@@ -1,0 +1,132 @@
+{% load static %}
+<link href="{% static 'images/favicon.ico' %}" type="image/x-icon" rel="shortcut icon"/>
+
+<link href="{% static 'css/form.css' %}" rel="stylesheet">
+
+<script src="{% static 'js/jquery.min.js' %}"></script>
+
+<link href="{% static 'css/bootstrap-select.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+<script src="{% static 'js/bootstrap-select.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.min.js' %}"></script>
+
+<link href="https://cdn.quilljs.com/latest/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/latest/quill.js"></script>
+<script src="{% static 'js/quilljs/image-resize.min.js' %}"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="{% static 'js/iframe-resizer/iframeResizer.contentWindow.min.js' %}"></script>
+
+<style>
+
+    input[type="radio"] {
+        opacity: 0;
+        position: fixed;
+        width: 0;
+    }
+
+    .options-container label {
+        margin: 5px;
+    }
+
+    input[type="radio"]:checked+label {
+        background-color: rgb(87, 180, 255);
+        color: white;
+    }
+
+    fieldset {
+        padding: 0 1.4em 1.4em 1.4em !important;
+        margin: 20px;
+    }
+
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    /* max-height: 80%; */
+  }
+
+  .message-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .message {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    word-wrap: break-word;
+  }
+
+  .student-message {
+    background-color: #e6f7ff;
+  }
+
+  .message-name {
+    /* align center vertically */
+    display: flex;
+    align-items: center;
+  }
+
+  .message-name span {
+    cursor: pointer;
+    font-size: 18px;
+    margin-right: 10px;
+  }
+
+  .message-text {
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 20px;
+  }
+
+  .reply-message {
+    margin-left: 20px;
+    background-color: #f0f0f0;
+    border-left: 4px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+  }
+
+  .input-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #f0f0f0;
+  }
+
+  .form-control {
+    width: 90%;
+    margin-right: 10px;
+  }
+
+  .wrapper {width:100%; margin:0 auto;}
+  .resize {width:100%; height:auto;}
+
+  .wrapper img {
+    border: 5px solid black;
+    max-width: 100%;
+    height: auto;
+  }
+
+  #view-poll-data {
+    border: 3px solid black;
+  }
+</style>
+
+{% if course.id %}
+<script>
+    // This function scrolls the message container to the bottom
+    function scrollToBottom() {
+      var messageContainer = document.querySelector('.message-container');
+      if (messageContainer) { messageContainer.scrollTop = messageContainer.scrollHeight; }
+    }
+
+    // Call the scrollToBottom function when the document is ready
+    document.addEventListener('DOMContentLoaded', function () {
+      scrollToBottom();
+    });
+</script>
+{% endif %}

@@ -1,0 +1,273 @@
+* {
+  box-sizing: border-box;
+}
+
+.column {
+  float: left;
+  width: 33%;
+  padding: 1px 0.2px 1px 11.9px;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+}
+
+#mta-header-with-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: row;
+}
+
+#mta-header-with-btn div:nth-child(2) {
+  display: flex;
+  gap: 0;
+}
+
+#mta-header-with-btn div:nth-child(2) .btn {
+  border-radius: 0;
+}
+
+input[type="date"] {
+  appearance: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px;
+  color: #333;
+  background-color: #fff;
+  font-size: 16px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  color: #999;
+}
+
+#student-chosen-popup {
+  width: 50%;
+}
+
+#hand-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#hand-controls #control-buttons {
+  width: 70%;
+}
+
+#hand-controls #instructor-notification {
+  width: 30%;
+}
+
+@media screen and (max-width: 600px) {
+  #mta-header-with-btn {
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  #mta-header-with-btn div:nth-child(2) {
+    flex-direction: column;
+    width: 90%;
+  }
+
+  #mta-header-with-btn div:nth-child(2) .btn {
+    width: 100%;
+    margin: 5px;
+    border-radius: 5px;
+  }
+
+  .dropdown-menu {
+    width: 100%;
+  }
+
+  #hand-controls #control-buttons {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #hand-controls #control-buttons button {
+    width: 30%;
+    height: 80px;
+    margin: 2px;
+    white-space: normal;
+  }
+
+  #hand-controls #control-buttons .glyphicon {
+    display: none;
+  }
+
+  #hand-controls #instructor-notification {
+    width: 60%;
+    margin: auto;
+    text-align: center;
+  }
+
+  #hand-controls #instructor-notification h3 {
+    font-size: 20px;
+    white-space: normal;
+  }
+}
+
+.divider {
+  border-right: 2px solid #333;
+}
+
+.btn-xl {
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 10px;
+  width: 300px;
+}
+
+.btn-hand {
+  width: 40%;
+  height: 80px;
+  font-size: 20px;
+  margin: 2.5px;
+}
+
+.btn-ms {
+  padding: 12px 15px;
+  font-size: 18px;
+  border-radius: 10px;
+  width: 200px;
+}
+
+.btn-tbl {
+  padding: 0.0001px 5px;
+  font-size: 14px;
+  border-radius: 0.0001px;
+}
+
+@media screen and (max-width: 800px) {
+  #student-chosen-popup {
+    width: 90%;
+  }
+}
+
+@media screen and (max-width: 999px) {
+  #hand-controls {
+    flex-direction: column;
+  }
+
+  #hand-controls #control-buttons {
+    width: 100%;
+    margin: auto;
+    text-align: center;
+  }
+
+  #hand-controls #control-buttons button {
+    width: 30%;
+    font-size: medium;
+  }
+
+  #hand-controls #instructor-notification {
+    width: 90%;
+    margin: auto;
+    text-align: center;
+  }
+
+  .divider {
+    border: none;
+  }
+}
+
+@media screen and (min-width: 1000px) {
+  #hand-controls #control-buttons {
+    width: 80%;
+  }
+
+  #hand-controls #control-buttons button {
+    width: 30%;
+  }
+
+  #hand-controls #instructor-notification {
+    width: 20%;
+  }
+}
+
+.column1 {
+  float: left;
+  width: 50%;
+  padding: 1px 0.1px 1px 11.9px;
+}
+
+.thumbnail {
+  padding-right: 17px;
+  padding-left: 17px;
+}
+
+@media screen and (max-width: 800px) {
+  .thumbnail {
+    margin-top: 20px;
+  }
+}
+
+.column {
+  float: left;
+  width: 33%;
+  padding: 1px 0.2px 1px 11.9px;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#message-board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#message-board-header > div:first-child {
+  flex: 1;
+}
+
+#message-board-header > div:last-child {
+  display: flex;
+  gap: 5px;
+}
+
+#myDIV {
+  width: 100%;
+  padding: 5px 0;
+  background-color: lightblue;
+  margin-top: 5px;
+}
+
+/* table tr#ROW1  {background-color:rgb(124, 241, 183);}
+      table tr#ROW2  {background-color:rgb(154, 201, 240);}
+      table tr#ROW3  {background-color:rgb(241, 145, 145);} */
+table tr#ROW1 {
+  background-color: rgb(115, 202, 115);
+}
+
+table tr#ROW2 {
+  background-color: rgb(168, 210, 247);
+}
+
+table tr#ROW3 {
+  background-color: rgb(250, 137, 137);
+}
+
+table tr#ROW4 {
+  background-color: rgb(250, 224, 137);
+}

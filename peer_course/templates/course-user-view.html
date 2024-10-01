@@ -1,0 +1,396 @@
+{% extends "form_simp_base.html" %}
+
+{% load has_my_submission %}
+{% load get_my_submission %}
+{% load submission_status %}
+{% load get_function_result %}
+{% load submission_button %}
+{% load get_role %}
+{% load tag_review_exists %}
+{% load deadline_not_passed %}
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_my_reviews %}
+
+
+
+
+{% block content %}
+    
+<div class="container-fluid">
+
+
+  <div class="col-md-4 col-md-offset-2">
+  
+    <div class="page-header">
+      <h2>User {{ user.first_name }} {{ user.last_name }}</h2>  
+    </div>
+    <h4>User ID: {{ user.username }}</h4>
+    <h4>Email: {{ user.email }}</h4>  
+    <a class="btn btn-primary" href="{% url 'account:edit' user.id %}">Edit User Information</a>
+
+  </div>
+
+
+   <div class="row">
+    {%if is_a_student or is_a_ta %}
+    <p>
+      {{user.first_name}} {{user.last_name}}'s lower bound dependability score is: {{coursemember.lower_confidence_bound}} </br>
+      {{user.first_name}} {{user.last_name}}'s realistic dependability score is: {{coursemember.markingload}}</br>
+      {%if is_a_student and is_independent%}
+        {{user.first_name}} {{user.last_name}}'s <span style="color: blue"> Independent.</span> 
+      {%else%}
+      {{user.first_name}} {{user.last_name}} is <span style="color: red"> Supervised.</span>
+      {%endif%}
+      <!-- <span style="color: blue"> {{coursemember.markingload}} (CI: [{{coursemember.lower_confidence_bound}}, {{coursemember.upper_confidence_bound}}])</span> -->
+    </p>
+    </div>
+
+    {%endif%}
+    {%if is_a_student %}
+
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+      <!-- <h2 class="page-header">
+        Assignments
+      </h2> -->
+    <h3>{{user.first_name}} {{user.last_name}}'s  assignment submissions</h3>
+      <div class="panel panel-default">
+        <!-- <div class="panel-body"> -->
+
+          <!-- <a class="btn btn-link" href="{% url 'assignment:create' %}">Create a new assignment</a>   -->
+
+          <!-- <a class="btn btn-link" href="/assignment/question/list/">Show existing assignment questions</a>   -->
+        <!-- </div> -->
+      
+        
+        {% if not assignments or assignments|length == 0 %}
+        <div class="panel-body">
+            <div class="well">No assignment yet.</div>
+        </div>
+        {% else %}
+          <table class="table">
+            <thead>
+              <tr>
+
+                <th class="col-md-2" style="padding-left: 20px">Assignment</th>
+                <th class="col-md-2">Deadline</th> 
+                <th class="col-md-2">Submission</th>
+                <th class="col-md-4">Reviews</th>                
+                <th class="col-md-2">Score</th>
+             
+              </tr> 
+            </thead> 
+            <tbody> 
+              {% for assignment in assignments %}
+
+                {% has_my_submission assignment user as my_submission_exists %}
+                {% get_my_submission assignment user as my_submission %}
+
+                {% if not my_submission_exists and assignment.deadline_passed %}
+                  <tr class="bg-danger"> 
+                {% elif my_submission_exists %}
+                  <tr class="bg-success">
+                {% elif not my_submission_exists and not assignment.deadline_passed %}
+                  <tr class="bg-warning">
+                {% endif %}
+                  <td scope="row">
+                    <a class="btn btn-link" href="/assignment/{{ assignment.id }}/view/">
+                      <h5><strong>{{ assignment.name }}</strong></h5>
+                    </a>
+                  </td> 
+                  <td>
+                    <h5>
+                      {% if assignment.deadline is None %}
+                        <i>[Deadline not set]</i>
+                      {% elif not assignment.deadline_passed %}
+                        {{ assignment.deadline }} 
+                      {% else %}
+                        {{ assignment.deadline }} (passed)
+                      {% endif %}
+                    </h5>
+                  </td>
+                  
+
+                    {% comment %}
+                      If it's a student then we show the options to create/edit/show the student's submission
+                    {% endcomment %}
+                    
+                    {% if my_submission_exists %}
+                      <td style="vertical-align: middle">
+                        <a href="/assignment/submission/{{ my_submission.id }}/view/">
+                          View
+                        </a>
+                      </td>
+                    {% else %}
+                      <td>
+                          
+                          {% if can_compose_submission %}
+                            {% submission_create_button assignment '' 'Create a submission' %}
+                          {% else %}
+                            <h5>No submission</h5>
+                          {% endif %}
+                      </td>
+                    {% endif %}
+
+
+                    <td>
+                    {% if my_submission.reviewassignment_set.all|length == 0 %}
+                                No review assigned
+                    {% else %}                        
+
+                    {% for review in my_submission.reviewassignment_set.all %}
+                        {% get_role course review.grader.user as grader_role %}
+                        {% if review|tag_review_exists and review.deadline_passed %}
+                        <div>
+                        <a href="/review/{{ review.id }}/view/" target="">
+                                            {% if grader_role == 'ta' %}
+                                            <span style="color: green"> {{review.grader.user.first_name}} {{review.grader.user.last_name}}'s Review </span>
+                                            {% elif grader_role == 'instructor' %}
+                                            <span style="color: red"> {{review.grader.user.first_name}} {{review.grader.user.last_name}}'s Review </span>
+                                            {% else %}
+                                            {{review.grader.user.first_name}} {{review.grader.user.last_name}}'s Review
+                                            {% endif %}
+                                            
+                        </a>
+                        </div>
+                        {% else %}
+                        <div>                    
+                        {% if grader_role == 'ta' %}
+                            TA
+                        {% elif grader_role == 'instructor' %}
+                            Instructor
+                        {% else %}
+                            Student
+                        {% endif %}
+                            review unavailable
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    {% endif %}
+                    </td>
+
+
+                    <td style="vertical-align: middle">
+                      {% submission_status my_submission %}
+                    </td>
+
+                  
+
+                  </tr>
+                {% endfor %} 
+              </tbody> 
+            </table>
+          {% endif %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+    {% endif %}
+
+
+
+{% load get_reviews_to_be_completed %}
+{% get_reviews_to_be_completed reviews as reviews_to_be_completed %}
+
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-6 col-md-offset-2 col-md-8">
+     
+      {% comment %}
+      <h3>{{user.first_name}} {{user.last_name}}'s reviews to be completed</h3>
+      {% if reviews_to_be_completed|length == 0 %}
+      <div class="well">No pending reviews.</div>
+      {% else %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="col-md-2">Submission</th> 
+            <th class="col-md-2">Deadline</th> 
+            <th class="col-md-2">Link</th> 
+          </tr> 
+        </thead>
+        <tbody>
+          {% for review in reviews_to_be_completed %}
+            <tr class="bg-danger">
+              <td>
+                <a href="/assignment/submission/{{ review.submission.id }}/view/" target="_blank">
+                {% if is_a_student %}
+                  Submission for Assignment {{ review.submission.assignment.name }}
+                {% else %}
+                  {{ review.submission.author.user.first_name }} 
+                  {{ review.submission.author.user.last_name }}
+                {% endif %}
+                </a>
+              </td>
+              <td>{{ review.deadline }}</td>
+              {% if review.deadline > now  %}
+              <td><a href="/review/{{ review.id }}/create/" target="_blank">Create this review</a></td>
+              {% else %}
+              <td><strong>The deadline has passed</strong></td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      {% endcomment %}
+
+      <h3>{{user.first_name}} {{user.last_name}}'s reviews of other submissions</h3>
+
+      
+
+      {% if not course|has_review %}
+      <div class="alert alert-info" role="alert" style="margin: 4px;">
+        No review assigned to {{user.first_name}} {{user.last_name}}.
+      </div>  
+      {% else %}
+  
+
+
+      <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+      {% for assignment in course.assignment_set.all %}
+        {% if assignment.browsable %}
+
+          {% get_my_reviews assignment user as my_reviews %}
+
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                <strong>Assignment {{ assignment.name }}</strong>
+              </h4>
+            <div>
+
+              {% if my_reviews|length == 0 %}
+                <div>
+                  No review assigned
+                </div>
+              {% else %}
+
+                <table class="table">
+
+                  <thead>
+                    <tr>
+                      <th class="col-md-2.5">Submission</th> 
+                      <!-- <th class="col-md-2.5">Deadline</th> -->
+                      <th class="col-md-2.5">{{user.first_name}} {{user.last_name}}'s Review</th> 
+                      <th class="col-md-2.5">Final Grade (grading method)</th>
+                      <th class="col-md-2.5">Evaluation Grade</th>
+
+
+                    </tr> 
+                  </thead> 
+
+                  <tbody>
+                    
+                      {% for review in my_reviews %}
+                        {% if review|tag_review_exists %}
+                        <tr class="bg-success">
+                        {% elif not review.deadline_passed %}
+                        <tr class="bg-danger">
+                        {% else %}
+                        <tr class="bg-warning">
+                        {% endif %}
+                          <td>
+                            <a href="/assignment/submission/{{ review.submission.id }}/view/" target="_blank">
+                              {% if is_a_student %}
+                                {% if review.submission.author.user == user %}
+                                {{user.first_name}} {{user.last_name}}'s submission
+                                {% elif review.submission.calibration_id == 0 %}
+                                {{review.submission.author.user.first_name}}  {{review.submission.author.user.last_name}}'s submission
+                                {% else %}
+                                  Calibration review
+                                {% endif %}
+                              {% else %}
+                                {{ review.submission.author.user.first_name }} 
+                                {{ review.submission.author.user.last_name }}
+                              {% endif %}
+                            </a>
+                          </td>
+                          <td>
+                              {% if review|tag_review_exists and review.submission.calibration_id == 0%}
+                              <a href="/review/{{ review.id }}/view/" target="_blank">({{review.assigned_grade}}/{{review.submission.assignment.max_total_grade}})</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id > 0%}
+                              <a href="/calibration/{{ review.id }}/view/" target="_blank">({{review.assigned_grade}}/{{review.submission.assignment.max_total_grade}})</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/edit/" target="_blank">Edit this review</a>
+                            {% elif not review.deadline_passed and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/create/" target="_blank">Create this review</a>
+                            {% elif not review.deadline_passed and review.submission.calibration_id > 0%}
+                            <a href="/calibration/{{ review.id }}/create/" target="_blank">Create this review</a>
+
+                            {% else %}
+                              <p>Missing review</p>
+                            {% endif %}
+                          </td>
+                          <td>
+                              {% if review|tag_review_exists and review.submission.calibration_id == 0%}
+                              <a href="/review/{{ review.id }}/view/" target="_blank">({{review.submission.final_grade}}/{{review.submission.assignment.max_total_grade}}) (Method: {{review.submission.final_grading_method}})</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id > 0%}
+                              <a href="/calibration/{{ review.id }}/view/" target="_blank">({{review.submission.final_grade}}/{{review.submission.assignment.max_total_grade}}) (Method: Instructor)</a>
+                              &nbsp;&nbsp;&nbsp;
+                            {% elif review|tag_review_exists and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/edit/" target="_blank">Edit this review</a>
+                            {% elif not review.deadline_passed and review.submission.calibration_id == 0 %}
+                              <a href="/review/{{ review.id }}/create/" target="_blank">Create this review</a>
+                            {% elif not review.deadline_passed and review.submission.calibration_id > 0%}
+                            <a href="/calibration/{{ review.id }}/create/" target="_blank">Create this review</a>
+
+                            {% else %}
+                              <p>Missing review</p>
+                            {% endif %}
+                          </td>
+                          <td>
+                            {% if review|tag_review_exists and review.submission.calibration_id == 0%}
+                              {%if review.evaluation_grade is not None%}  
+                               ({{review.evaluation_grade}}/{{review.max_evaluation_grade}})  
+                               {%elif review.evaluations.exists%}
+                               Not submitted yet
+                               {%endif%}
+                            {% else %}
+                                Not applicable                         
+                            {% endif %}         
+                          </td>
+                        </tr>
+                      {% endfor %}
+
+                  </tbody>            
+
+                </table>
+
+              {% endif %}
+
+            </div>
+
+            </div>
+
+
+          </div>
+        {% endif %}
+
+      {% endfor %}
+      </div>
+
+  {% endif %}
+    </div>
+  </div>
+
+</div>
+
+
+  
+
+
+
+
+
+
+</div>
+{% endblock %}

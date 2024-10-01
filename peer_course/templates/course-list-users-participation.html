@@ -1,0 +1,28 @@
+{% extends "form_simp_base_participation.html" %}
+
+{% block content %}
+
+<!-- <a class="btn btn-secondary" href="/course/{{ course.id }}/">Return to the Course Homepage</a> -->
+
+<div class="col-sm-6 col-md-offset-2 col-md-8">
+    <div class="mta-header-with-btn">
+      <h2> List of users for {{course.displayname }}</h2>
+            
+          <div class="btn-group mta-btn-group-title" role="group" aria-label="...">
+            <a class="btn btn-info" href="/course/{{ course.id }}/export_instructors/">
+              <span class="glyphicon glyphicon-user"></span> Export Instructors
+            </a>
+            <a class="btn btn-success" href="/course/{{ course.id }}/export_tas/">
+              <span class="glyphicon glyphicon-user"></span> Export TAs
+            </a>
+            <a class="btn btn-info" href="/course/{{ course.id }}/export_students/">
+              <span class="glyphicon glyphicon-user"></span> Export Students
+            </a>
+          </div>
+    </div>
+
+
+{% load list-users %}
+{% list_users course request.user %}
+
+{% endblock %}

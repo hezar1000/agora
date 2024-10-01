@@ -1,0 +1,30 @@
+#mysqlclient
+# Python version 3.9.9 as of May 2023
+Django==2.1.15
+djangorestframework
+markdown
+django-filter
+django-cron
+django-extensions
+arrow
+django-request-logging
+django_markdown2
+django-nested-admin
+django-contrib-comments
+django-mptt
+django-tagging
+numpy
+scipy
+django-blog-zinnia
+tqdm
+pandas
+#psycopg2
+
+# for polling system
+channels==2.3.1
+channels-redis
+
+## For SAML2 authentication: not used
+git+https://github.com/farzadab/django-saml2-pro-auth
+## You may also need to install these packages on your OS:
+## build-essential libssl-dev libffi-dev python-dev libxml2-dev libxmlsec1 xmlsec1 libxmlsec1-openssl libxmlsec1-dev

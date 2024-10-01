@@ -1,0 +1,222 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      {% if is_assignee %}
+      <h2 class="page-header">Respond to an appeal for {{ appeal.submission.assignment.name }}</h2>
+      {% else %}
+      <h2 class="page-header">View an appeal for {{ appeal.submission.assignment.name }}</h2>
+      {% endif %}
+      
+      {% comment %}
+      /assignment/submission/view/{{ appeal.submission.id }}
+      /grade/appeal/respond/{{ appeal.id }}/
+      {% endcomment %}
+
+      <div class="row">
+        <div class="col-md-8">
+      
+          
+          <!-- A list of reviews -->
+
+            
+            {% for field in appeal_data %}
+              <div class="form-group row mathjax">
+                  <div class="col-md-4 col-form-label">
+                      <strong>{{ field.0 }}:</strong>
+                  </div>
+                  <div class="col-md-8">
+                      {{ field.1 | linebreaks }}
+                  </div>
+              </div>
+            {% endfor %}
+            {% if not is_student %}
+                {% if appeal_form %}
+                    <form action="{% url 'grade:appeal_respond' appeal.id %}" method="post">
+                        {% csrf_token %}
+
+                        {% for field in appeal_form %}
+                            <div class="form-group row">
+                                <div class="col-md-4 col-form-label">
+                                    {{ field.label_tag }} 
+                                </div>
+                                <div class="col-md-8">
+                                    {{ field }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <input type="submit" class="btn btn-primary" value="Submit">
+                    </form>
+                {% else %}
+                    <a class="btn btn-warning"
+                        data-toggle="tooltip"
+                        title="To edit the response, assignee, or status"
+                        href="{% url 'grade:appeal_reopen' appeal.id %}">Reopen</a>
+                {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+          <div class="panel panel-default">
+            <div class="panel-heading"><h5>Submission and the reviews</h5></div>
+            <table class="table">
+              <thead>
+                <th>Item</th>
+                <th>Grade</th>
+              </thead>
+
+              <tbody>
+                {% if is_instructor %}
+                <tr>
+                    <td>
+                      <a href="{% url 'assignment:submission_view' appeal.submission.id %}">{{appeal.submission.author.user.first_name}} {{appeal.submission.author.user.last_name}}'s Submission</a>
+                    </td>
+                    <td>{{ appeal.submission.final_grade }}</td>
+                  </tr>
+                  {% for review in reviews %}
+                    <tr>
+                      <td>
+                          <a href="{% url 'review:view' review.id %}">
+                            {% if review.grader.user == request.user %}
+                              My
+                            {% else %}
+                            {{review.grader.user.first_name}} {{review.grader.user.last_name}}'s 
+                            {% endif %}
+                            Review
+                          </a>
+                      </td>
+                      <td>
+                        {% if review.submitted %}
+                          {{ review.assigned_grade }}
+                        {% else %}
+                          Not submitted
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                {% else %}
+                <tr>
+                  <td>
+                    <a href="{% url 'assignment:submission_view' appeal.submission.id %}">Submission</a>
+                  </td>
+                  <td>{{ appeal.submission.final_grade }}</td>
+                </tr>
+                {% for review in reviews %}
+                  <tr>
+                    <td>
+                        <a href="{% url 'review:view' review.id %}">
+                          {% if review.grader.user == request.user %}
+                            My
+                          {% elif review.grader.role == 'ta' %}
+                            TA
+                          {% elif review.grader.role == 'instructor' %}
+                            Instructor
+                          {% else %}
+                            Student
+                          {% endif %}
+                          Review
+                        </a>
+                    </td>
+                    <td>
+                      {% if review.submitted %}
+                        {{ review.assigned_grade }}
+                      {% else %}
+                        Not submitted
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+{% load static %}
+     <script src={% static 'js/timeme.min.js' %}></script>
+    <script type="text/javascript">
+        // Initialize library and start tracking time
+        TimeMe.initialize({
+        currentPageName: "my-home-page", // current page
+        idleTimeoutInSeconds: 30 // seconds
+        });
+        // Retrieve time spent on current page
+        var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+        TimeMe.callAfterTimeElapsedInSeconds(5, function(){
+        console.log("The user has been actively using the page for 5 seconds! Let's prompt them with something.");
+        });
+        var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+        console.log(isSafari);
+        {#var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;#}
+        {#if (iOS){#}
+        TimeMe.setIdleDurationInSeconds(30);
+        {#TimeMe.setCurrentPageName("NAME_OF_THE_PAGE");#}
+        TimeMe.initialize();
+        var isOnIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i);
+        var eventName = isOnIOS ? "pagehide" : "beforeunload";
+        var objappVersion = navigator.appVersion;
+        var browserAgent = navigator.userAgent;
+        var browserName = navigator.appName;
+        var browserVersion = '' + parseFloat(navigator.appVersion);
+        var browserMajorVersion = parseInt(navigator.appVersion, 10);
+        var Offset, OffsetVersion, ix;
+
+        // For Chrome
+        if ((OffsetVersion = browserAgent.indexOf("Chrome")) != -1) {
+            browserName = "Chrome";
+            browserVersion = browserAgent.substring(OffsetVersion + 7);
+        }
+        if (browserName==="Chrome") {
+            console.log(browserName);
+            window.addEventListener(eventName, function (event) {
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("POST","{% url 'grade:appeal_timer' %}", false);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+            xmlhttp.send("timeSpent=" + timeSpentOnPage) ;
+            var url = window.location.href;
+            var result = timeSpentOnPage +' ' +url;
+            xmlhttp.send(result);
+            console.log(xmlhttp.status);
+            console.log(window.location.href);});
+            window.onbeforeunload = function (event) {
+            xmlhttp=new XMLHttpRequest();
+            xmlhttp.open("POST","{% url 'grade:appeal_timer' %}", true);
+            console.log('OPENED: ', xmlhttp.status);
+            var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+            var url = window.location.href;
+            var result = timeSpentOnPage +' ' +url;
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            console.log("Time spent on page");
+            console.log(timeSpentOnPage);
+            xmlhttp.send(result);
+            console.log(xmlhttp.status);
+            console.log(window.location.href);}
+        }
+        else
+        {
+        window.onbeforeunload = function (event) {
+        xmlhttp=new XMLHttpRequest();
+        xmlhttp.open("POST","{% url 'grade:appeal_timer' %}", false);
+        console.log('OPENED: ', xmlhttp.status);
+        var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+        var url = window.location.href;
+        var result = timeSpentOnPage +' ' +url;
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        console.log("Time spent on page");
+        console.log(timeSpentOnPage);
+        xmlhttp.send(result);
+        console.log(xmlhttp.status);
+        console.log(window.location.href);};}
+    </script>
+{% endblock %}

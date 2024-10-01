@@ -1,0 +1,193 @@
+[
+    {"model": "auth.user", "pk": 1, "fields": {
+        "password": "pbkdf2_sha256$30000$JQ763Yrldhch$b+yBLgQeNhvzlTO9+MsghEgB4u44JPw+sdyTqlfxA1w=",
+        "last_login": "2017-12-27T03:50:42.109Z", "is_superuser": true,
+        "username": "farzad", "first_name": "", "last_name": "", "email": "", "is_staff": true, "is_active": true, "date_joined": "2017-12-27T03:50:37.056Z", "groups": [], "user_permissions": []}
+    },
+    {"model" : "auth.user", "pk" : 2, "fields" : {
+            "username" : "98498165",
+            "last_name" : "Abdolhosseini",
+            "first_name" : "Farzad",
+            "email" : "farzadab@cs.ubc.ca", "is_staff" : false, "user_permissions" : [], "date_joined" : "2017-12-27T04:30:04.823Z", "last_login" : null, "is_active" : true, "is_superuser" : false, "groups" : [], "password" : "pbkdf2_sha256$30000$wmS08py17vMs$1ECpPf89coJqh44C15CUFEs3VOdYVKfCviT4yNWMyog="
+        }
+    },
+    {"model" : "auth.user", "pk" : 3, "fields" : {
+            "username" : "alicegao",
+            "email" : "",
+            "first_name" : "Alice",
+            "last_name" : "Gao", "is_active" : true, "last_login" : null, "is_superuser" : false, "groups" : [], "is_staff" : false, "user_permissions" : [], "date_joined" : "2017-12-27T04:30:40.292Z", "password" : "pbkdf2_sha256$30000$hc4alKSEYgrs$d+tBT6CCYJMRYgPBqnYSJkcZsFFWc/QwJuIaTY/0hDM="
+        }
+    },
+    {"model" : "auth.user", "pk" : 4, "fields" : {
+            "username" : "hedayatzarkoob",
+            "email" : "",
+            "first_name" : "Hedayat",
+            "last_name" : "Zarkoob", "groups" : [], "password" : "pbkdf2_sha256$30000$3tHA40za1cNO$KBMrAFD0olzOw9YtaRpOxyrXBzoG6wcP8S62f3PDDHU=", "is_superuser" : false, "last_login" : null, "is_active" : true, "date_joined" : "2017-12-27T04:31:23.827Z", "user_permissions" : [], "is_staff" : false
+        }
+    },
+    {"model" : "auth.user", "pk" : 5, "fields" : {
+            "username" : "admin",
+            "email" : "",
+            "first_name" : "",
+            "last_name" : "", "is_superuser" : true, "last_login" : null, "is_active" : true, "groups" : [], "password" : "pbkdf2_sha256$30000$FBu2BLAd5Rjf$G5ikz+2IxAw+4QlnmDiRJZiFrGHee0w+03gquC68nUg=", "is_staff" : true, "date_joined" : "2017-12-27T04:32:02.421Z", "user_permissions" : []
+        }
+    },
+    {"model" : "auth.user", "pk" : 6, "fields" : {
+            "username" : "98498166",
+            "last_name" : "Doe",
+            "first_name" : "John",
+            "email" : "john@cs.ubc.ca", "is_staff" : false, "user_permissions" : [], "date_joined" : "2017-12-27T05:19:58.951Z", "last_login" : null, "is_active" : true, "is_superuser" : false, "groups" : [], "password" : "pbkdf2_sha256$30000$wmS08py17vMs$1ECpPf89coJqh44C15CUFEs3VOdYVKfCviT4yNWMyog="
+        }
+    },
+    {"model" : "auth.user", "pk" : 7, "fields" : {
+            "username" : "98498167",
+            "last_name" : "Ma",
+            "first_name" : "David",
+            "email" : "david@cs.ubc.ca", "is_staff" : false, "user_permissions" : [], "date_joined" : "2017-12-27T05:19:58.951Z", "last_login" : null, "is_active" : true, "is_superuser" : false, "groups" : [], "password" : "pbkdf2_sha256$30000$wmS08py17vMs$1ECpPf89coJqh44C15CUFEs3VOdYVKfCviT4yNWMyog="
+        }
+    },
+    {"model": "peer_course.Course", "pk": 1, "fields": {
+            "displayname": "CPSC 430",
+            "browsable": true,
+            "archived": false,
+            "stucode": "1c3c4f",
+            "tascode": "4c3c4f",
+            "instructor_code": "6c3c4f"
+        }
+    },
+    {"model": "peer_course.Course", "pk": 2, "fields": {
+            "displayname": "CPSC 320",
+            "browsable": true,
+            "archived": false,
+            "stucode": "1d3c4f",
+            "tascode": "4d3c4f",
+            "instructor_code": "6d3c4f"
+        }
+    },
+    {"model": "peer_course.coursemember", "pk": 1, "fields": {
+            "role": "instructor",
+            "user": 3,
+            "course": 1
+        }
+    },
+    {"model": "peer_course.coursemember", "pk": 2, "fields": {
+            "role": "ta",
+            "course": 1,
+            "user": 4
+       }
+    },
+    {"model": "peer_course.coursemember", "pk": 3, "fields": {
+            "role": "student",
+            "user": 2,
+            "course": 1
+       }
+    },
+    {"model": "peer_course.coursemember", "pk": 4, "fields": {
+            "role": "student",
+            "user": 6,
+            "course": 1
+       }
+    },
+    {"model" : "peer_review.rubric", "pk" : 1, "fields" : {
+          "name" : "zero/one",
+          "questions" : [
+             1
+          ]
+       }
+    },
+    {"model" : "peer_review.rubricquestion", "pk" : 1, "fields" : {
+           "text" : "Is the answer correct?",
+           "title" : "Correct"
+        }
+    },
+    {"model" : "peer_review.rubricquestionmultiplechoiceitem", "pk" : 2, "fields" : {
+        "question" : 1,
+        "text" : "No",
+        "marks" : 0
+       }
+    },
+    {"model" : "peer_review.rubricquestionmultiplechoiceitem", "pk" : 1, "fields" : {
+        "question" : 1,
+        "text" : "Yes",
+        "marks" : 1
+       }
+    },
+    {"model" : "peer_assignment.assignment", "pk" : 1, "fields" : {
+           "course" : 1,
+           "deadline" : "2018-01-06T20:00:00Z",
+           "name" : "A1",
+           "assignment_type" : "pdf",
+           "release_time" : "2017-12-26T20:00:00Z",
+           "statement" : "uploads/statements/1.pdf",
+           "browsable" : true
+        }
+    },
+    {"model" : "peer_assignment.assignmentquestion", "pk" : 1, "fields" : {
+           "assignment" : 1,
+           "rubric" : 1,
+           "description" : "Question 1 from the problem statement (PDF)",
+           "title" : "Q1",
+           "category" : "FILE"
+        }
+    },
+    {"model" : "peer_assignment.assignmentquestion", "pk" : 2, "fields" : {
+           "title" : "Q2",
+           "rubric" : 1,
+           "description" : "Question 2 from the problem statement (PDF)",
+           "category" : "FILE",
+           "assignment" : 1
+        }
+    },
+    {"model" : "peer_review.assignmentwithreviews", "pk" : 1, "fields" : {
+           "student_review_deadline_default" : "2017-12-30T18:10:00Z",
+           "ta_review_deadline_default" : "2018-01-03T09:00:00Z"
+        }
+    },
+
+    
+
+    {"model" : "peer_assignment.assignmentsubmission", "pk" : 1, "fields" : {
+           "author" : 3,
+           "time_submitted" : "2017-12-27T20:02:41.799Z",
+           "assignment" : 1,
+           "time_last_modified" : "2017-12-27T20:02:42.045Z",
+           "nopublicuse" : false
+        }
+    },
+    {"model" : "peer_assignment.assignmentsubmission", "pk" : 2, "fields" : {
+           "time_submitted" : "2017-12-27T20:03:46.537Z",
+           "assignment" : 1,
+           "time_last_modified" : "2017-12-27T20:03:46.632Z",
+           "nopublicuse" : false,
+           "author" : 4
+        }
+    },
+    {"model" : "peer_assignment.submissioncomponent", "pk" : 1, "fields" : {
+           "attachment" : "assignment_submission_files/response.pdf",
+           "content" : "",
+           "question" : 1,
+           "submission" : 1
+        }
+    },
+    {"model" : "peer_assignment.submissioncomponent", "pk" : 2, "fields" : {
+           "content" : "",
+           "attachment" : "assignment_submission_files/response.pdf",
+           "question" : 2,
+           "submission" : 1
+        }
+    },
+    {"model" : "peer_assignment.submissioncomponent", "pk" : 3, "fields" : {
+           "submission" : 2,
+           "question" : 1,
+           "attachment" : "assignment_submission_files/response.pdf",
+           "content" : ""
+        }
+    },
+    {"model" : "peer_assignment.submissioncomponent", "pk" : 4, "fields" : {
+           "attachment" : "assignment_submission_files/response.pdf",
+           "content" : "",
+           "submission" : 2,
+           "question" : 2
+        }
+    }
+]

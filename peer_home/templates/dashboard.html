@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% load tag_review_exists %}
+{% load get_pending_reviews %}
+{% load has_review %}
+{% load get_my_reviews %}
+{% load get_reviews_to_be_completed %}
+
+<div class="container-fluid">
+  <div class="col-md-8 col-md-offset-4">
+
+    <h1>Welcome to Agora!</h1>
+
+    <div class="list-group">
+      <h3>Assignments to be completed</h3>
+      {% if pending_assignments %}
+        <table class="table">
+            <thead>
+              <tr>
+                <th class="col-md-3">Assignment</th>
+                <th class="col-md-3">Deadline</th> 
+                <th></th>
+              </tr>       
+            </thead>
+            <tbody>
+              {% for assignment in pending_assignments %}
+              <tr class="bg-danger">
+                <td>
+                  <a href="/assignment/{{ assignment.id }}/view/">
+                    <h5>Assignment <strong>{{ assignment.name }}</strong></h5>
+                  </a>
+                </td>
+                <td>
+                  <h5><strong>{{ assignment.deadline }}</strong></h5>
+                </td>
+                <td>
+                  <a class="btn btn-link" href="/assignment/{{ assignment.id }}/submission/create/">
+                    Create a submission
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="well">No assignments left to do!</div>
+        {% endif %}
+
+        <h3>Reviews to be completed</h3>
+        {% with pending_reviews=reviews|get_reviews_to_be_completed %}
+          {% if pending_reviews %}
+            <table class="table">
+              <thead>
+                <tr>
+                  <th class="col-md-3">Submission</th> 
+                  <th class="col-md-3">Deadline</th> 
+                  <th></th> 
+                </tr> 
+              </thead>
+              <tbody>
+                {% for review in pending_reviews %}
+                  <tr class="bg-danger">
+                    <td>
+                      <a href="/assignment/submission/{{ review.submission.id }}/view/" target="_blank">
+                      {% if is_student %}
+                        A student's submission
+                      {% else %}
+                        {{ review.submission.author.user.first_name }} 
+                        {{ review.submission.author.user.last_name }}
+                      {% endif %}
+                      </a>
+                    </td>
+                    <td>{{ review.deadline }}</td>
+                    <td><a href="/review/{{ review.id }}/create/" target="_blank">Create my review</a></td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          {% else %}
+            <div class="well">No reviews assigned to you!</div>
+          {% endif %}
+        {% endwith %}
+      <!-- <a href="#" class="list-group-item disabled">
+        Archived
+      </a> -->
+      {% for course in courses %}
+        {% if course.browsable %}
+        <a href="/course/{{ course.id }}/" class="list-group-item">{{ course.displayname }}</a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+  </div>  
+</div>
+
+{% endblock %}

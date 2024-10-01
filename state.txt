@@ -1,0 +1,20 @@
+Wed Jan 24
+
+Things I can do:
+
+- Create a course through admin interface.
+- Enroll instructor using code.
+- Add students manually to the course.
+- Create an assignment with release date, due date. 
+- Create a submission for an assignment
+
+TODO: Check other places where course ID is referenced as cid rather than course_id.  (The reviews for course page does not display because it is checking cid in session but course ID is stored as course_id in session.)
+
+
+Possible important bugs:
+- Cannot seem to add assignment questions when creating an assignment.
+- No option to assign reviews.
+- Configure review sessions does not save it.
+
+
+

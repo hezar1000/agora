@@ -1,0 +1,87 @@
+{% include "base-lecture.html" %}
+
+{% block content %}
+
+<style>
+    .input-container {
+      position: sticky;
+      bottom: 0;
+    }
+</style>
+
+{% if lecture and lecture.enable_messages %}
+
+<div class="chat-container">
+  <div class="message-container">
+    {% if messages %}
+      {% for message in messages %}
+
+      {% if not message.hidden %}
+
+        {% if message.auth_user_id == auth_id or message.broadcast %}
+          <div class="message student-message">
+            <p><strong>{% if message.auth_user_id == auth_id %}You{% else %}Classmate{%endif%}</strong> {{ message.message }}</p>
+            {% if message.reply_message %}
+            <div class="reply-message">
+              <p><strong>Instructor</strong> {{ message.reply_message }}</p>
+            </div>
+            {% endif %}
+
+            {% if message.broadcast and message.auth_user_id == auth_id %}
+            <p style="margin-top: 10px">(Broadcasted)</p>
+            {% endif %}
+          </div>
+        {% endif %}
+        
+      {% endif %}
+
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <div class="input-container">
+    <input class="form-control" type="text" name="message" placeholder="Message..." {% if blocked %} disabled {% endif %}>
+    <button class="btn btn-primary" onclick="send_message()" {% if blocked %} disabled {% endif %}>Send to Instructor</button>
+</div>
+{% if blocked %}
+<span style="color: red; font-weight: bold;">You have been blocked</span>
+{% else %}
+<span>Instructor can broadcast this message to the entire class</span>
+{% endif %}
+
+{% elif not lecture %}
+<p>Lecture not started.</p>
+{% elif lecture and not lecture.enable_messages %}
+<p>Feature disabled.</p>
+{% endif %}
+
+<script>
+  let send_message = () => {
+    let message = $("input[name='message']").val();
+
+    if (!message) return;
+
+    $.ajax({
+      type: "POST",
+      beforeSend: function (xhr, settings) {
+        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+      },
+      data: { message: message },
+      success: function (response) {
+        console.log("Message sent successfully");
+        $("input[name='message']").val('');
+        $('.message-container').load(window.location.href + ' .message-container');
+      },
+      error: function (error) {
+        console.error("Error sending message:", error);
+      }
+    });
+  }
+
+  // on enter key press when the input field is focused
+  $("input[name='message']").keypress(function (e) {
+    if (e.which == 13) send_message();
+  });
+</script>
+
+{% endblock %}

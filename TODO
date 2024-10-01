@@ -1,0 +1,318 @@
+Merge:
+  do:
+    ☐ calibration
+      ☐ off/on setting
+    ☐ evaluation
+      ☐ off/on setting
+  maybe:
+      ☐ quiz
+      ☐ text question: markdown
+  dont:
+    ✔ qualification @done(18-10-05 15:26)
+    ✔ UI dashboard @done(18-10-05 15:34)
+      ✔ calibration @done(18-10-05 15:23)
+      ✔ time-period @done(18-10-05 14:59)
+    ✔ SAML @done(18-10-05 14:52)
+    ✔ weblog @done(18-10-05 14:52)
+    ☐ migration files
+  misc:
+    ☐ component-wise/total median
+
+  merge:
+    ☐ figure out which commits to merge or not
+  fix:
+    ☐ account for calibration/evaluation to TA and Assignment overview in instructor dashboard
+  test:
+    ☐ Interact with the page to make sure everything works
+
+
+Todo:
+  Kevin:
+      check with hedy:
+        ☐ what happens if the review has not been submitted?
+    
+    ☐ requirement instead of qualification @low
+
+----------------------------
+
+    ☐ waitlist ... person can drop course after the first week @low
+
+    ☐ handle permissions of inactive users
+
+      ☐ min/max criteria
+      ☐ fine-tuning: view
+      ☐ fix markdown
+    
+    ☐ automatically assign reviews: @low 
+      ☐ need to set the number in the course definition?
+
+    ☐ better handling when a person drops a course  ..  not assigning reviews
+
+    ☐ turn it in @later
+
+    dashboard for students: @low
+      ☐ calibration scores
+      ☐ independent/supervised
+      ☐ relative time for assignment/calibration deadline
+
+  ☐ add an instructor+TA reviews count field
+  New requirements:
+    ☐ compute mean/median of assignment in grades page
+      ☐ better yet, do this per each question @wont
+  ☐ reviews tab: long assignment name is displayed badly
+  ☐ assignment tab:
+    ☐ assigment column link: if submitted -> `sub (edit)` else `assgn`
+    ☐ add reviews column
+  ☐ remove grades table
+  ☐ mta tooltip: not friendly
+  ☐ dashboard:
+    ☐ completed tasks
+
+  ☐ view your reviews: collapse @low 
+  dashboard:
+    ☐ assignment table: 
+    ☐ grade details page for submission: grade (per review), status, appeal, ...
+  appeal:
+    ☐ assign review number for student reviews (to show in dashboard and refering to in appeals)
+    ☐ show reviews of submission in appeal
+  
+  ☐ don't let instructor assign reviews before hard deadline
+
+  No reviews:
+    ☐ automatically raise warning
+  appeal button:
+    ☐ no appealing when grade doesn't exist @high
+    ☐ in submission
+    ☐ status for grade: waiting, appeal, ....
+  grades for review: @low @later
+    ☐ your grade should be seen on dashboard
+  ☐ reorder reviews @low
+  ☐ archive, closed
+
+  Matt's requests:
+    ☐ Group assignment @low
+    ☐ export to blackboard? @resolved
+
+  ☐ bulk reassign reviews
+    ☐ bad position
+    ☐ in "Tasks to be completed"
+  LOG: @high @finished?
+    ☐ changes in appeal @high
+    ☐ manual grading @high
+    ☐ anytime something changes in DB ...
+    ☐ everything that is being overwritten
+
+  ☐ save/submit for students
+    ☐ save -> should stay in task list
+  edit submission:
+    ☐ why there was no link to the file? @noidea?
+      ☐ actually preview old file @notneeded?
+  ☐ review: collapse problem statement @resolved? removed for now
+
+  ☐ add another stid field to users
+
+  ☐ too many words!
+  ☐ remove tabs (assignment, review, dashboard) when course not chosen?
+  ☐ remove "back to ..." buttons
+  ☐ dashboard for instructor
+    ☐ remove course info completely, just buttons should stay
+    ☐ student code: randomly sample from common english words? @low
+    ☐ tasks to be completed for instructor: remove if tasks not empty
+    ☐ stats about the course
+      ☐ for each assignment
+        ☐ released?
+        ☐ Students: show how many submissions, reviews, .... @high @today @sunday
+        ☐ TAs: show how many reviews assigned/completed + late reviews ... @high @today @sunday
+          ☐ measure of how much the TA has done?
+      ☐ for each TA
+    ☐ maybe add a new page for dashboard ....? @notneeded?
+  ☐ display users
+      ☐ assignments
+        ☐ doesn't render well on mobile (small sizes) @better
+      ☐ create an assignment
+        ☐ publish: beside submit
+          ☐ save/publish
+        ☐ view/edit rubric @resolved
+        ☐ view/edit question @resolved
+        ☐ more streamlined way: inline ... @low @longterm
+        ☐ peer review spot check logic file to be changed dynamically ... @low @longterm
+      ☐ review
+        instructor will be looking at TAs, not at the reviews themselves
+        ☐ TA's tab
+      
+  ☐ show "not graded" in subs/reviews list
+  ☐ rubric questions: only specific to course
+  ☐ student mode @low
+    ☐ create multiple users:
+      ☐ login/logout as a new person ...
+  ☐ add filter for displaying author/grader @low
+
+Late hour:
+  ☐ (DB) course config (updatable -> increase only? or just show warning?)
+  submission edit/submit page:
+    ☐ may need to somehow indicate that the deadline has passed: count late hours dynamically?
+
+Questions:
+  ☐ Late hour
+
+Proposed:
+  ☐ remove assignment page for students
+
+Wont:
+  ☐ num reviewers in assignment page
+  ☐ cron task to do this
+
+Appeal:
+
+  ☐ add appeal items to review:assignment_review_list
+
+Archive:
+  ✔ review for review @done(18-10-03 13:04) @project(Todo.Kevin)
+  ✔ for TAs not students @critical @done(18-09-11 00:50) @project(Todo.Kevin)
+  ✔ TA should see evaluations for the reviews on the same submission as he is grading it @high @done(18-10-03 13:04) @project(Todo.Kevin)
+  ✔ assignment submit text doesn't show errors @done(18-10-03 13:04) @project(Todo.Kevin)
+  ✔ text rubrick ... @high @done(18-10-03 13:05)
+  ✔ no question ++ change the "please briefly describe your reasoning" text @done(18-10-03 13:05)
+  ✔ calibration logic @hedayat @critical @done(18-09-09 19:00) @project(Todo.Kevin)
+  ✔ don't set it to zero @high @done(18-01-31 00:53) @project(Todo.No reviews)
+  ✔ remove assignments tab for students @done(18-01-31 00:16) @project(Todo)
+  ✔ dialog box for new questions, not completely working @done(18-01-31 00:06) @project(Todo)
+  ✔ shouldn't be able to remove instructor @done(18-01-31 00:12) @project(Todo)
+  ✔ quiz as assignment with multiple choice @critical @done(18-08-28 19:08) @project(Todo.Kevin)
+  ✔ remove go to assignments, reviews buttons from dashboard @done(18-01-31 00:16) @project(Todo)
+  ✔ installation scripts @almost_done @critical @done(18-02-02 01:02) @project(Todo)
+  ✔ late hours @critical @today @done(18-02-04 16:51) @project(Todo.Matt's requests)
+  ✔ appeal @critical @done(18-01-31 00:15) @project(Todo)
+  ✔ taking off references to UBC @critical @done(18-02-05 13:04) @project(Todo)
+  ✔ signin @done(18-02-05 13:04) @project(Todo)
+  ✔ 3 attempts ... @done(18-09-09 18:57) @project(Todo.Kevin)
+  ✔ signup @done(18-02-05 13:04) @project(Todo)
+  ✔ ubc email @done(18-02-05 13:04) @project(Todo)
+  ✔ find ubc in code @done(18-02-05 13:04) @project(Todo)
+  ✔ export to CSV @high @today @done(18-01-27 12:59) @project(Todo)
+  ✔ add a "I am fine with ..." to review @high @today @started(18-01-27 13:02) @done(18-01-27 13:22) @lasted(20 minutes 38 seconds) @project(Todo)
+  ✔ log reassignings @done(18-01-31 00:19) @project(Todo)
+  ✔ can't submit assignment until they get 100% on quiz @done(18-09-09 18:57) @project(Todo.Kevin)
+  ✔ validations for reasoning @high @today @started(18-01-29 00:27) @done(18-01-29 01:27) @lasted(1 hour 52 seconds) @project(Todo)
+  ✔ part of the rubric @done(18-01-29 01:27) @project(Todo)
+  ✔ max/min length @done(18-01-29 01:27) @project(Todo)
+  ✔ TA review incomplete -> change title based on deadline reached or not @done(18-02-02 23:31) @project(Todo)
+  ✔ remove role: for student @done(18-01-31 00:22) @project(Todo)
+  ✔ export grades to CSV for instructor @done(18-01-31 00:22) @project(Todo)
+  ✔ rubrick for review @critical @done(18-09-02 19:07) @project(Todo.Kevin)
+  ✔ remove "visible to students" option @high @today @done(18-01-28 11:25) @project(Todo)
+  ✔ handle deadline == None in: assignment, submission?, assignments lists (order) @high @done(18-01-29 02:02) @project(Todo)
+  ✔ add to user TODO list @done(18-09-03 20:28) @project(Todo.Kevin.tasks)
+  ✔ home @done(18-01-27 21:10) @project(Todo)
+  ✔ highlight accordingly @done(18-01-27 21:10) @project(Todo)
+  ✔ SAML @done(18-08-22 14:58) @project(Todo.Kevin)
+  ✔ submit/edit form @done(18-09-05 12:40) @project(Todo.Kevin.tasks)
+  ✔ what about half an hour? should it be divisible? yes @done(18-02-03 17:08) @project(Late hour)
+  ✔ (DB) extra field: max amount per submission? 48 hours @done(18-02-03 12:03) @project(Late hour)
+  ✔ (DB) member prop? not really, unless we want caching (which we do, but not now) @done(18-02-03 17:08) @project(Late hour)
+  ✔ need to view late hours remaining/used somehow, but where? @done(18-02-03 17:08) @project(Late hour)
+  ✔ (DB) late hours used per submission @done(18-02-03 17:08) @project(Late hour)
+  ✔ where should this be shown? @done(18-02-03 19:24) @project(Late hour)
+  ✔ write the `clean` function @started(18-09-05 09:50) @done(18-09-05 12:40) @lasted(2h50m41s) @project(Todo.Kevin.tasks)
+  ✔ don't show after deadline+remaining late hours is passed @done(18-02-03 17:08) @project(Late hour.submit/edit button)
+  ✔ confirmation when using up late hours @done(18-02-03 18:14) @project(Late hour.submission edit/submit page)
+  ✔ should I just remove "Visible to students" from create an assignment? @done(18-02-01 14:18) @project(Questions)
+  ✔ Appeal: @done(18-02-01 14:19) @project(Questions)
+  ✔ get UI/process approved @done(18-02-01 14:19) @project(Questions)
+  ✔ view for submitted version @done(18-09-05 12:40) @project(Todo.Kevin.tasks)
+  ✔ should restrictions be dynamic? @done(18-02-01 14:18) @project(Questions)
+  ✔ one appeal per submission @done(18-02-03 11:50) @project(Appeal)
+  ✔ min/max length restrictions @done(18-02-03 11:50) @project(Appeal)
+  ✔ create @done(18-02-03 11:50) @project(Appeal.Process)
+  ✔ view @done(18-02-03 11:50) @project(Appeal.Process)
+  ✔ edit @done(18-02-03 11:50) @project(Appeal.Process)
+    (student: can't edit when in_progress/closed/...)
+    (TA: view/edit can be the same)
+  ✔ assignment logic: is this right? do we even have independent/supervised reviews? @done(18-09-03 12:14) @project(Todo.Kevin.check with hedy)
+  ✔ add appeal items to course dashboard @done(18-02-03 11:50) @project(Appeal)
+  ✔ text questions for assignments @critical @done(18-08-25 11:49) @project(Todo.Kevin)
+  ✔ pass QA test @done(18-09-09 18:57) @project(Todo.Kevin)
+  ✔ create a 500 error page @done(18-08-31 22:00) @project(Todo.Kevin)
+  ✔ Content-Security-Policy: frame-ancestors domain.com @done(18-02-05 21:34) @project(Todo)
+  ✔ add_header X-Frame-Options "Allow-From domain.com"; @done(18-02-05 21:34) @project(Todo)
+  ✔ integer hours @done(18-02-05 21:45) @project(Todo)
+  ✔ TAs shouldn't be able to see student reviews @done(18-02-05 22:39) @project(Todo)
+  ✔ better error handling when the server response is not correct @done(18-09-05 09:49) @project(Todo.Kevin)
+  ✔ Instructor should be able to override late hours used for assignment @done(18-02-06 22:41) @project(Todo)
+  ✔ late day instead of late hour ... @done(18-02-11 14:08) @project(Todo)
+  ✔ grace period @done(18-02-11 14:43) @project(Todo)
+  ✔ grace period: show error @done(18-02-11 18:24) @project(Todo)
+  ✔ max late hour setting per assignment @done(18-02-11 14:43) @project(Todo.New requirements)
+  ✔ select TAs for spot check @done(18-02-05 00:08) @project(Todo.New requirements)
+  ✔ #subs as default value @done(18-02-05 00:08) @project(Todo.New requirements)
+  ✔ no student ID handling: Access denied. You have successfully logged in but you do not have access to the <application_name>application.  If you are experiencing any issues regarding this application, please contact <contact_information> @done(18-09-05 09:49) @project(Todo.Kevin)
+  ✔ fix timezone problems @critical @done(18-02-04 16:26) @project(Todo.Urgent)
+  ✔ TA spot check logic @done(18-02-05 00:08) @project(Todo.Bugs)
+  ✔ **when adding members, search member still not works. @resolved? @done(18-02-02 22:45) @project(Todo.Bugs)
+  ✔ "no to do item" in the grades menu does not make sense. @done(18-02-02 22:41) @project(Todo.Bugs)
+  ✔ deadline for student reviews time in 24hr? @done(18-02-02 22:53) @project(Todo.Bugs)
+  ✔ On the dashboard, to do list, assignment is not clickable. @done(18-02-02 23:19) @project(Todo.Bugs)
+  ✔ **The rubric for a question does not change once I select a new one and save! @done(18-02-02 23:28) @project(Todo.Bugs)
+  ✔ TA review incomplete >>> TA review deadline is not passed @done(18-02-02 23:31) @project(Todo.Bugs)
+  ✔ When showing review results, it should be answer not answers! @done(18-02-02 23:33) @project(Todo.Bugs)
+  ✔ also it is better to show how many points the chosen answer has. @done(18-02-02 23:42) @project(Todo.Bugs)
+  ✔ curretly it is diffcult to map the chose answer in the review to the score that a student got @done(18-02-02 23:42) @project(Todo.Bugs)
+  ✔ bring assignment tab page back for students @done(18-02-02 23:47) @project(Todo.Bugs)
+  ✔ fix signup errors @critical @done(18-02-02 00:48) @project(Todo)
+  ✔ remove release-time for student & ta reviews @high @done(18-02-02 00:54) @project(Todo)
+  ✔ remove "I am fine with ... & deadline, submitted, ..." in review @done(18-01-23 17:53)
+  ✔ TA reassigning review @done(18-01-24 01:26)
+  ✔ no file found @done(18-01-23 18:33)
+  ✔ course title at the top @done(18-01-23 19:01)
+  ✔ select multi: better widget @medium @done(18-01-23 18:34)
+  ✔ grades: ascending order @done(18-01-23 19:03)
+  ✔ choose a course "to continue" @done(18-01-24 13:23)
+  ✔ remove visible to students @done(18-01-24 13:23)
+  ✔ just "remove" + "edit" @done(18-01-25 23:43)
+  ✔ remove button: less ambiguous @done(18-01-24 22:58)
+  ✔ shouldn't really remove: just deactivate @critical @today @started(18-01-24 21:37) @done(18-01-24 22:36) @lasted(59 minutes 48 seconds)
+  ✔ shouldn't be able to login to course/review anymore @done(18-01-24 22:36)
+  ✔ shouldn't be able to remove submissions/review at all: in delete assignment @done(18-01-24 22:50)
+  ✔ configure review settings -> configure @done(18-01-19 22:14)
+  ✔ visible to students: visible -> yes/no @done(18-01-19 22:14)
+  ✔ submissions received -> 1 submission @done(18-01-19 22:14)
+  ✔ create assignment: button @done(18-01-20 00:16)
+  ✔ title: just create an assignment @done(18-01-20 00:48)
+  ✔ number of questions: default to 1 @done(18-01-20 11:06)
+  ✔ preview of the rubric @done(18-01-20 19:04)
+  ✔ complete review @done(18-01-20 11:51)
+  ✔ in bracket: grade that everyone gave @done(18-01-20 11:45)
+  ✔ bracket: TA; Grade: 1 @done(18-01-23 19:27)
+  ✔ remove access (and buttons) to "configure review settings" for TA @done(18-01-18 20:06)
+  ✔ reassign TA review @done(18-01-18 23:02)
+  ✔ TA can't see his/her reviews after deadline @done(18-01-18 21:52)
+  ✔ TAs shouldn't see submission task @done(18-01-18 21:23)
+  ✔ Course config: @done(18-01-18 21:18)
+  ✔ can TA see "display users" page? See yes, but not edit @done(18-01-18 21:17)
+  ✔ we might need a view page: Not for now @done(18-01-18 21:18)
+  ✔ can TA see instructor code? Nope @done(18-01-18 21:18)
+  ✔ display users page @done(18-01-18 20:02)
+  ✔ TA can't edit/add/remove @done(18-01-18 14:20)
+  ✔ search user for add @done(18-01-18 19:54)
+  ✔ home -> Dashboard @done(18-01-18 14:13)
+  ✔ add stu code for all @done(18-01-18 14:13)
+  ✔ remove edit for TA @done(18-01-18 19:18)
+  ✔ remove Dashboard title @done(18-01-18 14:13)
+  ✔ view/edit config @done(18-01-18 12:10)
+  ✔ TA shouldn't be able to edit this @done(18-01-18 12:10)
+  ✔ remove stu/ta/inst codes @done(18-01-18 12:10)
+  ✔ add home/dashboard page back @done(18-01-18 12:10)
+  ✔ add "create a submission" button to assignment for student @done(18-01-18 11:57)
+  ✔ how the grade was calculated @done(18-01-18 11:46)
+  ✔ submissions title: assignment (not reviews/subs) @done(18-01-17 21:41)
+  ✔ navbar @done(18-01-17 21:35)
+  ✔ role in front of name @done(18-01-17 21:34)
+  ✔ logout at the end @done(18-01-17 21:34)
+  ✔ use review:list instead @done(18-01-17 21:34)
+  ✔ on error assign reviews: redirect @done(18-01-17 21:34)
+  ✔ rubric create/list: allow for TA @done(18-01-17 21:34)
+  ✔ add "configure review settings" in reviews page too @done(18-01-17 21:34)
+  ✔ require choose course on home: redirect to course_list @done(18-01-17 21:34)
+  ✔ view name of course in upper right corner @done(18-01-17 21:34)
+  ✔ deadline passed in assignment view no breakline @done(18-01-17 21:34)
+  ✔ should be able to see reviews (after deadline ...) @done(18-01-17 21:34)

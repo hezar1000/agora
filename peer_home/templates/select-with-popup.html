@@ -1,0 +1,15 @@
+<span style="" class="mathjax">
+    {{ select_field | safe }}
+    
+    <a
+        href="{{ href }}"
+        id="add_id_{{ field }}"
+        style="font-size: 1em; display:block; margin-left: 5px; margin-top: 5px"
+        onclick="return showAddAnotherPopup(this);">
+        <span class="glyphicon glyphicon-plus text-success" aria-hidden="true"></span> Create new
+    </a>
+</span>
+
+<script>
+    $('#id_{{field}}').selectpicker({liveSearch: true, selectedTextFormat: 'count > 3'})
+</script>

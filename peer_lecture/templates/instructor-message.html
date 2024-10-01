@@ -1,0 +1,165 @@
+{% include "base-lecture.html" %}
+
+{% load static %}
+
+{% block content %}
+
+  <script>
+
+    window.addEventListener('message', function(event) {
+        const data = event.data;
+        let key = data.key;
+        let value = data.value;
+        
+        if (key == "message") {
+          if (!$(".message-container").has(".message").length) window.location.reload();
+          
+          $.ajax({
+            type: "GET",
+            beforeSend: function (xhr, settings) {
+              xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            },
+            data: { "get-messages": true },
+            success: function (response) {
+              $(".message-container").append(response.html_content);
+            },
+            error: function (error) {
+              console.error("Error sending message:", error);
+            }
+          });
+        }
+    });
+
+
+  </script>
+
+    {% if lecture and lecture.enable_messages %}
+    <div class="chat-container">
+      <div class="message-container">
+        {% if messages %}
+            {% for message in messages %}
+            {% include 'message-bubble.html' with message=message %}
+            {% endfor %}
+        {% else %}
+          <p>No messages yet.</p>
+        {% endif %}
+      </div>
+
+    {% elif not lecture and course_member.role == 'instructor' %}
+      <p>Please start the lecture first.</p>
+    {% elif not lecture and course_member.role == 'ta' %}
+      <p>Instructor has not started the lecture.</p>
+    {% elif lecture and not lecture.enable_messages %}
+      <p>Feature disabled.</p>
+    {% endif %}
+
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+
+  $("input[name='message-reply']").keypress(function (e) {
+    if (e.which == 13) {
+      send_reply($(this).siblings("button"));
+    }
+  });
+
+  function send_reply(btn) {
+    let message_reply = $(btn).siblings("input[name='message-reply']").val();
+    let message_id = $(btn).siblings("input[type='hidden']").attr("name");
+
+    message_id = parseInt(message_id);
+
+    $.ajax({
+      type: "POST",
+      beforeSend: function (xhr, settings) {
+        xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+      },
+      data: { "reply-message": message_reply,
+              "message-id": message_id },
+      success: function (response) {
+        console.log("Message sent successfully");
+        window.location.reload();
+      },
+      error: function (error) {
+        console.error("Error sending message:", error);
+      }
+    });
+
+  }
+
+  function broadcast(btn) {
+    // get the data-user attribute
+    let message_id = $(btn).attr("data-message");
+    message_id = parseInt(message_id);
+
+    if (confirm('Are you sure you want to broadcast this message?')) {
+      $.ajax({
+        type: "POST",
+        beforeSend: function (xhr, settings) {
+          xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+        },
+        data: { "broadcast-message": message_id },
+        success: function (response) {
+          console.log("Message sent successfully");
+          window.location.reload();
+        },
+        error: function (error) {
+          console.error("Error sending message:", error);
+        }
+      });
+    }
+  }
+
+  function block(btn) {
+    // get the data-user attribute
+    let user_id = $(btn).attr("data-user");
+    user_id = parseInt(user_id);
+
+    if (confirm('Are you sure you want to block this student?')) {
+      $.ajax({
+        type: "POST",
+        beforeSend: function (xhr, settings) {
+          xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+        },
+        data: { "block-user": user_id },
+        success: function (response) {
+          console.log("Message sent successfully");
+          window.location.reload();
+        },
+        error: function (error) {
+          console.error("Error sending message:", error);
+        }
+      });
+    }
+
+  }
+
+  function hide(btn) {
+    // get the data-user attribute
+    let message_id = $(btn).attr("data-message");
+    message_id = parseInt(message_id);
+
+    if (confirm('Are you sure you want to hide this message?')) {
+
+      $.ajax({
+        type: "POST",
+        beforeSend: function (xhr, settings) {
+          xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+        },
+        data: { "hide-message": message_id },
+        success: function (response) {
+          console.log("Message sent successfully");
+          window.location.reload();
+        },
+        error: function (error) {
+          console.error("Error sending message:", error);
+        }
+      });
+    }
+
+  }
+
+</script>
+
+{% endblock %}

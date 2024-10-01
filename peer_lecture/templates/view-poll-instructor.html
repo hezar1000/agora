@@ -1,0 +1,41 @@
+<div>
+    <h3>Poll Running</h3>
+
+    <form method="post">
+    
+        {% csrf_token %}
+
+        {% if poll.poll_data %}
+        <div id="view-poll-data"></div>
+        {% endif %}
+
+        <fieldset>
+            <button type="submit" class="btn btn-danger"  name="stop-poll">Stop Poll</button>
+        </fieldset>
+
+    </form>
+</div>
+
+<script>
+    let quill = new Quill('#view-poll-data', {
+        theme: 'snow',
+        readOnly: true,
+    });
+
+    quill.getModule('toolbar').container.style.display = 'none';
+    quill.root.innerHTML = `{{ poll.poll_data|safe }}`;
+
+    const editorContainer = document.querySelector('#view-poll-data');
+
+    function setEditorHeight() {
+        quill.root.style.height = 'auto'; // Reset height to auto to calculate the actual height
+        const contentHeight = quill.root.offsetHeight;
+        editorContainer.style.height = contentHeight + 'px';
+    }
+
+    setEditorHeight();
+
+    quill.root.querySelectorAll('img').forEach(img => {
+        img.addEventListener('load', setEditorHeight);
+    });
+</script>

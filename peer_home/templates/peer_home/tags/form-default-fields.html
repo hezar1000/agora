@@ -1,0 +1,35 @@
+{% load field_utils %}
+
+{% csrf_token %}
+
+{% non_field_errors form %}
+
+{% for field in form.hidden_fields %}
+    {{ field }}
+
+    {% if field.errors %}
+        <!-- This should never be displayed ... -->
+        <br/>
+        <span style="color: red">{{ field.errors.as_text }}</span>
+    {% endif %}
+{% endfor %}
+
+{% for field in form.visible_fields %}
+    <div class="form-group row">
+        <div class="col-md-4 col-form-label">
+            {{ field.label_tag }}
+        </div>
+        <div class="col-md-7">
+            <small>
+            <p class="form-text text-muted">
+                {{ field.help_text }}
+            </p>
+            </small>
+            {{ field }}
+            {% if field.errors %}
+                <br/>
+                <span style="color: red">{{ field.errors.as_text }}</span>
+            {% endif %}
+        </div>
+    </div>
+{% endfor %}

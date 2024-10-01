@@ -1,0 +1,83 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load relative_date %}
+{% load typeof %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <h2 class="page-header">
+        {% if is_student %}
+          Appeals I've submitted
+        {% elif is_instructor %}
+          All appeals in this course
+        {% else %}
+          Appeals assigned to me
+        {% endif %}
+      </h2>
+
+      {% if items %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-4">Appeal to</th>
+              {% if is_instructor %}
+                <th class="col-md-3">Assignee</th>
+              {% endif %}
+              <th class="col-md-1">Status</th>
+              <th class="col-md-2">Creation Date</th>
+              <th class="col-md-2">Last Modification</th>
+            </tr> 
+          </thead>
+
+          <tbody>
+            {% for ritem in items %}
+              <tr>
+                <td>
+                  {% if ritem|typeof == "Appeal" %}
+                    <a href="{% url 'grade:appeal_view' ritem.id %}">
+                      {{ ritem.submission.assignment.name }} from {{ ritem.submission.author.get_user_fullname }}
+                    </a>
+                    {% else %}
+                    {% if is_student %}
+                      <a href="{% url 'grade:report_view' ritem.id %}">
+                        (Report) {{ ritem.review.submission.assignment.name }} from Student
+                      </a>
+                      {%else%}
+                      <a href="{% url 'grade:report_view' ritem.id %}">
+                        (Report) {{ ritem.review.submission.assignment.name }} from {{ ritem.review.grader.get_user_fullname }}
+                      </a>
+                      {%endif%}
+                  {% endif %}
+                </td>
+
+                {% if is_instructor %}
+                  <td>{{ ritem.assignee.get_user_fullname }}</td>
+                {% endif %}
+
+                <td>{{ ritem.get_status_display }}</td>
+
+                <td>{% relative_date_tooltip ritem.creation_date %}</td>
+                <td>{% relative_date_tooltip ritem.modification_date %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="well">
+          {% if is_student %}
+            No appeals yet submitted.
+          {% elif is_instructor %}
+            No appeals made to this course.
+          {% else %}
+            No appeals assigned to you.
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

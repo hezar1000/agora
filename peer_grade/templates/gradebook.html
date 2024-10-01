@@ -1,0 +1,347 @@
+{% extends "form_simp_base.html" %}
+
+{% load submission_status %}
+{% load submission_button %}
+{% load typeof %}
+
+{% block content %}
+
+{% if 'course_id' in request.session %}
+
+{%if render_dict.is_instructor %}
+
+<div class="container-fluid">
+
+  <div class="col-sm-6 col-md-offset-2 col-md-8">
+
+      <div class="mta-header-with-btn">
+          <h3>Assignments Gradebook   </h3>
+          <a class="btn btn-success" href="/grade/gradebook/export/">
+            <span class="glyphicon glyphicon-plus"></span> Export to CSV
+            </a> 
+      </div>     
+
+        <div class="panel panel-default"> 
+          <div style="overflow-x:auto;">
+          <table class="table table-striped"> 
+            
+            <thead> 
+              <tr> 
+                <th class="col-md-1">Student</th>
+                {% for item in render_dict.assignments %}
+                <th class="col-md-1">{{item.name}}</th>
+               {% endfor%}
+              </tr> 
+            </thead>
+  
+            <tbody> 
+              {% for key,values in grade_dict.items %}
+                <tr>
+                  <td>   <a href="/course/{{key.course.id}}/{{key.user.id}}/" target="">{{ key.user.first_name }} {{ key.user.last_name }}</a> </td>
+                  {% for sub in values %}
+                    {%if sub == 'not submitted'%}
+                      <td>   -- </td>
+                    {% else %}
+                      <td>  <a href="/assignment/submission/{{ sub.id }}/view/">
+                        {%if not sub.final_grade is None %}
+                        {%  widthratio sub.final_grade sub.assignment.max_total_grade 100 %}&#37
+                        {%else%}
+                        N/A
+                        {%endif%}
+                      </a>  </td>
+                    {% endif %}
+                  {% endfor %}
+                </tr>
+                {% endfor %} 
+            </tbody> 
+          </table>
+          </div>
+        </div>
+<!-- 
+        <div class="mta-header-with-btn">
+            <h3>Quiz Gradebook   </h3>
+            <a class="btn btn-success" href="/grade/gradebook/export_quizez/">
+              <span class="glyphicon glyphicon-plus"></span> Export to CSV
+              </a> 
+        </div>     
+  
+          <div class="panel panel-default"> 
+            <div style="overflow-x:auto;">
+            <table class="table table-striped"> 
+              
+              <thead> 
+                <tr> 
+                  <th class="col-md-1">Student</th>
+                  {% for item in render_dict.quizes %}
+                  <th class="col-md-1">{{item.name}}</th>
+                 {% endfor%}
+                </tr> 
+              </thead>
+    
+              <tbody> 
+                {% for key,values in grade_dict_quiz.items %}
+                  <tr>
+                    <td>   <a href="/course/{{key.course.id}}/{{key.user.id}}/" target="">{{ key.user.first_name }} {{ key.user.last_name }}</a> </td>
+                    {% for sub in values %}
+                      {%if sub == 'not submitted'%}
+                        <td>   -- </td>
+                      {% else %}
+                        <td>  <a href="/assignment/submission/{{ sub.id }}/view/">
+                          {%if not sub.final_grade is None %}
+                          {%  widthratio sub.final_grade sub.assignment.max_total_grade 100 %}&#37
+                          {%else%}
+                          N/A
+                          {%endif%}
+                        </a>  </td>
+                      {% endif %}
+                    {% endfor %}
+                  </tr>
+                  {% endfor %} 
+              </tbody> 
+            </table>
+            </div>
+          </div>
+  
+          <div class="mta-header-with-btn">
+              <h3>Peer Review Gradebook   </h3>
+              <a class="btn btn-success" href="/grade/gradebook/export_peerreview/">
+                <span class="glyphicon glyphicon-plus"></span> Export to CSV
+                </a> 
+          </div>     
+    
+            <div class="panel panel-default"> 
+              <div style="overflow-x:auto;">
+              <table class="table table-striped"> 
+                
+                <thead> 
+                  <tr> 
+                    <th class="col-md-1">Student</th>
+                    {% for item in render_dict.assignments %}
+                    <th class="col-md-1">{{item.name}}</th>
+                   {% endfor%}
+                  </tr> 
+                </thead>
+      
+                <tbody> 
+                  {% for key,values in grade_dict.items %}
+                    <tr>
+                      <td>   <a href="/course/{{key.course.id}}/{{key.user.id}}/" target="">{{ key.user.first_name }} {{ key.user.last_name }}</a> </td>
+                      {% for sub in values %}
+                        {%if sub == 'not submitted'%}
+                          <td>   -- </td>
+                        {% else %}
+                          <td>  <a href="/assignment/submission/{{ sub.id }}/view/">
+                            {%if not sub.final_grade is None %}
+                            {%  widthratio sub.final_grade sub.assignment.max_total_grade 100 %}&#37
+                            {%else%}
+                            N/A
+                            {%endif%}
+                          </a>  </td>
+                        {% endif %}
+                      {% endfor %}
+                    </tr>
+                    {% endfor %} 
+                </tbody> 
+              </table>
+              </div>
+            </div> -->
+   
+    </div>
+
+</div>
+
+{% else %}
+
+<div class="container-fluid">
+  
+<!-- <div class="col-sm-6 col-md-offset-2 col-md-8">
+      <h3>Peer Review Grades</h3>
+      <div class="panel panel-default"> 
+        <table class="table table-striped"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">Week</th>
+              <th class="col-md-3">Dependability (real estimate)</th>
+              <th class="col-md-3">Grade before auction</th>
+              <th class="col-md-3">Grade after auction</th>
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for item in review_grades %}
+              <tr>
+                    {% for key,values in item.items %}
+                <td>   {{ key }} </td>
+                <td> {{ values.0 }} </td>
+                <td> {{ values.1 }} </td>
+                <td> {{ values.2 }} </td>
+              </tr>
+                   {%endfor%}
+              <div>
+            {% endfor %}
+          </tbody> 
+        </table>
+      </div>
+
+ 
+  </div> -->
+
+<div class="col-sm-6 col-md-offset-2 col-md-8">
+        <h3>Essay Grades</h3>
+        <div class="panel panel-default"> 
+
+        {% load tag_review_exists %}
+        {% load deadline_not_passed %}
+        {% load get_pending_reviews %}
+        {% load has_review %}
+        {% load get_my_reviews %}
+      {% if grade_items|length == 0  %}
+      <div class="well">No grades yet.</div>
+      {% else %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>My submission</th>
+            <th>Grade</th>
+            <th>Grading Method</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for g_item in grade_items %}
+            <tr>
+              {% if g_item|typeof == "AssignmentSubmission" and g_item.assignment.assignment_type == "text"  %}
+                <td >
+                  <a href="/assignment/submission/{{ g_item.id }}/view/" target="">
+                    {{ g_item.assignment.name }}
+                  </a>
+                </td>
+                <td>{% submission_status g_item True %}</td>
+                <td >
+                        {{ g_item.final_grading_method }}
+                          </td>
+              {% endif %}
+          {% endfor %}
+                    {% if g_item.evaluation_grade %}
+                      {{ g_item.evaluation_grade | floatformat }} / {{ g_item.max_evaluation_grade }}
+                    {% endif %}
+                  </td>
+
+            </tr>
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+  </div>
+
+<div class="col-sm-6 col-md-offset-2 col-md-8">
+        <h3>Quiz Grades</h3>
+        <div class="panel panel-default"> 
+        {% load tag_review_exists %}
+        {% load deadline_not_passed %}
+        {% load get_pending_reviews %}
+        {% load has_review %}
+        {% load get_my_reviews %}
+      {% if grade_items|length == 0  %}
+      <div class="well">No grades yet.</div>
+      {% else %}
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>My submission</th>
+            <th>Grade</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for g_item in grade_items %}
+            <tr>
+              {% if g_item|typeof == "AssignmentSubmission" and g_item.assignment.assignment_type == "quiz"  %}
+                <td >
+                  <a href="/assignment/submission/{{ g_item.id }}/view/" target="">
+                    {{ g_item.assignment.name }}
+                  </a>
+                </td>
+                <td>{% submission_status g_item True %}</td>
+              {% endif %}
+          {% endfor %}
+                    {% if g_item.evaluation_grade %}
+                      {{ g_item.evaluation_grade | floatformat }} / {{ g_item.max_evaluation_grade }}
+                    {% endif %}
+                  </td>
+            </tr>
+        </tbody>
+      </table>
+      {% endif %}
+    </div>
+  </div>
+
+
+<div class="col-sm-6 col-md-offset-2 col-md-8">
+      <h3>Peer Review Grades</h3>
+      <div class="panel panel-default"> 
+        <table class="table table-striped"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">Week</th>
+              <th class="col-md-3">Grade</th>
+              <th class="col-md-3">Comments</th>
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for item in review_grades %}
+            <tr>
+              <td> {{ item.grading_period }} </td>
+              <td> {{ item.grade }}&#37 </td>
+              <td> {{ item.comments }} </td>
+            </tr>
+            <div>
+          {% endfor %}
+          </tbody> 
+        </table>
+      </div> 
+  </div>
+
+
+  <div class="col-sm-6 col-md-offset-2 col-md-8">
+    <h3>Participation Grades</h3>
+    <div class="panel panel-default"> 
+      <table class="table table-striped"> 
+        
+        <thead> 
+          <tr> 
+            <th class="col-md-3">Class</th>
+            <th class="col-md-3">Grade</th>
+            <th class="col-md-3">Comments</th>
+          </tr> 
+        </thead>
+
+        <tbody> 
+          {% for item in participation_grades %}
+            <tr>
+              <td> {{ item.grading_period }} </td>
+              <td> {{ item.grade }} </td>
+              <td> {{ item.comments }} </td>
+            </tr>
+            <div>
+          {% endfor %}
+        </tbody> 
+      </table>
+    </div>
+
+
+</div>
+
+{% endif %}
+
+{% else %}
+
+please choose a course first!
+
+{% endif %}
+
+
+{% endblock %}

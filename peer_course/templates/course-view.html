@@ -1,0 +1,1954 @@
+<!-- root -->
+<!-- participation dashboard for a course -->
+
+{% extends "base_participation.html" %}
+
+{% block content %}
+{% load submission_status %}
+{% load submission_button %}
+{% load get_role %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'css/course-view-redesign.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/iframe-resizer/iframeResizer.min.js' %}"></script>
+{% endblock %}
+
+
+<script type="text/javascript">
+  const is_instructor = "{{ is_instructor }}" == "True";
+  const is_ta = "{{ is_ta }}" == "True";
+  const is_student = "{{ is_student }}" == "True";
+  let enable_messages = "{{ lecture.enable_messages }}" == "True";
+  let lecture = "{{ lecture }}";
+
+  let message_board;
+  let poll_board;
+
+  let btn_green_up = false;
+  let btn_blue_up = false;
+  let btn_red_up = false;
+  let btn_yellow_up = false;
+
+  function resizeIframe(obj) {
+    obj.style.height = "0";
+    obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+  }
+</script>
+
+{% if course %}
+<script>
+  const auth_id = "{{coursemember.id}}";
+  const ws_scheme = window.location.protocol == "https:" ? "wss" : "ws";
+  const url = `${ws_scheme}://${window.location.host}/ws/{{course.id}}/?auth_id=${auth_id}`;
+
+  var socket = new WebSocket(url);
+
+  socket.onopen = function (event) {
+    console.log('WebSocket connection established');
+  };
+
+  socket.onclose = function (event) {
+    console.log('WebSocket connection closed');
+
+    setTimeout(() => {
+      socket = new WebSocket(url);
+    }, 2000);
+  };
+
+  socket.onerror = function (error) {
+    console.log('WebSocket error: ');
+    console.log(error);
+    socket.close();
+  };
+
+  let all_iframes_loaded = () => {
+    if (is_instructor) {
+      message_board = document.getElementById('message-instructor').contentWindow;
+      poll_board = document.getElementById('polling-instructor').contentWindow;
+    } else if (is_ta) {
+      message_board = document.getElementById('message-instructor').contentWindow;
+      poll_board = document.getElementById('polling-student').contentWindow;
+    } else {
+      message_board = document.getElementById('message-student').contentWindow;
+      poll_board = document.getElementById('polling-student').contentWindow;
+    }
+
+    socket.onmessage = (e) => {
+      let message = JSON.parse(e.data);
+      let key = message.key;
+      let value = message.value;
+
+      console.log(key, value);
+
+        switch(key) {
+          // HAND-RAISE EVENTS
+          case 'enable-hand':
+            if (is_student && typeof update === "function") { update(); }
+            else if (typeof count_hands_up === "function") { count_hands_up("false"); }
+            break;
+
+          case 'disable-hand':
+            if (is_student && typeof update === "function") { update(); }
+            else if (typeof count_hands_up === "function") { count_hands_up("false"); }
+            break;
+
+          case 'next-student':
+            if (typeof update === "function") {
+              let username = "{{ coursemember.user }}"
+
+              if (value == username) {
+                openStudentPickedPopup();
+                update();
+              }
+            }
+
+            else if (is_instructor && typeof count_hands_up === "function") { count_hands_up("false"); }
+            break;
+
+          case 'undo-last-call':
+            if (typeof update === "function") { update(); }
+            else if (typeof count_hands_up === "function") { count_hands_up("false"); }
+            break;
+
+          case 'update-hand-status':
+            if (typeof count_hands_up === "function") { count_hands_up("false"); }
+            break;
+
+
+          // MESSAGE EVENTS
+
+          case 'begin-lecture':
+            if (is_instructor) {
+              $("#lecture-control").load(window.location.href + ' #lecture-control');
+              $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                var iframeSrc = $('#message-instructor').attr('src');
+                $('#message-instructor').attr('src', iframeSrc);
+              })
+              poll_board.location.reload();
+            }
+            else { message_board.location.reload(); poll_board.location.reload(); }
+            break;
+
+          case 'end-lecture':
+            if (is_instructor) {
+              $("#lecture-control").load(window.location.href + ' #lecture-control');
+              $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                var iframeSrc = $('#message-instructor').attr('src');
+                $('#message-instructor').attr('src', iframeSrc);
+              })
+              poll_board.location.reload();
+            }
+            else { message_board.location.reload(); poll_board.location.reload(); }
+            break;
+
+          case 'reply-message':
+            message_board.location.reload();
+            break;
+
+          case 'hide-message':
+            message_board.location.reload();
+            break;
+
+          case 'broadcast-message':
+            message_board.location.reload();
+            break;
+
+          case 'update-message-visibility':
+            if (is_instructor) {
+              $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                var iframeSrc = $('#message-instructor').attr('src');
+                $('#message-instructor').attr('src', iframeSrc);
+              })
+            } else {
+              $('#message-student').load(window.location.href + ' #message-student', function() {
+                var iframeSrc = $('#message-student').attr('src');
+                $('#message-student').attr('src', iframeSrc);
+              })
+            }
+            break;
+
+          case 'message':
+            message_board.postMessage(message, '*');
+            break;
+
+          case 'block-user':
+            message_board.location.reload();
+            break;
+
+          case 'unblock-user':
+            message_board.location.reload();
+            break;
+
+          // POLL EVENTS
+
+          case 'start-poll':
+            poll_board.location.reload();
+            break;
+
+          case 'stop-poll':
+            poll_board.location.href = poll_board.location.href + '?stop-poll=true';
+            break;
+
+          default:
+            break;
+        }
+      };
+    }
+
+
+    window.addEventListener('message', (event) => { });
+
+    window.onbeforeunload = function () {
+      socket.close();
+    };
+
+  </script>
+  {% endif %}
+
+  <div class="container-fluid">
+
+    <div class="row">
+      <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8 col-md-offset-2 col-sm-offset-1 col-sm-offset-2.5">
+        <div id="mta-header-with-btn">
+          <div>
+            <h2>{{ course.displayname }}</h2>
+          </div>
+
+          {% if is_instructor or is_ta or request.user.is_superuser %}
+          <div>
+
+            {% if is_instructor or request.user.is_superuser %}
+            <button style="display: none" class="btn btn-success" id="begin-lecture" name="begin-lecture">Start Lecture</button>
+            <button style="display: none" class="btn btn-danger" id="end-lecture" name="end-lecture">End Lecture</button>
+            {% endif %}
+            <!-- <form method="post" id="lecture-control">
+              {% csrf_token %}
+              {% if lecture %}
+              <button class="btn btn-danger" id="lecture-control" name="end-lecture">End Lecture</button>
+              {% else %}
+              <button class="btn btn-success" id="lecture-control" name="begin-lecture">Start Lecture</button>
+              {% endif %}
+            </form> -->
+
+            <a class="btn btn-info" href="/course/{{ course.id }}/list_users/">
+              <span class="glyphicon glyphicon-user"></span> Display Users
+            </a>
+
+            {% if not is_ta %}
+            <a class="btn btn-primary" href="/course/{{ course.id }}/edit/">
+              <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
+            </a>
+
+            <div class="btn-group" style="padding: 0; margin: 0;">
+              <button class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
+                aria-expanded="false">
+                <span class="glyphicon glyphicon-save"></span> Export <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li><a href="/course/{{ course.id }}/export_daily_participation_data/">Discussion Participation Today</a>
+                </li>
+                <li onclick="openExportPopup('polls')"><a style="cursor: pointer;">Poll Participation per Day</a></li>
+                <li onclick="openExportPopup('messages')"><a style="cursor: pointer;">Messages per Day</a></li>
+                <hr>
+                <li><a href="/course/{{ course.id }}/export_participation_data/">All Discussion Participation</a></li>
+                <li><a href="/course/{{ course.id }}/export_poll_participation_data/">All Poll Participation</a></li>
+                <li><a href="/course/{{ course.id }}/export_message_data/">All Messages</a></li>
+              </ul>
+            </div>
+            {% endif %}
+
+          </div>
+          {%else%}
+          <div>
+            <!-- You currently have <span style="color: green">{{green_points}}</span> points from the <span style="color: green">Green</span>, <span style="color: blue">{{blue_points}}</span> points from the <span style="color: blue">Blue</span>, and <span style="color: red">{{red_points}}</span> points from the <span style="color: red">Red</span> lists. -->
+            <!-- You have gained <span id='daily_points' style="color: blue">{{total_points_today}}</span> new participation points today. -->
+            <!-- You currently have <span id = 'total_points' style="color: blue">{{total_points}}</span> total participation points. -->
+            {% if course.id == 333 %}
+            <p style="font-size: medium">
+              Realistic Dependability Estimate: <span style="color: blue; font-weight: bold;"> {{dependability_mean}}
+              </span> </br>
+              Pessimistic Dependability Estimate: <span style="color: blue; font-weight: bold;"> {{dependability_min}}
+              </span> </br>
+
+              {% if coursemember.is_independent == False%}
+              <span style="color: red"> You should do at least 3 calibrations before the next essay deadline. </span>
+              {%endif%}
+
+              {% if coursemember.qualified == False%}
+              <span style="color: red"> You have not gotten full mark on this week's quiz yet. </span> </br>
+              {%endif%}
+
+              <br>
+
+              Participation Points:
+              <span id='daily_points' style="color: blue; font-weight: bold">{{total_points_today}}</span> +
+              <span id='daily_bonus' style="color: blue; font-weight: bold">{{total_points_bonus}}</span> (Bonus) <br>
+              {%else%}
+              Participation Points:
+              <span id='daily_points' style="color: blue; font-weight: bold">{{total_points_today}}</span> +
+              <span id='daily_bonus' style="color: blue; font-weight: bold">{{total_points_bonus}}</span> (Bonus)
+              {%endif%}
+            </p>
+
+          </div>
+          {%endif%}
+        </div>
+
+        <div id="export-popup" class="popup">
+          <input type="date" id="datePicker">
+          <button class="btn btn-primary">OK</button>
+          <button class="btn btn-danger" onclick="closeExportPopup()">Cancel</button>
+        </div>
+
+        <div id="student-chosen-popup" class="popup">
+          <h3>You have been picked to speak</h3>
+          <br><br>
+          <button class="btn btn-primary" onclick="closeStudentPickedPopup()">OK</button>
+        </div>
+
+        <script>
+          function openStudentPickedPopup() {
+            const popup = document.getElementById('student-chosen-popup');
+            popup.style.display = 'block';
+
+            setTimeout(() => {
+              closeStudentPickedPopup();
+            }, 3000);
+          }
+
+          function closeStudentPickedPopup() {
+            const popup = document.getElementById('student-chosen-popup');
+            popup.style.display = 'none';
+          }
+
+          function openExportPopup(type) {
+            document.getElementById('export-popup').getElementsByTagName('button')[0].onclick = function () { getValue(type) };
+
+            const popup = document.getElementById('export-popup');
+            const today = new Date();
+            const dd = String(today.getDate()).padStart(2, '0');
+            const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+            const yyyy = today.getFullYear();
+
+            const todayStr = yyyy + '-' + mm + '-' + dd;
+            document.getElementById('datePicker').value = todayStr;
+
+            popup.style.display = 'block';
+          }
+
+          function closeExportPopup() {
+            const popup = document.getElementById('export-popup');
+            popup.style.display = 'none';
+          }
+
+          function getValue(type) {
+            const selectedDate = document.getElementById('datePicker').value;
+
+            if (type == 'polls') {
+              window.location.href = `/course/{{ course.id }}/export_poll_participation_data/?date=${selectedDate}`;
+            } else if (type == 'messages') {
+              window.location.href = `/course/{{ course.id }}/export_message_data/?date=${selectedDate}`;
+            }
+
+
+            closeExportPopup()
+          }
+        </script>
+
+        {% if is_student %}
+
+        <div class="row">
+          <div class="col-md-6" style="text-align: center">
+            <button class="btn btn-hand btn-success" id='hand_green'></button>
+            <button class="btn btn-hand btn-primary" id='hand_blue'></button>
+            <button class="btn btn-hand btn-danger" id='hand_red'></button>
+            <button class="btn btn-hand btn-warning" id='hand_yellow'></button>
+            <br>
+            <h3 id="hand-notif"></h3>
+          </div>
+
+          <div class="col-md-6">
+            <h3>Message Board</h3>
+            <iframe id="message-student" src="/message/student" width="100%" height="400px" onload="iframeLoaded()"
+              frameborder="0"></iframe>
+          </div>
+        </div>
+
+        <div class="row">
+          <iframe id="polling-student" scrolling="no" onload="resizeIframe(this); iframeLoaded()" src="/polling/student"
+            width="100%" frameborder="0"></iframe>
+        </div>
+
+        <script>
+          iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-student')
+        </script>
+
+        <script type="text/javascript">
+          function is_another_hand_up(b) {
+            if (btn_green_up && b != btn_green_up) return true;
+            if (btn_blue_up && b != btn_blue_up) return true;
+            if (btn_red_up && b != btn_red_up) return true;
+            if (btn_yellow_up && b != btn_yellow_up) return true;
+
+            return false;
+          }
+
+          let hand_notif = document.getElementById("hand-notif");
+
+          document.getElementById("hand_green").addEventListener("click", function () {
+            if (is_another_hand_up(btn_green_up)) {
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
+            }
+
+            let btn = document.getElementById("hand_green");
+            let url = ""
+
+            if (btn_green_up) url = '/disable/';
+            else url = '/enable/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                if (btn_green_up) {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_green_up = false;
+                  hand_notif.innerHTML = "";
+                } else {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_green_up = true;
+
+                  hand_notif.style.color = "#198754";
+                  hand_notif.innerHTML = "Hand raised in Green list";
+                }
+              }
+            });
+          });
+
+          document.getElementById("hand_blue").addEventListener("click", function () {
+            if (is_another_hand_up(btn_blue_up)) {
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
+            }
+
+            let btn = document.getElementById("hand_blue");
+            let url = ""
+
+            if (btn_blue_up) url = '/disable_blue/';
+            else url = '/enable_blue/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                if (btn_blue_up) {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_blue_up = false;
+
+                  hand_notif.innerHTML = "";
+                } else {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_blue_up = true;
+
+                  hand_notif.style.color = "#0d6efd";
+                  hand_notif.innerHTML = "Hand raised in Blue list";
+                }
+              }
+            });
+          });
+
+          document.getElementById("hand_red").addEventListener("click", function () {
+            if (is_another_hand_up(btn_red_up)) {
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
+            }
+
+            let btn = document.getElementById("hand_red");
+            let url = ""
+
+            if (btn_red_up) url = '/disable_red/';
+            else url = '/enable_red/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                // console.log(btn)
+
+                if (btn_red_up) {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_red_up = false;
+
+                  hand_notif.innerHTML = "";
+                } else {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_red_up = true;
+
+                  hand_notif.style.color = "#dc3545";
+                  hand_notif.innerHTML = "Hand raised in Red list";
+                }
+              }
+            });
+          });
+
+
+          document.getElementById("hand_yellow").addEventListener("click", function () {
+            if (is_another_hand_up(btn_yellow_up)) {
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
+            }
+
+            let btn = document.getElementById("hand_yellow");
+            let url = ""
+
+            if (btn_yellow_up) url = '/disable_yellow/';
+            else url = '/enable_yellow/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                // console.log(btn)
+
+                if (btn_yellow_up) {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_yellow_up = false;
+
+                  hand_notif.innerHTML = "";
+                } else {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_yellow_up = true;
+
+                  hand_notif.style.color = "#ffc107";
+                  hand_notif.innerHTML = "Hand raised in Yellow list";
+                }
+              }
+            });
+          });
+
+        </script>
+
+        <script type="text/javascript">
+          window.onload = () => {
+            update();
+          }
+
+          function update() {
+            $.ajax({
+              url: '/check_status/',
+              method: 'GET',
+              success: function (data) {
+                if (data['disbale_green']) {
+                  let hand = document.getElementById("hand_green");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_green_up = false;
+
+                  if (hand_notif.innerHTML.includes("Green")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_green");
+                  hand.disabled = false;
+
+                  if (data['status_green'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_green_up = false;
+                    if (hand_notif.innerHTML.includes("Green")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_green_up = true;
+
+                    hand_notif.style.color = "#198754";
+                    hand_notif.innerHTML = "Hand raised in Green list";
+                  }
+
+                }
+
+                if (data['disbale_blue']) {
+                  let hand = document.getElementById("hand_blue");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_blue_up = false;
+
+                  if (hand_notif.innerHTML.includes("Blue")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_blue");
+                  hand.disabled = false;
+
+                  if (data['status_blue'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_blue_up = false;
+
+                    if (hand_notif.innerHTML.includes("Blue")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_blue_up = true;
+
+                    hand_notif.style.color = "#0d6efd";
+                    hand_notif.innerHTML = "Hand raised in Blue list";
+                  }
+                }
+
+                if (data['disbale_red']) {
+                  let hand = document.getElementById("hand_red");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_red_up = false;
+
+                  if (hand_notif.innerHTML.includes("Red")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_red");
+                  hand.disabled = false;
+
+                  if (data['status_red'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_red_up = false;
+
+                    if (hand_notif.innerHTML.includes("Red")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_red_up = true;
+
+                    hand_notif.style.color = "#dc3545";
+                    hand_notif.innerHTML = "Hand raised in Red list";
+                  }
+                }
+
+                if (data['disbale_yellow']) {
+                  let hand = document.getElementById("hand_yellow");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_yellow_up = false;
+
+                  if (hand_notif.innerHTML.includes("Yellow")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_yellow");
+                  hand.disabled = false;
+
+                  if (data['status_yellow'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_yellow_up = false;
+
+                    if (hand_notif.innerHTML.includes("Yellow")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_yellow_up = true;
+
+                    hand_notif.style.color = "#ffc107";
+                    hand_notif.innerHTML = "Hand raised in Yellow list";
+                  }
+                }
+                document.getElementById("daily_points").innerHTML = data['total_points_today'];
+                document.getElementById("daily_bonus").innerHTML = data['total_bonus_points'];
+              }
+            });
+          }
+        </script>
+
+        {%endif%}
+
+        {% if is_instructor or request.user.is_superuser %}
+
+        <div class="thumbnail">
+          <div id="hand-controls">
+            <div id="control-buttons">
+
+              <div>
+                <button class="btn btn-success btn-ms" id="next_student" disabled="disabled">
+                  <span class="glyphicon glyphicon-user"></span> Next student
+                </button>
+                <button class="btn btn-success btn-ms" id="clear_all" disabled="disabled">
+                  <span class="glyphicon glyphicon-erase"></span> Clear
+                </button>
+                <button class="btn btn-success btn-ms" id="enable">Enable Green</button>
+              </div>
+
+              <div>
+                <button class="btn btn-primary btn-ms" id="next_student_blue" disabled="disabled">
+                  <span class="glyphicon glyphicon-user"></span> Next student
+                </button>
+                <button class="btn btn-primary btn-ms" id="clear_all_blue" disabled="disabled">
+                  <span class="glyphicon glyphicon-erase"></span> Clear
+                </button>
+                <button class="btn btn-primary btn-ms" id="enable_blue">Enable Blue</button>
+              </div>
+
+              <div>
+                <button class="btn btn-danger btn-ms" id="next_student_red" disabled="disabled">
+                  <span class="glyphicon glyphicon-user"></span> Next student
+                </button>
+                <button class="btn btn-danger btn-ms" id="clear_all_red" disabled="disabled">
+                  <span class="glyphicon glyphicon-erase"></span> Clear
+                </button>
+                <button class="btn btn-danger btn-ms" id="enable_red">Enable Red</button>
+              </div>
+
+              <div>
+                <button class="btn btn-warning btn-ms" id="next_student_yellow" disabled="disabled">
+                  <span class="glyphicon glyphicon-user"></span> Next student
+                </button>
+                <button class="btn btn-warning btn-ms" id="clear_all_yellow" disabled="disabled">
+                  <span class="glyphicon glyphicon-erase"></span> Clear
+                </button>
+                <button class="btn btn-warning btn-ms" id="enable_yellow">Enable Yellow</button>
+              </div>
+
+              <div>
+                <button class="btn btn-outline-dark btn-ms" id="enable_all">
+                  <span class="glyphicon glyphicon-ok"></span> Enable All
+                </button>
+                <button class="btn btn-dark btn-ms" id="clear_all_lists">
+                  <span class="glyphicon glyphicon-erase"></span> Clear All
+                </button>
+                <button class="btn btn-dark btn-ms" id="disable_all"> <span class="glyphicon glyphicon-remove"></span>
+                  Disable All</button>
+              </div>
+
+            </div>
+            <!-- <img id="headshot"  src="" style="display:none;width:220px;height:250px;"/>   </br> -->
+
+            <div id="instructor-notification">
+              <h3 id="student"></h3>
+            </div>
+          </div>
+
+          <div class="row" style="padding: 10px">
+            <div class="divider col-md-4" style="height: 500px;">
+              <h3>List of hand ups <button class="btn btn-primary" onclick="count_hands_up('false');"><span
+                    class="glyphicon glyphicon-repeat"></span></button></h3>
+              <h5 id="status"></h5>
+              <div>
+                <canvas id="myChart" width="100%" height="200px"></canvas>
+              </div>
+
+              <div style="overflow-y: auto; height: 170px;">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">Student</th>
+                      <th scope="col">Spoken</th>
+                      <th scope="col">List</th>
+                    </tr>
+                  </thead>
+                  <tbody id='table'>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-4 divider" style="height: 500px;">
+              <h3>List of already spoken</h3>
+              <h5 id="status_spoken"></h5>
+              <div style="height: 400px; overflow-y: auto">
+                <table class="table table-striped">
+                  <thead>
+                    <tr>
+                      <th scope="col">Student</th>
+                      <th scope="col">List</th>
+                      <th scope="col">Count</th>
+                    </tr>
+                  </thead>
+                  <tbody id='table_of_spoken'>
+                    <!-- Add your table rows here -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="col-md-4" style="height: 500px;">
+              <div id="message-board-header">
+                <div>
+                  <h3>Message Board</h3>
+                </div>
+
+                <div>
+                  <button class="btn" onclick="openBlockedListPopup()">Blocked List</button>
+
+                  {% if lecture %}
+                  <button class="btn btn-primary" id="toggle-message-board-btn" onclick="toggleMessageBoard()">
+                    {% if lecture.enable_messages %}
+                    Disable
+                    {% else %}
+                    Enable
+                    {% endif %}
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+              <iframe id="message-instructor" src="/message/instructor" width="100%" height="400px"
+                onload="iframeLoaded()" frameborder="0"></iframe>
+            </div>
+          </div>
+
+          <div id="blocked-list-popup" class="popup">
+            <p>Click the student to unblock</p>
+            <br>
+            <div style="height: 200px; overflow-y: auto;">
+            </div>
+            <br>
+            <button class="btn btn-danger" onclick="closeBlockedListPopup()">Close</button>
+          </div>
+
+          <script>
+            function openBlockedListPopup() {
+
+              const popup = document.getElementById('blocked-list-popup');
+
+              $.ajax({
+                url: '/message/instructor',
+                beforeSend: function (xhr, settings) {
+                  xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                method: 'GET',
+                data: 'get-blocked-list',
+                success: function (data) {
+                  let block_students = data.blocked_students;
+                  const div = popup.getElementsByTagName('div')[0];
+                  div.innerHTML = '';
+
+                  for (let i = 0; i < block_students.length; i++) {
+                    const student = block_students[i];
+                    const studentDiv = document.createElement('div');
+                    const studentBtn = document.createElement('a');
+                    studentBtn.setAttribute('onclick', `unblock(${student.id}, this)`);
+                    studentBtn.setAttribute('class', 'btn');
+                    studentBtn.innerHTML = `${student.first_name} ${student.last_name}`;
+                    studentDiv.appendChild(studentBtn);
+                    div.appendChild(studentDiv);
+                  }
+
+                  popup.style.display = 'block';
+                }
+              });
+
+            }
+
+            function unblock(id, e) {
+              let parent = e.parentNode;
+
+              if (!confirm(`Are you sure you want to unblock ${e.innerHTML}?`)) return;
+
+              $.ajax({
+                url: '/message/instructor/',
+                type: "POST",
+                beforeSend: function (xhr, settings) {
+                  xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                },
+                data: { "unblock-user": id },
+                success: function (response) {
+                  parent.parentNode.removeChild(parent);
+                },
+                error: function (error) {
+                  console.error("Error sending message:", error);
+                }
+              });
+            }
+
+            function closeBlockedListPopup() {
+              const popup = document.getElementById('blocked-list-popup');
+              popup.style.display = 'none';
+            }
+
+            function toggleMessageBoard() {
+              let btn = document.getElementById("toggle-message-board-btn");
+              if (!btn) return;
+
+              btnValue = btn.innerHTML.replace(/\s/g, '');
+
+              if (enable_messages) {
+                btn.innerHTML = "Enable";
+
+                $.ajax({
+                    url: '/message/instructor',
+                    beforeSend: function (xhr, settings) {
+                      xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    method: 'GET',
+                    data: { 'toggle-message-board': false },
+                    success: function (data) {
+                      enable_messages = false;
+                      document.getElementById('message-instructor').contentWindow.location.reload();
+                    },
+                    error: function (error) {
+                      console.error("Error sending message:", error);
+                    }
+                  });
+              } else if (!enable_messages) {
+                btn.innerHTML = "Disable";
+
+                $.ajax({
+                    url: '/message/instructor',
+                    beforeSend: function (xhr, settings) {
+                      xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+                    },
+                    method: 'GET',
+                    data: { 'toggle-message-board': true },
+                    success: function (data) {
+                      enable_messages = true;
+                      document.getElementById('message-instructor').contentWindow.location.reload();
+                    },
+                    error: function (error) {
+                      console.error("Error sending message:", error);
+                    }
+                  });
+              }
+            }
+          </script>
+
+          <div class="row">
+            <a class="btn btn-secondary btn-lg " id="undo">
+              <span class="glyphicon glyphicon-arrow-left"></span> Undo Last Call
+            </a>
+          </div>
+
+          <div>
+            <iframe id="polling-instructor" scrolling="no" onload="resizeIframe(this); iframeLoaded()"
+              src="/polling/instructor" width="100%" frameborder="0"></iframe>
+          </div>
+
+          <script>
+            iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-instructor')
+          </script>
+
+        </div>
+
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
+
+        <div>
+          <button class="btn btn-primary btn-lg" onclick="hideFunction()">README</button>
+
+          <div id="myDIV" style="display:none">
+            <p>
+              There are 4 lists, Green, Blue, and Red.
+              The Green list is the main one that is normally used.
+              The Blue list is the list that students can use to bypass the main list.
+              The Red list is the list that could be used for questions, etc.
+              The Yellow list is for clicker questions.
+              <!-- The Blue and Red list follow the same point system, however, by default no participation credit is assigned upon using the Red list.  -->
+            </p>
+
+            <p>
+              This app has the following point system for the class by default, first-time hand up has 10 points, each
+              subsequent one has 1 extra point, if a student speaks upon participation, they’d get 1 point each time
+              someone from the same list they were chosen speaks.
+              Participation in the Red list has no points. Notice that the mentioned given number of points to each
+              category can be updated in course configuration. </br>
+
+              There is also an undo button that reverts the last operation. It can revert everything, step by step, all
+              the way to the beginning of the class. It does not delete anything, it just excludes them from the
+              calculations (so we still log the things that happened) and puts the hands of the guy who was chosen to
+              speak back up. </br>
+
+              There is also a “choose next” button in front of each student in the list so that they can manually be
+              chosen next.
+            </p>
+            <p>
+              To get a test class to play with, use the following info. </br>
+
+              Url to log in: https://mta.students.cs.ubc.ca/account/login/ </br>
+
+              Instructor's username: “Kevin" </br>
+
+              Student 1 username: “John" </br>
+
+              Student 2 username: “Jane" </br>
+
+              Password for all of the users: “mta2mta2”
+            </p>
+
+          </div>
+
+          <script>
+            function hideFunction() {
+              var x = document.getElementById("myDIV");
+              if (x.style.display === "none") {
+                x.style.display = "block";
+              } else {
+                x.style.display = "none";
+              }
+            }
+          </script>
+        </div>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("next_student")
+          btn.addEventListener("click", function () {
+            document.getElementById("student").innerHTML = "Picking the next student...";
+            $.ajax({
+              url: '/random_student/',
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+                document.getElementById("student").innerHTML = '<span style=\"color:' + 'Green' + '\">' + 'Green' + ': ' + data['student'] + '</span>';
+                if (data['student_id'] != 'None') {
+                  $("<tr><td scope=\"row\">" + data['student'] + "</td><td scope=\"row\">" + 'Green' + "</td><td scope=\"row\">" + '-' + "</td></tr>").prependTo("#table_of_spoken");
+                  // document.getElementById('headshot').src = "/static/images/headshots/" + data['student_id'] + ".png"
+                  // document.getElementById('headshot').style.display = 'block';
+                }
+                else {
+                  // document.getElementById('headshot').style.display = 'none';
+                }
+
+              }
+            });
+          });
+          var btn = document.getElementById("next_student_blue")
+          btn.addEventListener("click", function () {
+            document.getElementById("student").innerHTML = "Picking the next student...";
+            $.ajax({
+              url: '/random_student_blue/',
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+
+                // console.log(data)
+                document.getElementById("student").innerHTML = '<span style=\"color:' + 'Blue' + '\">' + 'Blue' + ': ' + data['student'] + '</span>';
+                if (data['student_id'] != 'None') {
+                  $("<tr><td scope=\"row\">" + data['student'] + "</td><td scope=\"row\">" + 'Blue' + "</td><td scope=\"row\">" + '-' + "</td></tr>").prependTo("#table_of_spoken");
+                  // document.getElementById('headshot').src = "/static/images/headshots/"+data['student_id']+".png"
+                  // document.getElementById('headshot').style.display = 'block';
+                }
+                else {
+                  // document.getElementById('headshot').style.display = 'none';
+                }
+
+              }
+            });
+          });
+          var btn = document.getElementById("next_student_red")
+          btn.addEventListener("click", function () {
+            document.getElementById("student").innerHTML = "Picking the next student...";
+            $.ajax({
+              url: '/random_student_red/',
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+
+                // console.log(data)
+                document.getElementById("student").innerHTML = '<span style=\"color:' + 'Red' + '\">' + 'Red' + ': ' + data['student'] + '</span>';
+                if (data['student_id'] != 'None') {
+                  $("<tr><td scope=\"row\">" + data['student'] + "</td><td scope=\"row\">" + 'Red' + "</td><td scope=\"row\">" + '-' + "</td></tr>").prependTo("#table_of_spoken");
+                  // document.getElementById('headshot').src = "/static/images/headshots/"+data['student_id']+".png"
+                  // document.getElementById('headshot').style.display = 'block';
+                }
+                else {
+                  // document.getElementById('headshot').style.display = 'none';
+                }
+
+              }
+            });
+          });
+          var btn = document.getElementById("next_student_yellow")
+          btn.addEventListener("click", function () {
+            document.getElementById("student").innerHTML = "Picking the next student...";
+            $.ajax({
+              url: '/random_student_yellow/',
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+
+                // console.log(data)
+                document.getElementById("student").innerHTML = '<span style=\"color:' + 'Orange' + '\">' + 'Yellow' + ': ' + data['student'] + '</span>';
+                if (data['student_id'] != 'None') {
+                  $("<tr><td scope=\"row\">" + data['student'] + "</td><td scope=\"row\">" + 'Yellow' + "</td><td scope=\"row\">" + '-' + "</td></tr>").prependTo("#table_of_spoken");
+                  // document.getElementById('headshot').src = "/static/images/headshots/"+data['student_id']+".png"
+                  // document.getElementById('headshot').style.display = 'block';
+                }
+                else {
+                  // document.getElementById('headshot').style.display = 'none';
+                }
+
+              }
+            });
+          });
+        </script>
+
+        <script>
+          // var btn= document.getElementById("choose_next")
+          // console.log(btn)
+          // btn.addEventListener("click", function() {
+          function myFunction(student_id, list_id) {
+            document.getElementById("student").innerHTML = "Picking the next student...";
+            $.ajax({
+              url: "/choose_next/" + student_id + "/" + list_id,
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+
+                // console.log(data)
+                document.getElementById("student").innerHTML = '<span style=\"color:' + data['color'] + '\">' + data['color'] + ': ' + data['student'] + '</span>';
+                if (data['student_id'] != 'None') {
+                  $("<tr><td scope=\"row\">" + data['student'] + "</td><td scope=\"row\">" + data['color'] + "</td><td scope=\"row\">" + '-' + "</td></tr>").prependTo("#table_of_spoken");
+                  // document.getElementById('headshot').src = "/static/images/headshots/"+data['student_id']+".png"
+                  // document.getElementById('headshot').style.display = 'block';
+                }
+                else {
+                  // document.getElementById('headshot').style.display = 'none';
+                }
+
+              }
+            });
+          }
+          // });
+        </script>
+        <script type="text/javascript">
+          window.onload = () => {
+            count_hands_up("false");
+            lecture_status();
+          }
+
+          function lecture_status() {
+            let btn_start = document.getElementById("begin-lecture");
+            let btn_end = document.getElementById("end-lecture");
+
+            let is_lecutre = "{{ lecture }}" != "None";
+
+            if (is_lecutre) {
+              btn_start.style.display = "none";
+              btn_end.style.display = "block";
+
+              $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                var iframeSrc = $('#message-instructor').attr('src');
+                $('#message-instructor').attr('src', iframeSrc);
+              })
+              poll_board.location.reload();
+            } else {
+              btn_end.style.display = "none";
+              btn_start.style.display = "block";
+
+              $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                var iframeSrc = $('#message-instructor').attr('src');
+                $('#message-instructor').attr('src', iframeSrc);
+              })
+              poll_board.location.reload();
+            }
+
+            let toggle_lecture = function() {
+              $.ajax({
+                url: '/polling/instructor/',
+                method: 'GET',
+                data: { 'toggle-lecture': 'true' },
+                success: function (data) {
+                  if (data['begin']) {
+                    btn_start.style.display = "none";
+                    btn_end.style.display = "block";
+                  } else {
+                    btn_end.style.display = "none";
+                    btn_start.style.display = "block";
+                  }
+
+                  $('#message-board-header').load(window.location.href + ' #message-board-header', function() {
+                    var iframeSrc = $('#message-instructor').attr('src');
+                    $('#message-instructor').attr('src', iframeSrc);
+                  })
+                  poll_board.location.reload();
+                }
+              });
+            }
+
+            btn_start.addEventListener("click", toggle_lecture);
+            btn_end.addEventListener("click", toggle_lecture);
+          }
+
+          function count_hands_up(send_message="true") {
+            console.log("Sending message: " + send_message);
+            $.ajax({
+              url: '/count_hands_up/',
+              method: 'GET',
+              data: { send_message: send_message },
+              success: function (data) {
+                console.log(data);
+                if (data['green_enabled']) {
+                  document.getElementById("next_student").disabled = false
+                  document.getElementById("clear_all").disabled = false
+                  document.getElementById("enable").innerHTML = "Disable Green"
+                } else {
+                  document.getElementById("next_student").disabled = true
+                  document.getElementById("clear_all").disabled = true
+                  document.getElementById("enable").innerHTML = "Enable Green"
+                }
+
+
+                if (data['blue_enabled']) {
+                  document.getElementById("next_student_blue").disabled = false
+                  document.getElementById("clear_all_blue").disabled = false
+                  document.getElementById("enable_blue").innerHTML = "Disable Blue"
+                } else {
+                  document.getElementById("next_student_blue").disabled = true
+                  document.getElementById("clear_all_blue").disabled = true
+                  document.getElementById("enable_blue").innerHTML = "Enable Blue"
+                }
+
+
+                if (data['red_enabled']) {
+                  document.getElementById("next_student_red").disabled = false
+                  document.getElementById("clear_all_red").disabled = false
+                  document.getElementById("enable_red").innerHTML = "Disable Red"
+                } else {
+                  document.getElementById("next_student_red").disabled = true
+                  document.getElementById("clear_all_red").disabled = true
+                  document.getElementById("enable_red").innerHTML = "Enable Red"
+                }
+
+
+                if (data['yellow_enabled']) {
+                  document.getElementById("next_student_yellow").disabled = false
+                  document.getElementById("clear_all_yellow").disabled = false
+                  document.getElementById("enable_yellow").innerHTML = "Disable Yellow"
+                } else {
+                  document.getElementById("next_student_yellow").disabled = true
+                  document.getElementById("clear_all_yellow").disabled = true
+                  document.getElementById("enable_yellow").innerHTML = "Enable Yellow"
+                }
+
+                document.getElementById("status").innerHTML = data['count'];
+                document.getElementById("status_spoken").innerHTML = data['count_spoken'];
+                rows = create_table(data)
+                plot_chart(data)
+                // plot_chart_spoken(data)
+                // console.log(rows)
+                $('#table').html(rows);
+              }
+            });
+          };
+          function create_table(input) {
+            let rows = '';
+            // console.log(input['list_of_unspoken'])
+            for (var i = 0; i < input['yellow_list_of_unspoken'].length; i++) {
+              rows += "<tr id= \"ROW4\"><td scope=\"row\">" + input['yellow_list_of_unspoken'][i][0] + ' ' + input['yellow_list_of_unspoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['yellow_list_of_unspoken'][i][2] + ",4" + ")\">(Choose next) </button>" + "</td><td scope=\"row\">" + "No" + "</td><th scope=\"row\">" + "Yellow" + "</th></tr>"
+            }
+            for (var i = 0; i < input['red_list_of_unspoken'].length; i++) {
+              rows += "<tr id= \"ROW3\"><td scope=\"row\">" + input['red_list_of_unspoken'][i][0] + ' ' + input['red_list_of_unspoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['red_list_of_unspoken'][i][2] + ",3" + ")\">(Choose next) </button>" + "</td><td scope=\"row\">" + "No" + "</td><th scope=\"row\">" + "Red" + "</th></tr>"
+            }
+            for (var i = 0; i < input['blue_list_of_unspoken'].length; i++) {
+              rows += "<tr id= \"ROW2\"><td scope=\"row\">" + input['blue_list_of_unspoken'][i][0] + ' ' + input['blue_list_of_unspoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['blue_list_of_unspoken'][i][2] + ",2" + ")\">(Choose next) </button>" + "</td><td scope=\"row\">" + "No" + "</td><th scope=\"row\">" + "Blue" + "</th></tr>"
+            }
+            for (var i = 0; i < input['list_of_unspoken'].length; i++) {
+              rows += "<tr id= \"ROW1\"><td scope=\"row\">" + input['list_of_unspoken'][i][0] + ' ' + input['list_of_unspoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['list_of_unspoken'][i][2] + ",1" + ")\">(Choose next) </button>" + "</td><td scope=\"row\">" + "No" + "</td><th scope=\"row\">" + "Green" + "</th></tr>"
+            }
+
+
+            for (var i = 0; i < input['yellow_list_of_spoken'].length; i++) {
+              rows += "<tr id= \"ROW4\"><td scope=\"row\">" + input['yellow_list_of_spoken'][i][0] + ' ' + input['yellow_list_of_spoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['yellow_list_of_spoken'][i][2] + ",4" + ")\"> (Choose next) </button>" + "</td><td scope=\"row\">" + "Yes" + "</td><th scope=\"row\">" + "Yellow" + "</th></tr>"
+            }
+            for (var i = 0; i < input['red_list_of_spoken'].length; i++) {
+              rows += "<tr id= \"ROW3\"><td scope=\"row\">" + input['red_list_of_spoken'][i][0] + ' ' + input['red_list_of_spoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['red_list_of_spoken'][i][2] + ",3" + ")\"> (Choose next) </button>" + "</td><td scope=\"row\">" + "Yes" + "</td><th scope=\"row\">" + "Red" + "</th></tr>"
+            }
+            for (var i = 0; i < input['blue_list_of_spoken'].length; i++) {
+              rows += "<tr id= \"ROW2\"><td scope=\"row\">" + input['blue_list_of_spoken'][i][0] + ' ' + input['blue_list_of_spoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['blue_list_of_spoken'][i][2] + ",2" + ")\"> (Choose next) </button>" + "</td><td scope=\"row\">" + "Yes" + "</td><th scope=\"row\">" + "Blue" + "</th></tr>"
+            }
+            for (var i = 0; i < input['list_of_spoken'].length; i++) {
+              rows += "<tr id= \"ROW1\"><td scope=\"row\">" + input['list_of_spoken'][i][0] + ' ' + input['list_of_spoken'][i][1] + ' ' + "<button class=\"btn btn-link btn-tbl\" id=\"choose_next\" onclick=\"myFunction(" + input['list_of_spoken'][i][2] + ",1" + ")\"> (Choose next) </button>" + "</td><td scope=\"row\">" + "Yes" + "</td><th scope=\"row\">" + "Green" + "</th></tr>" + "<span>"
+            }
+            return rows
+            // <tr><th scope="row">3</th><td>Larry</td><td>the Bird</td></tr>
+          }
+          // function updateHandsUp() {
+          //     document.getElementById('count_hands_up').click()
+          // }
+          // setInterval(updateHandsUp, 1000);
+
+          function plot_chart(input) {
+            var xValues = ["Green", "Blue", "Red", "Yellow"];
+            var yValues = input['count_total'];
+            var barColors = ["green", "blue", "red", "orange"];
+
+            new Chart("myChart", {
+              type: "bar",
+              data: {
+                labels: xValues,
+                datasets: [{
+                  backgroundColor: barColors,
+                  data: yValues,
+                }]
+              },
+              options: {
+                animation: {
+                  duration: 0
+                },
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: { display: false },
+                title: {
+                  display: false,
+                  text: "Hand ups bar plot"
+                },
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }],
+                  xAxes: [{
+                    // Change here
+                    barPercentage: 0.5
+                  }]
+                }
+              }
+            });
+          }
+
+          function plot_chart_spoken(input) {
+            var xValues = ["Green", "Blue", "Red", "Yellow"];
+            var yValues = input['count_total_spoken'];
+            var barColors = ["green", "blue", "red", "orange"];
+
+            new Chart("myChart1", {
+              type: "bar",
+              data: {
+                labels: xValues,
+                datasets: [{
+                  backgroundColor: barColors,
+                  data: yValues,
+                }]
+              },
+              options: {
+                animation: {
+                  duration: 0
+                },
+                legend: { display: false },
+                title: {
+                  display: false,
+                  text: "Spoken bar plot"
+                },
+                scales: {
+                  yAxes: [{
+                    ticks: {
+                      beginAtZero: true
+                    }
+                  }],
+                  xAxes: [{
+                    // Change here
+                    barPercentage: 0.5
+                  }]
+                }
+              }
+            });
+          }
+        </script>
+
+
+        <script type="text/javascript">
+          // var statusIntervalId = window.setInterval(count_already_spoken, 1000);
+          $(document).ready(function () {
+            count_already_spoken();
+          });
+
+          function count_already_spoken() {
+            $.ajax({
+              url: '/count_already_spoken/',
+              method: 'GET',
+              success: function (data) {
+                // console.log(data)
+                // document.getElementById("status_spoken").innerHTML = data['count_spoken'];
+                spoken_rows = create_spoken_table(data)
+                $('#table_of_spoken').html(spoken_rows);
+              }
+            });
+          };
+
+
+          function create_spoken_table(input) {
+            let rows = '';
+            // console.log(input['list_of_already_spoken'])
+            let max_len = Math.min(input['list_of_already_spoken'].length, 100)
+            for (var i = 0; i < max_len; i++) {
+              // rows += "<tr><td scope=\"row\">"+input['list_of_already_spoken'][i][0]+"</td><td scope=\"row\">"+input['list_of_already_spoken'][i][1]+"</td><th scope=\"row\">"+ "Yes" +"</th></tr>"
+              rows += "<tr><td scope=\"row\">" + input['list_of_already_spoken'][i][0] + ' ' + input['list_of_already_spoken'][i][1] + "</td><td scope=\"row\">" + input['list_of_already_spoken'][i][2] + "</td><td scope=\"row\">" + input['list_of_already_spoken'][i][3] + "</td></tr>"
+
+            }
+            return rows
+            // <tr><th scope="row">3</th><td>Larry</td><td>the Bird</td></tr>
+          }
+          // function updateHandsUp() {
+          //     document.getElementById('count_hands_up').click()
+          // }
+          // setInterval(updateHandsUp, 1000);
+        </script>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("clear_all")
+          btn.addEventListener("click", function () {
+            // if(!confirm('You are about to clear the Green list. Are you sure?')) {
+            //           e.preventDefault();
+            //       }
+            document.getElementById("student").innerHTML = 'All hands were cleared in the Green list.'
+            $.ajax({
+              url: '/clear_all/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+          var btn = document.getElementById("clear_all_blue")
+          btn.addEventListener("click", function () {
+            // if(!confirm('You are about to clear the Blue list. Are you sure?')) {
+            //           e.preventDefault();
+            //       }
+            document.getElementById("student").innerHTML = 'All hands were cleared in the Blue list.'
+            $.ajax({
+              url: '/clear_all_blue/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+          var btn = document.getElementById("clear_all_red")
+          btn.addEventListener("click", function () {
+            // if(!confirm('You are about to clear the Red list. Are you sure?')) {
+            //           e.preventDefault();
+            //       }
+            document.getElementById("student").innerHTML = 'All hands were cleared in the Red list.'
+            $.ajax({
+              url: '/clear_all_red/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+
+          var btn = document.getElementById("clear_all_yellow")
+          btn.addEventListener("click", function () {
+            // if(!confirm('You are about to clear the Yellow list. Are you sure?')) {
+            //           e.preventDefault();
+            //       }
+            document.getElementById("student").innerHTML = 'All hands were cleared in the Yellow list.'
+            $.ajax({
+              url: '/clear_all_yellow/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+
+          var btn = document.getElementById("clear_all_lists")
+          btn.addEventListener("click", function () {
+            if (!confirm('You are about to clear all lists. Are you sure?')) {
+              e.preventDefault();
+            }
+            document.getElementById("student").innerHTML = 'All hands were cleared.'
+            $.ajax({
+              url: '/clear_all_lists/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+
+          var btn = document.getElementById("undo")
+          btn.addEventListener("click", function () {
+            document.getElementById("student").innerHTML = 'All participation record were removed from the last call.'
+            $.ajax({
+              url: '/undo/',
+              method: 'GET',
+              success: function (data) {
+                count_hands_up();
+                document.getElementById("status_spoken").innerHTML = data['count_spoken'];
+                spoken_rows = create_spoken_table(data)
+                $('#table_of_spoken').html(spoken_rows);
+              }
+            });
+          });
+
+        </script>
+
+
+        <script type="text/javascript">
+          document.getElementById("enable").addEventListener("click", function () {
+            var btn = this
+            if (btn.innerHTML === "Enable Green") {
+              document.getElementById("next_student").disabled = false
+              document.getElementById("clear_all").disabled = false
+              document.getElementById("student").innerHTML = 'Hand up feature is enabled for the Green list.'
+              $.ajax({
+                url: '/enable/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Disable Green";
+                  count_hands_up();
+                }
+              });
+            }
+            else {
+              document.getElementById("next_student").disabled = true
+              document.getElementById("clear_all").disabled = true
+              document.getElementById("student").innerHTML = 'Hand up feature is disabled for the Green list.'
+              $.ajax({
+                url: '/disable/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Enable Green";
+                  count_hands_up();
+                }
+              });
+            }
+
+          });
+        </script>
+
+        <script type="text/javascript">
+          document.getElementById("enable_blue").addEventListener("click", function () {
+            var btn = document.getElementById("enable_blue")
+            if (btn.innerHTML === "Enable Blue") {
+              document.getElementById("next_student_blue").disabled = false
+              document.getElementById("clear_all_blue").disabled = false
+              document.getElementById("student").innerHTML = 'Hand up feature is enabled for the Blue list.'
+              $.ajax({
+                url: '/enable_blue/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Disable Blue";
+                  count_hands_up();
+                }
+              });
+            }
+            else {
+              document.getElementById("next_student_blue").disabled = true
+              document.getElementById("clear_all_blue").disabled = true
+              document.getElementById("student").innerHTML = 'Hand up feature is disabled for the Blue list.'
+              $.ajax({
+                url: '/disable_blue/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Enable Blue";
+                  count_hands_up();
+                }
+              });
+            }
+
+          });
+        </script>
+
+        <script type="text/javascript">
+          document.getElementById("enable_red").addEventListener("click", function () {
+            var btn = document.getElementById("enable_red")
+            if (btn.innerHTML === "Enable Red") {
+              document.getElementById("next_student_red").disabled = false
+              document.getElementById("clear_all_red").disabled = false
+              document.getElementById("student").innerHTML = 'Hand up feature is enabled for the Red list.'
+              $.ajax({
+                url: '/enable_red/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Disable Red";
+                  count_hands_up();
+                }
+              });
+            }
+            else {
+              document.getElementById("next_student_red").disabled = true
+              document.getElementById("clear_all_red").disabled = true
+              document.getElementById("student").innerHTML = 'Hand up feature is disabled for the Red list.'
+              $.ajax({
+                url: '/disable_red/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Enable Red";
+                  count_hands_up();
+                }
+              });
+            }
+
+          });
+        </script>
+
+
+        <script type="text/javascript">
+          document.getElementById("enable_yellow").addEventListener("click", function () {
+            var btn = document.getElementById("enable_yellow")
+            if (btn.innerHTML === "Enable Yellow") {
+              document.getElementById("next_student_yellow").disabled = false
+              document.getElementById("clear_all_yellow").disabled = false
+              document.getElementById("student").innerHTML = 'Hand up feature is enabled for the Yellow list.'
+              $.ajax({
+                url: '/enable_yellow/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Disable Yellow";
+                  count_hands_up();
+                }
+              });
+            }
+            else {
+              document.getElementById("next_student_yellow").disabled = true
+              document.getElementById("clear_all_yellow").disabled = true
+              document.getElementById("student").innerHTML = 'Hand up feature is disabled for the Yellow list.'
+              $.ajax({
+                url: '/disable_yellow/',
+                method: 'GET',
+                success: function () {
+                  btn.innerHTML = "Enable Yellow";
+                  count_hands_up();
+                }
+              });
+            }
+
+          });
+
+        </script>
+
+        <script type="text/javascript">
+          document.getElementById("disable_all").addEventListener("click", function () {
+            document.getElementById("next_student").disabled = true
+            document.getElementById("next_student_blue").disabled = true
+            document.getElementById("next_student_red").disabled = true
+            document.getElementById("next_student_yellow").disabled = true
+
+            document.getElementById("clear_all").disabled = true
+            document.getElementById("clear_all_blue").disabled = true
+            document.getElementById("clear_all_red").disabled = true
+            document.getElementById("clear_all_yellow").disabled = true
+
+            document.getElementById("enable").innerHTML = "Enable Green";
+            document.getElementById("enable_blue").innerHTML = "Enable Blue";
+            document.getElementById("enable_red").innerHTML = "Enable Red";
+            document.getElementById("enable_yellow").innerHTML = "Enable Yellow";
+
+            document.getElementById("student").innerHTML = 'Hand up feature is disabled in all lists.'
+
+            $.ajax({
+              url: '/disable_all/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+        </script>
+
+        <script type="text/javascript">
+          document.getElementById("enable_all").addEventListener("click", function () {
+            document.getElementById("next_student").disabled = false
+            document.getElementById("next_student_blue").disabled = false
+            document.getElementById("next_student_red").disabled = false
+            document.getElementById("next_student_yellow").disabled = false
+
+            document.getElementById("clear_all").disabled = false
+            document.getElementById("clear_all_blue").disabled = false
+            document.getElementById("clear_all_red").disabled = false
+            document.getElementById("clear_all_yellow").disabled = false
+
+            document.getElementById("enable").innerHTML = "Disable Green";
+            document.getElementById("enable_blue").innerHTML = "Disable Blue";
+            document.getElementById("enable_red").innerHTML = "Disable Red";
+            document.getElementById("enable_yellow").innerHTML = "Disable Yellow";
+
+            document.getElementById("student").innerHTML = 'Hand up feature is enabled in all lists.'
+
+            $.ajax({
+              url: '/enable_all/',
+              method: 'GET',
+              success: function () {
+                count_hands_up();
+              }
+            });
+          });
+        </script>
+
+        {%endif%}
+
+
+        {% if is_instructor or request.user.is_superuser %}
+
+        <div class="row">
+          <div class="col-sm-6 col-md-offset-0 col-md-8">
+            <div class="mta-header-with-btn">
+              <h2>Control Panel</h2>
+            </div>
+          </div>
+        </div>
+        <div class="thumbnail">
+          <button class="btn btn-danger " id="disqualify_all">
+            <span class="glyphicon glyphicon-erase"></span> Disqualify Everyone
+          </button>
+          <a class="btn btn-warning " href="/course/{{ course.id }}/import_ci/">
+            <span class="glyphicon glyphicon-user"></span> Import Dependability Scores
+          </a>
+          <a class="btn btn-warning " href="/course/{{ course.id }}/export_ci/">
+            <span class="glyphicon glyphicon-user"></span> Export Dependability Scores
+          </a>
+          <a class="btn btn-primary " href="/grade/upload_grading_items">
+            <span class="glyphicon glyphicon-pencil"></span> Upload Grading Items
+          </a>
+        </div>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("disqualify_all")
+          btn.addEventListener("click", function () {
+            if (!confirm('You are about to disqualify every student to do peer reviews. Are you sure?')) {
+              e.preventDefault();
+            }
+            $.ajax({
+              url: '/disqualify_all/',
+              method: 'GET',
+              success: function () {
+                alert("Every student was disqualified to do peer reviews. They can qualify themselves again by finishing their weekly quiz.");
+              }
+            });
+          });
+        </script>
+
+
+        {%endif%}
+
+        {% if is_instructor or request.user.is_superuser %}
+        <div class="thumbnail">
+          <div class="caption">
+            <!-- <h3>Students</h3> -->
+            <div class="row">
+              <div class="col-md6 col-sm-12">
+                <dl class="dl-horizontal" style="margin-bottom:0">
+                  <dt> # Students:</dt>
+                  <dd><code>{{num_students}}</code></dd>
+                  {% if course.enable_independent_pool %}
+                  <dt> # Supervised:</dt>
+                  <dd><code>{{num_supervised}}</code></dd>
+                  <dt> # Independent:</dt>
+                  <dd><code>{{num_independent}}</code></dd>
+                  {% endif %}
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+        {%endif%}
+
+
+
+        {% if is_ta %}
+        <div class="thumbnail">
+          <div class="caption">
+            <div class="row">
+              <div class="col-md-8">
+                <iframe id="polling-student" scrolling="no" onload="iframeLoaded(); resizeIframe(this);"
+                  src="/polling/student" width="100%" frameborder="0"></iframe>
+              </div>
+
+              <div class="col-md-4">
+                <h3>Message Board</h3>
+                <iframe id="message-instructor" src="/message/instructor" width="100%" height="400px"
+                  onload="iframeLoaded()" frameborder="0"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="thumbnail">
+          <div class="caption">
+            <!-- <h3>Students</h3> -->
+            <div class="row">
+              <div class="col-md12 col-sm-10">
+                <dl class="dl-horizontal" style="margin-bottom:0">
+                  <dt> Total #TA reviews:</dt>
+                  <dd><code>{{total_reviews}}</code></dd>
+                  <dt> My total #reviews: </dt>
+                  <dd><code>{{user_total_reviews}}</code></dd>
+                  <dt> #Time Spent [hh:mm:ss]:</dt>
+                  <dd><code>{{timer}}</code></dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-success btn-ms" id="start_timer">
+            <span class="glyphicon glyphicon-user"></span> Start Timer
+          </button>
+          <button class="btn btn-danger btn-ms" id="stop_timer">
+            <span class="glyphicon glyphicon-user"></span> Stop Timer
+          </button>
+        </div>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("start_timer")
+          btn.addEventListener("click", function () {
+            if (!confirm('You are about to start you timer. Are you sure?')) {
+              e.preventDefault();
+            }
+            $.ajax({
+              url: '/start_timer/',
+              method: 'GET',
+              success: function (data) {
+                alert(data['response']);
+              }
+            });
+          });
+        </script>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("stop_timer")
+          btn.addEventListener("click", function () {
+            if (!confirm('You are about to stop your timer. Are you sure?')) {
+              e.preventDefault();
+            }
+            $.ajax({
+              url: '/stop_timer/',
+              method: 'GET',
+              success: function (data) {
+                alert(data['response']);
+              }
+            });
+          });
+        </script>
+
+
+        {%endif%}
+
+        <div>
+          {% if is_ta %}
+          <a class="btn btn-primary" href="/review/{{ course.id }}/request_next/"> <span
+              class="glyphicon glyphicon-pencil"></span> Request the next submission to review</a>
+          {% endif %}
+          </br>
+        </div>
+      </div>
+
+
+
+          {% if not is_instructor %}
+          {% if course.id == 333 %}
+          <div style="margin: 10px">
+            <a href="/calibration/476/request/" target="">Request calibration for Week 1</a> </br>
+            <a href="/calibration/482/request/" target="">Request calibration for Essay 1</a> </br>
+            <a href="/calibration/480/request/" target="">Request calibration for Essay 2</a> </br>
+
+          </div>
+        </div>
+
+
+        <div>
+          {%if is_student %}
+          <a class="btn btn-primary " href="/grade/gradebook">
+            <span class="glyphicon glyphicon-pencil"></span> View My Grades
+          </a>
+          <br><br><br><br>
+          {%endif%}
+        </div>
+        {% endif %}
+
+        {% endif %}
+      </div>
+    </div>
+
+    {%if is_instructor or is_ta %}
+    <!-- TAs overview -->
+
+    <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8 col-md-offset-2 col-sm-offset-1 col-sm-offset-2.5">
+      <div class="thumbnail">
+        <div class="caption">
+          <h3>Teaching Assistants</h3>
+
+          {% if not course.has_ta %}
+          <div class="well">No TAs assigned to this course yet.</div>
+          {% else %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="col-md-6">Name</th>
+                <th class="text-right">
+                  # Reviews (pending)
+                </th>
+                <th class="text-right">
+                  # Appeals (pending)
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ta in ta_stats %}
+              <tr class="">
+                <td>{{ ta.name }}</td>
+                <td
+                  class="text-right {% if ta.reviews.late %}bg-danger{% elif ta.reviews.pending %}bg-warning{% endif %}">
+                  {% if ta.reviews.late %}<small class="text-muted">(late)&nbsp;&nbsp; </small>{% endif %}
+                  {{ta.reviews.total}} ({{ta.reviews.pending}})
+                </td>
+                <td class="text-right">
+                  {{ta.appeal.total}} ({{ta.appeal.pending}})
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Assignments overview -->
+    <div class="col-xs-12 col-sm-10 col-md-8 col-lg-8 col-md-offset-2 col-sm-offset-1 col-sm-offset-2.5">
+      <div class="thumbnail">
+        <div class="caption">
+          <h3>Assignments</h3>
+
+          {% if not course.has_ta %}
+          <div class="well">No TAs assigned to this course yet.</div>
+          <!-- TODO -->
+          {% else %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th class="col-md-6">Name</th>
+                <th class="text-right">
+                  Submissions
+                </th>
+                <th class="text-right">
+                  TA Reviews
+                </th>
+                <th class="text-right">
+                  Instructor Reviews
+                </th>
+                <th class="text-right">
+                  Student Reviews
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for assignment in course.assignment_set.all %}
+              <tr class="">
+                <td>
+                  <a href="{% url 'review:assignment_review_list' assignment.id %}">
+                    <strong>{{ assignment.name }}</strong>
+                  </a>
+                </td>
+                <td class="text-right">
+                  {{ assignment.assignmentsubmission_set.all.count }} <small>/ {{ student_count }}</small>
+                </td>
+                <td class="text-right">
+                  {{ assignment.ta_reviews_count }}
+                </td>
+                <td class="text-right">
+                  {{ assignment.instructor_reviews_count }}
+                </td>
+                <td class="text-right">
+                  {{ assignment.student_reviews_count }}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <script>
+      let iframesLoaded = 0;
+      const totalIframes = 2;
+
+      function iframeLoaded() {
+        iframesLoaded++;
+        if (iframesLoaded === totalIframes) {
+          all_iframes_loaded();
+        }
+      }
+    </script>
+
+    {% endblock %}
+
+  </div>

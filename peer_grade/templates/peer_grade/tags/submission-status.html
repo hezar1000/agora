@@ -1,0 +1,36 @@
+{% if has_submission %}
+    {% if can_see_grade %}
+        <!-- {{ grade }} / {{ max_grade }} -->
+        {%  widthratio grade max_grade 100 %}&#37
+        &nbsp;
+        <small>
+            {% if not cant_appeal %}
+                {% if appeal %}
+                    <a href="{% url 'grade:appeal_view' appeal.id %}">(View appeal)</a>
+                {% else %}
+                    <a href="{% url 'grade:appeal_create' submission_id %}">(Appeal)</a>
+                {% endif %}
+            {% endif %}
+
+            {% if show_helper %}
+            <div class="mtatooltip" data-toggle="tooltip" data-placement="bottom"
+                title="To view the reviews and appeal your grade you can view the submission page">
+                <a href="{% url 'assignment:submission_view' submission_id %}">
+                    <span class="glyphicon glyphicon-question-sign"></span>
+                </a>
+            </div>
+            {% endif %}
+        </small>
+    {% else %}
+        <div class="mtatooltip" data-toggle="tooltip" data-placement="bottom"
+            title="{% if deadline_passed %}Sorry, we are running a bit behind schedule{% else %}Will be available after TA review is submitted or after peer grading weights are finalized{% endif %}">
+            Not available
+        </div>
+    {% endif %}
+{% else %}
+    <div style="margin-left: 7px"
+        class="mtatooltip" data-toggle="tooltip" data-placement="bottom"
+        title="Not submitted">
+        ---
+    </div>
+{% endif %}

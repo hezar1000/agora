@@ -1,0 +1,238 @@
+<div class="container-fluid">
+  
+  <div class="col-md-10 col-md-offset-1">
+
+      <h3>Instructors</h3>
+
+      {% if groups.instructor|length == 0 %}
+        <div class="alert alert-info" role="alert" style="margin: 4px;">
+            No instructor yet.
+        </div>      
+      {% else %}
+
+      <div class="panel panel-default"> 
+        <table class="table table-striped table-bordered"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">User ID</th>
+              <th class="col-md-4">Name</th> 
+              <th class="col-md-3">Email</th>
+              {% if is_instructor %}
+                <th class="col-md-2">Options</th>
+              {% endif %}
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for user in groups.instructor %}
+              <tr> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.username }}</a></td> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.first_name }} {{ user.last_name }}</a></td> 
+                <td>{{ user.email }}</td>
+                {% if is_instructor %}
+                  <td>
+                    {% if user.id != request_user.id %}
+                      <a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
+                        class="btn btn-danger btn-xs"
+                        data-toggle="confirmation"
+                        data-singleton="true"
+                        data-btn-ok-class="btn-danger"
+                        data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
+                        data-btn-cancel-class="btn-success"
+                        data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
+                        data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
+                        <span class="glyphicon glyphicon-trash"></span>
+                      </a>
+                    {% endif %}
+                    <a href="{% url 'account:edit' user.id %}"
+                      class="btn btn-primary btn-xs">
+                      <span class="glyphicon glyphicon-pencil"></span>
+                    </a>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody> 
+        </table>
+      </div>
+
+      {% endif %}
+    
+
+
+
+      <h3>TAs</h3>
+
+      {% if groups.ta|length == 0 %}
+        <div class="alert alert-info" role="alert" style="margin: 4px;">
+            No TA yet.
+        </div>      
+      {% else %}
+
+      <div class="panel panel-default"> 
+        <table class="table table-striped table-bordered"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">User ID</th>
+              <th class="col-md-4">Name</th> 
+              <th class="col-md-3">Email</th>
+              {% if is_instructor %}
+                <th class="col-md-2">Options</th>
+              {% endif %}
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for user in groups.ta %}
+              <tr> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.username }}</a></td> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.first_name }} {{ user.last_name }}</a></td> 
+                <td>{{ user.email }}</td>
+                {% if is_instructor %}
+                  <td><a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
+                    class="btn btn-danger btn-xs"
+                    data-toggle="confirmation"
+                    data-singleton="true"
+                    data-btn-ok-class="btn-danger"
+                    data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
+                    data-btn-cancel-class="btn-success"
+                    data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
+                    data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
+                    <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+                    <a href="{% url 'account:edit' user.id %}"
+                      class="btn btn-primary btn-xs">
+                      <span class="glyphicon glyphicon-pencil"></span>
+                    </a>
+                  </td>
+                {% endif %}
+
+              </tr>
+            {% endfor %}
+          </tbody> 
+        </table>
+      </div>
+
+      {% endif %}
+
+
+      <h3>Students</h3>
+
+      {% if groups.student|length == 0 %}
+        <div class="alert alert-info" role="alert" style="margin: 4px;">
+            No student yet.
+        </div>      
+      {% else %}
+
+      <div class="panel panel-default"> 
+        <table class="table table-striped table-bordered"> 
+          
+          <thead> 
+            <tr> 
+              <th class="col-md-3">User ID</th>
+              <th class="col-md-4">Name</th> 
+              <th class="col-md-3">Email</th>
+              {% if is_instructor %}
+                <th class="col-md-2">Options</th>
+              {% endif %}
+            </tr> 
+          </thead>
+
+          <tbody> 
+            {% for user in groups.student %}
+              <tr> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.username }}</a></td> 
+                <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.first_name }} {{ user.last_name }}</a></td> 
+                <td>{{ user.email }}</td>
+                {% if is_instructor %}
+                  <td>
+                    <a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
+                      class="btn btn-danger btn-xs"
+                      data-toggle="confirmation"
+                      data-singleton="true"
+                      data-btn-ok-class="btn-danger"
+                      data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
+                      data-btn-cancel-class="btn-success"
+                      data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
+                      data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
+                      <span class="glyphicon glyphicon-trash"></span>
+                    </a>
+                    <a href="{% url 'account:edit' user.id %}"
+                      class="btn btn-primary btn-xs">
+                      <span class="glyphicon glyphicon-pencil"></span>
+                    </a>
+                  </td>
+                  
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody> 
+        </table>
+      </div>
+
+      {% endif %}
+    
+    {% if is_instructor %}
+      <div class="page-header">
+        <h3>Add a user</h3>
+      </div>
+
+      <form method="post" action="/course/{{ course.id }}/add_user/">
+        {% csrf_token %}
+
+        <div class="form-group row">
+            <label for="id_user" class="col-md-2 col-form-label">User:</label> 
+
+            <div class="col-md-3">
+                <input id="user_input" type="text" placeholder="Search by user email" required form-control />
+                <input type="hidden" id="actual_user_input" name="user" type="text" value="" />
+                <!-- <select name="user" required class="form-control" id="id_user">
+                    <option value="" selected>---------</option>
+                    {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {{ user.first_name }} {{ user.last_name}} ({{ user.username }})
+                        </option>
+                    {% endfor %}
+                </select> -->
+            </div>
+            <script>
+              $(function() {
+                $("#user_input").autocomplete({
+                  source: "{% url 'account:get_unenrolled_users' course.id %}",
+                  minLength: 1,
+                  select: function (event, ui) {
+                    var selectedObj = ui.item;
+                    $("#actual_user_input").val(ui.item.id);
+                  }
+                });
+              });
+            </script>
+        </div>
+
+        <div class="form-group row">
+          <label for="id_role" class="col-md-2 col-form-label">Role:</label> 
+          
+          <div class="col-md-3">
+            <select name="role" required class="form-control" id="id_role">
+              <option value="" selected>---------</option>
+              <option value="instructor">Instructor</option>
+              <option value="ta">TA</option>
+              <option value="student">Student</option>
+              
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <button type="submit" class="btn btn-primary">Add this user to the course</button>
+        </div>
+
+      </form>
+    {% endif %}
+
+  </div>
+
+  <div></div>
+</div>
+

@@ -1,0 +1,91 @@
+<div>
+    <form action="post">
+        {% csrf_token %}
+
+        {% if poll.poll_data %}
+        <div id="view-poll-data"></div>
+        {% endif %}
+
+        <fieldset>
+            <div style="text-align: center;" class="radio-container"></div>
+        </fieldset>
+    </form>
+</div>
+
+<script>
+    let quill = new Quill('#view-poll-data', {
+        theme: 'snow',
+        readOnly: true,
+    });
+
+    quill.getModule('toolbar').container.style.display = 'none';
+    quill.root.innerHTML = `{{ poll.poll_data|safe }}`;
+
+    const editorContainer = document.querySelector('#view-poll-data');
+
+    function setEditorHeight() {
+        quill.root.style.height = 'auto'; // Reset height to auto to calculate the actual height
+        const contentHeight = quill.root.offsetHeight;
+        editorContainer.style.height = contentHeight + 'px';
+    }
+
+    setEditorHeight();
+
+    quill.root.querySelectorAll('img').forEach(img => {
+        img.addEventListener('load', setEditorHeight);
+    });
+</script>
+
+{% if course_member.role == 'student' %}
+
+<script>
+
+    // {{ poll.answer_options|safe }} is a js list as a string, so we need to parse it
+    let answer_options = JSON.parse('{{ poll.answer_options|safe }}');
+
+    let radioContainer = document.querySelector('.radio-container');
+
+    for (let i = 0; i < answer_options.length; i++) {
+        let input = document.createElement('input');
+        input.type = 'radio';
+        input.id = 'option' + answer_options[i];
+        input.name = 'poll-answer';
+        input.value = answer_options[i];
+
+        let label = document.createElement('label');
+        label.className = 'btn btn-default';
+        label.htmlFor = 'option' + answer_options[i];
+        label.innerHTML = answer_options[i];
+
+        radioContainer.appendChild(input);
+        radioContainer.appendChild(label);
+
+        radioContainer.appendChild(document.createTextNode(' '));
+    }
+
+</script>
+
+<script>
+    let poll_id = parseInt('{{poll.poll_id}}');
+    let radioBtns = document.querySelectorAll('input[type="radio"]');
+
+    radioBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+
+            let data = new FormData()
+            data.append('poll_id', poll_id)
+            data.append('poll-answer', btn.value)
+            
+            // send a post request using fetch api
+            fetch('', {
+                method: 'POST',
+                body: data,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                }
+            })
+        })
+    })
+</script>
+
+{% endif %}

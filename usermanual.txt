@@ -1,0 +1,30 @@
+
+Get into virtual environment:
+
+source virtualenv/env1/activate
+
+Run agora
+
+python3 manage.py runserver
+
+
+Admin interface:
+
+http://127.0.0.1:8000/admin/
+
+Admin username: admin
+Admin password: mechanicalta
+
+Users:
+
+alicegao/whitechocolate
+
+# To Alice: not changing this for now, but users that we have in the `initial_course_data` are these:
+# the reason that the passwords are changed is that I didn't know the defaults when I started.
+admin/agoraagora
+alicegao/alicealice
+hedayatzarkoob/hedayathedayat
+98498165/123456
+98498166/123456
+98498167/123456
+

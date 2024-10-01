@@ -1,0 +1,39 @@
+<div class="message {% if message.reply_message or message.blocked %}student-message{% else %}instructor-message{% endif %}">
+    <div class="message-name">
+      {% if not message.hidden %}
+      {% if not message.blocked %}
+      <span onclick="hide(this)" data-toggle="tooltip" data-placement="bottom" title="Hide message" class="glyphicon glyphicon-remove-circle" data-message="{{message.message_id}}"></span>
+      {% endif %}
+      {% endif %}
+
+      {% if not message.blocked %}
+      <span style="color: red" onclick="block(this)" data-toggle="tooltip" data-placement="bottom" title="Block student" class="glyphicon glyphicon-ban-circle" data-user="{{message.auth_user_id}}"></span>
+      {% endif %}
+      
+      {% if not message.broadcast and not message.blocked and not message.hidden %}
+      <span style="color: blue" onclick="broadcast(this)" data-toggle="tooltip" data-placement="bottom" title="Broadcast message" class="glyphicon glyphicon-bullhorn" data-message="{{message.message_id}}"></span>
+      {% endif %}
+      
+      <strong {% if message.blocked %} style="text-decoration: line-through" {% endif %}>{{message.auth_user__first_name}} {{message.auth_user__last_name}}</strong>
+    </div>
+    
+    <div class="message-text" {% if message.blocked %} style="text-decoration: line-through" {% endif %}>
+      {% if message.hidden %} (Hidden) {% endif %} {{ message.message }} 
+    </div>
+
+    {% if message.reply_message %}
+    <div class="reply-message">
+      <p>{{ message.reply_message }}</p>
+    </div>
+    {% else %}
+
+    {% if not message.blocked %}
+    <div class="reply-message input-container">
+      <input class="form-control" placeholder="Reply Message" type="text" name="message-reply">
+      <input type="hidden" name="{{ message.message_id }}">
+      <button class="btn btn-default" onclick="send_reply(this)">Reply</button>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>

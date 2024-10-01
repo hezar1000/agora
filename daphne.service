@@ -1,0 +1,21 @@
+[Unit]
+Description=MTA Daphne
+After=network.target
+
+
+[Service]
+Type=simple
+ExecStart=/home/mta/agora/venv/bin/daphne -p 8080 agora.asgi:application
+Restart=on-failure
+User=mta
+Group=mta
+WorkingDirectory=/home/mta/agora/
+
+Environment="DJANGO_SETTINGS_MODULE=agora.development_settings"
+
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=daphne
+
+[Install]
+WantedBy=multi-user.target

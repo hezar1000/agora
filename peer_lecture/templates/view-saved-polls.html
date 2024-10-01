@@ -1,0 +1,247 @@
+{% load static %}
+
+<style>
+    #view-saved-polls {
+        margin: 0 auto;
+        width: 80%;
+        height: 1000px;
+        overflow-y: scroll;
+        opacity: 0;
+    }
+
+    #view-poll {
+        padding: 20px;
+        margin: 20px;
+        border-bottom: 2px solid #ddd;
+    }
+
+    #poll-container {
+        border: 3px solid #ddd;
+        padding: 10px;
+        text-align: center;
+    }
+
+    #poll-data {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #poll-container > div:not(#poll-data) > p {
+        display: inline-block;
+        margin: 10px;
+    }
+
+    #poll-data {
+        border: none !important;
+    }
+
+    #poll-header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    #poll-actions {
+        display: flex;
+        flex-direction: row;
+    }
+
+    #poll-actions div:nth-child(2) {
+        margin-left: 20px;
+        margin-top: 5px;
+    }
+
+    #poll-actions h4 {
+        margin: 0;
+        cursor: pointer;
+    }
+
+    #view-polls-menu {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        margin: 20px auto;
+        width: 80%;
+    }
+
+    #search {
+        margin: 20px auto;
+        width: 80%;
+    }
+
+    @media screen and (max-width: 400px) {
+        #poll-header {
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        #poll-actions div {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #poll-actions button {
+            width: 100%;
+        }
+    }
+
+</style>
+
+{% if not saved_polls %}
+<p>No saved polls yet.</p>
+{% endif %}
+
+{% if saved_polls %}
+<div id="search">
+    <input onkeyup="search(this)" type="text" class="form-control" name="search-poll" placeholder="Search poll...">
+</div>
+{% endif %}
+
+<div id="view-saved-polls">
+
+    {% for poll in saved_polls  %}
+    
+        <form id="view-poll" method="post" onsubmit="return validateForm()">
+            {% csrf_token %}
+            <input type="hidden" name="saved-poll-id" value="{{poll.poll_id}}">
+
+            <div id="poll-header">
+                <div id="poll-title">
+                    <h4>{{ poll.title }}</h4>
+                </div>
+    
+                <div id="poll-actions">
+                    <div>
+                        {% if lecture %}
+                        <input name="id" type="hidden" value='{{lecture.lecture_id}}'>
+                        <button type="submit" class="btn btn-success" name="start-poll">Start</button>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary" name="edit-poll">Edit</button>
+                        <button type="submit" class="btn btn-warning" name="clone-poll">Clone</button>
+                        <button type="submit" class="btn btn-danger" name="delete-poll">Delete</button>
+                    </div>
+
+                    <div id="poll-container-toggle"><h4 class="glyphicon glyphicon glyphicon-plus"></h4></div>
+                </div>
+    
+            </div>
+
+            <div id="poll-container">
+                <div id="poll-data">{{ poll.poll_data|safe }}</div>
+
+                <hr style="border-width: 2px;">
+
+                <div>
+                    {% for answer in poll.answer_options %}
+                        <p {% if answer == poll.answer %} style="font-weight: bold;" {% endif %}>{{ answer }}</p>
+                    {% endfor %}
+
+                    <p {% if poll.answer == "None" %} style="font-weight: bold;" {% endif %}>None</p>
+                </div>
+                
+                <div>
+                    <p {% if poll.dont_save_answer %} style="font-weight: bold;" {% endif %}>Save only Participation</p>
+                    <p {% if not poll.dont_save_answer %} style="font-weight: bold;" {% endif %}>Save Participation and Answer</p>
+                </div>
+            </div>
+
+        </form>
+
+    
+    {% endfor %}
+
+</div>
+
+
+<script>
+
+    window.addEventListener('DOMContentLoaded', (event) => {
+        // Wait for the DOM to be fully loaded
+        const pollContainers = document.querySelectorAll('#poll-container');
+        
+        // Hide all poll containers initially
+        pollContainers.forEach((container) => {
+            container.style.display = 'none';
+        });
+
+        document.querySelector('#view-saved-polls').style.opacity = '1';
+    });
+
+    function validateForm() {
+        if (event.submitter.name === 'delete-poll') return confirm('Are you sure you want to delete this poll?');
+        
+        return true;
+    }
+
+    function togglePollContainer(event) {
+        const pollContainer = this.closest('#view-poll').querySelector('#poll-container');
+        const arrowIcon = this.querySelector('h4.glyphicon');
+
+        if (pollContainer.style.display === 'none' || pollContainer.style.display === '') {
+            pollContainer.style.display = 'block';
+            arrowIcon.classList.remove('glyphicon-plus');
+            arrowIcon.classList.add('glyphicon-minus');
+        } else {
+            pollContainer.style.display = 'none';
+            arrowIcon.classList.remove('glyphicon-minus');
+            arrowIcon.classList.add('glyphicon-plus');
+        }
+    }
+
+    // Add click event listeners to the toggle elements
+    const toggleElements = document.querySelectorAll('#poll-container-toggle, #poll-title, #poll-header');
+    toggleElements.forEach(element => {
+        element.addEventListener('click', function (event) {
+            if (element.id === 'poll-container-toggle') {
+                // Prevent the event from bubbling up to the #poll-title and #poll-header elements
+                event.stopPropagation();
+            }
+
+            if (event.target.closest('button')) {
+                return;
+            }
+
+            togglePollContainer.call(this, event);
+        });
+    });
+
+    const search = (e) => {
+        const search = e.value.toLowerCase();
+        const polls = document.querySelectorAll('#view-poll');
+
+        polls.forEach(poll => {
+            const title = poll.querySelector('#poll-title h4').textContent.toLowerCase();
+            if (title.indexOf(search) != -1) {
+                poll.style.display = 'block';
+            } else {
+                poll.style.display = 'none';
+            }
+        });
+    }
+    
+    // for each .view-poll-data in the document, create a quill editor
+    document.querySelectorAll('#poll-data').forEach(editorContainer => {
+        let quill = new Quill(editorContainer, {
+            theme: 'snow',
+            readOnly: true,
+        });
+
+        quill.getModule('toolbar').container.style.display = 'none';
+
+        const setEditorHeight = () => {
+            quill.root.style.height = 'auto'; // Reset height to auto to calculate the actual height
+            const contentHeight = quill.root.offsetHeight;
+            editorContainer.style.height = contentHeight + 'px';
+        }
+
+        setEditorHeight();
+
+        quill.root.querySelectorAll('img').forEach(img => {
+            img.addEventListener('load', setEditorHeight);
+        });
+    });
+</script>

@@ -1,0 +1,163 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+  <div class="row col-md-offset-1">
+
+    {% if has_visible_course %}
+      <div class="col-md-5">
+        <div class="page-header">
+          <h2>Choose a course</h2>
+        </div>
+
+        {% if courses_as_instructor and length == 0 %}
+          <h3>Create a new course to continue.</h3>
+        {% elif courses_as_instructor %}
+          <!--<h3>I am an instructor in the following courses:</h3>-->
+          <!--<h3>Please choose a course to continue</h3>-->
+
+          <div class="list-group">
+            <li class="list-group-item disabled"> Courses enrolled as an Instructor </li>
+            {% for cm in courses_as_instructor %}
+              <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
+                <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
+                {% if not cm.course.browsable %}
+                  <p class="list-group-item-text citem-text">
+                      (Hidden from students)
+                  </p>
+                {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+
+          <!--
+          <div class="list-group col-md-6">
+          {% for cm in courses_as_instructor %}
+              <div class="list-group-item">
+                <a class="col-md-8" href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}">{{ cm.course.displayname }}
+                {% if cm.course.browsable %}
+                  (Visible to students)
+                {% else %}
+                  (Hidden from students)
+                {% endif %}
+                </a>
+
+                {% if cm.course.browsable %}
+                  <a href="/course/{{ cm.course.id }}/modify/?action=hide">Hide</a>
+                {% else %}
+                  <a href="/course/{{ cm.course.id }}/modify/?action=show">Show</a>
+                {% endif %} 
+
+              </div>
+          {% endfor %}
+          </div>
+          -->
+      {% endif %}
+
+      {% if courses_as_ta and length == 0 %}
+          <h3>No course is availble right now. Come back later.</h3>
+      {% elif courses_as_ta %}
+          <!--<h3>Please choose a course to continue</h3>-->
+          <div class="list-group">
+            <li class="list-group-item disabled"> Courses enrolled as a TA </li>
+            {% for cm in courses_as_ta %}
+            <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
+              <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
+              {% if not cm.course.browsable %}
+                <p class="list-group-item-text citem-text">
+                    (Hidden from students)
+                </p>
+              {% endif %}
+            </a>
+            {% endfor %}
+          </div>
+      {% endif %}
+
+      {% if courses_as_student and length == 0 %}
+          <h3>No course is availble right now. Come back later.</h3>
+      {% elif courses_as_student %}
+          <!--<h3>I am a student in the following courses:</h3>-->
+          <!--<h3>Please choose a course to continue</h3>-->
+
+          <div class="list-group">
+            <li class="list-group-item disabled"> Courses enrolled as a Student </li>
+            {% for cm in courses_as_student %}
+              <a class="list-group-item" href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}">
+                <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
+              </a>
+            {% endfor %}
+          </div>
+
+      {% endif %}
+
+      {% if request.user.is_superuser %}
+        {% if courses|length == 0 %}
+        no courses
+        {% else %}
+          <div class="list-group">
+            {% for course in courses %}
+            <a href="{% url 'course:view' cid=course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
+              <h4 class="list-group-item-heading citem-heading">{{ course.displayname }}</h4>
+              {% if not course.browsable %}
+                <p class="list-group-item-text citem-text">
+                    (Hidden from students)
+                </p>
+              {% endif %}
+            </a>
+          {% endfor %}
+          </div>
+        {% endif %}
+      {% endif %}
+      </div>
+    {% endif %}
+
+  <div class="col-sm-12 col-md-5">
+  
+    {% if request.user.is_superuser %}
+
+    <div class="page-header">
+      <h2>Create a course</h2>
+    </div>
+    
+    <form method="post" action="/course/create/">
+      {% csrf_token %}
+      
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Course name </span>
+        <input type="text" class="form-control" placeholder="e.g. CPSC121 {% now 'Y' %}W1" name="cname" aria-describedby="basic-addon1">
+
+        <span class="input-group-btn">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </span>
+
+      </div>
+    </form>
+
+    {% else %}
+
+    <div class="page-header">
+      <h2>Enroll in a course</h2>
+    </div>
+
+    <form method="post" action="/course/enroll/">
+      {% csrf_token %}
+
+      <div class="input-group">
+        <span class="input-group-addon" id="basic-addon1">Enrollment code </span>
+        <input type="text" class="form-control" placeholder="e.g. 555x555x" name="coursecode" aria-describedby="basic-addon1">
+
+        <span class="input-group-btn">
+          <button type="submit" class="btn btn-primary">Enroll</button>
+        </span>
+
+      </div>
+    </form>
+
+    {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

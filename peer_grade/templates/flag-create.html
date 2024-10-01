@@ -1,0 +1,22 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+{% load field_utils %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-8 col-md-offset-2">
+                <h2 class="page-header">Flag review as inappropriate</h2>
+        
+                <form action="{{ request.path }}" method="post">
+                    {% form_default_fields form %}
+
+                    <input type="submit" class="btn btn-primary" value="Submit"
+                        data-toggle="confirmation"
+                        data-content="The review will be taken down!"
+                        data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove">
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}

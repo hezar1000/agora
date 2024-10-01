@@ -1,0 +1,888 @@
+<!-- root -->
+<!-- participation dashboard for a course -->
+
+{% extends "base.html" %}
+
+{% block content %}
+{% load submission_status %}
+{% load submission_button %}
+{% load static %}
+
+<!-- <script src="{% static 'js/iframe-resizer/iframeResizer.min.js' %}"></script>
+
+<script>
+  function resizeIframe(obj) {
+    obj.style.height = "0";
+    obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+  }
+</script>
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Create two equal columns that floats next to each other */
+  .column {
+    float: left;
+    width: 33%;
+    padding: 1px 0.2px 1px 11.9px;
+    /* border: 0.1px solid rgb(181, 176, 176); */
+  }
+
+  /* Clear floats after the columns */
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+
+  /* Style for the popup */
+  .popup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+      z-index: 999;
+    }
+
+    input[type="date"] {
+        appearance: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px;
+        color: #333;
+        background-color: #fff;
+        font-size: 16px;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        color: #999;
+    }
+
+</style> -->
+
+<div class="container-fluid">
+
+  <div class="row">
+    <div class="col-xs-10 col-sm-10 col-md-12 col-xs-offset-0.1 col-md-offset-0.1 col-sm-offset-0.1" style="margin: 0.1px;">
+      <div class="mta-header-with-btn">
+      <div> <h2>{{ course.displayname }}</h2> </div>
+        
+      {% if is_instructor or is_ta or request.user.is_superuser %}
+        <div class="btn-group">
+          {% if is_instructor or request.user.is_superuser %}
+            <form class="btn-group" method="post">
+              {% csrf_token %}
+      
+              <!-- {% if lecture %}
+              <button class="btn btn-danger " name="end-lecture">End Lecture</button>
+              {% else %}
+              <button class="btn btn-success " name="begin-lecture">Start Lecture</button>
+              {% endif %} -->
+            </form>
+          {% endif %}
+
+          <a class="btn btn-info " href="/course/{{ course.id }}/list_users/">
+            <span class="glyphicon glyphicon-user"></span> Display Users
+          </a>
+
+          {% if not is_ta %}
+
+            <a class="btn btn-primary " href="/course/{{ course.id }}/edit/">
+              <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
+            </a>
+            <div class="btn-group" style="padding: 0; margin: 0">
+              <a class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <span class="glyphicon glyphicon-save"></span> Export <span class="caret"></span>
+              </a>
+              <ul class="dropdown-menu">
+                <li><a href="/course/{{ course.id }}/export_daily_participation_data/">Discussion Participation Today</a></li>
+                <li onclick="openExportPopup('polls')"><a style="cursor: pointer;">Poll Participation per Day</a></li>
+                <li onclick="openExportPopup('messages')"><a style="cursor: pointer;">Messages per Day</a></li>
+                <!-- <li><a href="/course/{{ course.id }}/export_message_data/?date=true">Messages Per Day</a></li> -->
+                <hr>
+                <li><a href="/course/{{ course.id }}/export_participation_data/">All Discussion Participation</a></li>
+                <li><a href="/course/{{ course.id }}/export_poll_participation_data/">All Poll Participation</a></li>
+                <li><a href="/course/{{ course.id }}/export_message_data/">All Messages</a></li>
+              </ul>
+            </div>
+
+          {% endif %}
+        </div>
+      {%else%}
+        <div>
+          <!-- You currently have <span style="color: green">{{green_points}}</span> points from the <span style="color: green">Green</span>, <span style="color: blue">{{blue_points}}</span> points from the <span style="color: blue">Blue</span>, and <span style="color: red">{{red_points}}</span> points from the <span style="color: red">Red</span> lists. -->
+          <!-- You have gained <span id='daily_points' style="color: blue">{{total_points_today}}</span> new participation points today. -->
+          <!-- You currently have <span id = 'total_points' style="color: blue">{{total_points}}</span> total participation points. -->
+          {% if course.enable_independent_pool %}
+            <p>
+              Your current review status is 
+              {% if is_independent %}
+              <span style="color: blue">Independent</span>
+              {% else %} 
+              <span style="color: red">Supervised</span>
+              {% endif %} </br>
+              Our realistic estimate of your dependability score is
+              <span style="color: blue">  {{dependability_mean}}  </span> </br>
+              Our pessimistic estimate of your dependability score is <span style="color: blue">  {{dependability_min}} </span> </br>
+        
+            {% if coursemember.is_independent == False%}
+            <span style="color: red"> You should do at least 3 calibrations before the next essay deadline. </span> </br>
+            {%endif%}
+            <!-- {% if coursemember.qualified == False%}
+            <span style="color: red"> You have not gotten full mark on this week's quiz yet. </span> </br> -->
+          
+            <!-- {%endif%} -->
+            <!-- You currently have <span style="color: blue">{{coursemember.participation_points}} </span> weekly new points and <span style="color: blue">{{coursemember.regular_points}}</span> regular points. -->
+          </p>
+
+            <!-- In today's class, you have gained <span id='daily_points' style="color: blue">{{total_points_today}}</span> +
+            <span id='daily_bonus' style="color: blue">{{total_points_bonus}}</span> bonus participations points so far.
+          {%else%}
+          In today's class, you have gained <span id='daily_points' style="color: blue">{{total_points_today}}</span> +
+          <span id='daily_bonus' style="color: blue">{{total_points_bonus}}</span> bonus participations points so far. -->
+            <!-- {%endif%} -->
+
+        </div>
+      {%endif%}
+      </div>
+
+
+      <!-- <div id="export-popup" class="popup">
+        <input type="date" id="datePicker">
+        <button class="btn btn-primary">OK</button>
+        <button class="btn btn-danger" onclick="closeExportPopup()">Cancel</button>
+      </div> -->
+
+      <script>
+        function openExportPopup(type) {
+          document.getElementById('export-popup').getElementsByTagName('button')[0].onclick = function() { getValue(type) };
+
+          const popup = document.getElementById('export-popup');
+          const today = new Date();
+          const dd = String(today.getDate()).padStart(2, '0');
+          const mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+          const yyyy = today.getFullYear();
+
+          const todayStr = yyyy + '-' + mm + '-' + dd;
+          document.getElementById('datePicker').value = todayStr;
+
+          popup.style.display = 'block';
+        }
+
+        function closeExportPopup() {
+          const popup = document.getElementById('export-popup');
+          popup.style.display = 'none';
+        }
+
+        function getValue(type) {
+          const selectedDate = document.getElementById('datePicker').value;
+          
+          if (type == 'polls') {
+            window.location.href = `/course/{{ course.id }}/export_poll_participation_data/?date=${selectedDate}`;
+          } else if (type == 'messages') {
+            window.location.href = `/course/{{ course.id }}/export_message_data/?date=${selectedDate}`;
+          }
+
+
+          closeExportPopup()
+        }
+      </script>
+
+      <style>
+        .btn-xl {
+          padding: 10px 20px;
+          font-size: 16px;
+          border-radius: 10px;
+          width: 300px;
+        }
+      </style>
+
+
+      <!-- {% if is_student %}
+      <div class="thumbnail" style="text-align: center;">
+        <div class="row">
+          <div class="col-md-7">
+            <button class="btn btn-success btn-xl" id="hand_up">
+              <span class="glyphicon glyphicon-hand-up"></span> Hand up in the Green list
+            </button>
+            <button class="btn btn-success btn-xl" id='hand_down'>
+              <span class="glyphicon glyphicon-hand-down"></span> Hand down in the Green list
+            </button>
+          </div>
+          <div class="col-md-5">
+            <h4 id="student_green"></h4>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-7">
+            <button class="btn btn-primary btn-xl" id="hand_up_blue">
+              <span class="glyphicon glyphicon-hand-up"></span> Hand up in the Blue list
+            </button>
+            <button class="btn btn-primary btn-xl" id='hand_down_blue'>
+              <span class="glyphicon glyphicon-hand-down"></span> Hand down in the Blue list
+            </button>
+          </div>
+          <div class="col-md-5">
+            <h4 id="student_blue"></h4>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-7">
+            <button class="btn btn-danger btn-xl" id="hand_up_red">
+              <span class="glyphicon glyphicon-hand-up"></span> Hand up in the Red list
+            </button>
+            <button class="btn btn-danger btn-xl" id='hand_down_red'>
+              <span class="glyphicon glyphicon-hand-down"></span> Hand down in the Red list
+            </button>
+          </div>
+          <div class="col-md-5">
+            <h4 id="student_red"></h4>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-7">
+            <button class="btn btn-warning btn-xl" id="hand_up_yellow">
+              <span class="glyphicon glyphicon-hand-up"></span> Hand up in the Yellow list
+            </button>
+            <button class="btn btn-warning btn-xl" id='hand_down_yellow'>
+              <span class="glyphicon glyphicon-hand-down"></span> Hand down in the Yellow list
+            </button>
+          </div>
+          <div class="col-md-5">
+            <h4 id="student_yellow"></h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-8">
+          <iframe id="polling-student" scrolling="no" onload="resizeIframe(this)"  src="/polling/student" width="100%" frameborder="0"></iframe>
+        </div>
+        
+        <div class="col-md-4">
+          <h3>Message Board</h3>
+          <iframe id="message-student" src="/message/student" width="100%" height="400px" frameborder="0"></iframe>
+        </div>
+      </div>
+
+      <script>
+        iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-student')
+      </script>
+
+      <h4>Note: when your hand is up in any of the lists, it will go down automatically if you were chosen to speak in
+        class or if all hands were cleared by the instructor.</h4>
+ -->
+
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_up")
+        btn.addEventListener("click", function () {
+          $.ajax({
+            url: '/enable/',
+            method: 'GET',
+            success: function (data) {
+              console.log(data)
+              document.getElementById("student_green").innerHTML = data['hand'];
+            }
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_up_blue")
+        btn.addEventListener("click", function () {
+          $.ajax({
+            url: '/enable_blue/',
+            method: 'GET',
+            success: function (data) {
+              console.log(data)
+              document.getElementById("student_blue").innerHTML = data['hand'];
+            }
+          });
+        });
+      </script>
+
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_up_red")
+        btn.addEventListener("click", function () {
+          $.ajax({
+            url: '/enable_red/',
+            method: 'GET',
+            success: function (data) {
+              console.log(data)
+              document.getElementById("student_red").innerHTML = data['hand'];
+            }
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_up_yellow")
+        btn.addEventListener("click", function () {
+          $.ajax({
+            url: '/enable_yellow/',
+            method: 'GET',
+            success: function (data) {
+              console.log(data)
+              document.getElementById("student_yellow").innerHTML = data['hand'];
+            }
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var statusIntervalId = window.setInterval(update, 1000);
+        function update() {
+          $.ajax({
+            url: '/check_status/',
+            method: 'GET',
+            success: function (data) {
+              console.log(data)
+              if (data['disbale_green']) {
+                document.getElementById("hand_up").disabled = true
+                document.getElementById("hand_down").disabled = true
+                document.getElementById("student_green").innerHTML = ''
+              } else {
+                document.getElementById("hand_up").disabled = false
+                document.getElementById("hand_down").disabled = false
+                document.getElementById("student_green").innerHTML = data['status_green'];
+              }
+
+              if (data['disbale_blue']) {
+                document.getElementById("hand_up_blue").disabled = true
+                document.getElementById("hand_down_blue").disabled = true
+                document.getElementById("student_blue").innerHTML = ''
+              } else {
+                document.getElementById("hand_up_blue").disabled = false
+                document.getElementById("hand_down_blue").disabled = false
+                document.getElementById("student_blue").innerHTML = data['status_blue'];
+              }
+
+              if (data['disbale_red']) {
+                document.getElementById("hand_up_red").disabled = true
+                document.getElementById("hand_down_red").disabled = true
+                document.getElementById("student_red").innerHTML = ''
+              } else {
+                document.getElementById("hand_up_red").disabled = false
+                document.getElementById("hand_down_red").disabled = false
+                document.getElementById("student_red").innerHTML = data['status_red'];
+              }
+
+              if (data['disbale_yellow']) {
+                document.getElementById("hand_up_yellow").disabled = true
+                document.getElementById("hand_down_yellow").disabled = true
+                document.getElementById("student_yellow").innerHTML = ''
+              } else {
+                document.getElementById("hand_up_yellow").disabled = false
+                document.getElementById("hand_down_yellow").disabled = false
+                document.getElementById("student_yellow").innerHTML = data['status_yellow'];
+              }
+
+
+              // document.getElementById("student_blue").innerHTML = data['status_blue'];
+              // document.getElementById("student_red").innerHTML = data['status_red'];
+              // document.getElementById("student_yellow").innerHTML = data['status_yellow'];
+              document.getElementById("daily_points").innerHTML = data['total_points_today'];
+              document.getElementById("daily_bonus").innerHTML = data['total_bonus_points'];
+              // document.getElementById("total_points").innerHTML = data['total_points'];
+            }
+          });
+        }
+      </script>
+
+
+
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_down")
+        btn.addEventListener("click", function () {
+          document.getElementById("student_green").innerHTML = 'Your hand is down in the Green list.'
+          $.ajax({
+            url: '/disable/',
+            method: 'GET',
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_down_blue")
+        btn.addEventListener("click", function () {
+          document.getElementById("student_blue").innerHTML = 'Your hand is down in the Blue list.'
+          $.ajax({
+            url: '/disable_blue/',
+            method: 'GET',
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_down_red")
+        btn.addEventListener("click", function () {
+          document.getElementById("student_red").innerHTML = 'Your hand is down in the Red list.'
+          $.ajax({
+            url: '/disable_red/',
+            method: 'GET',
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("hand_down_yellow")
+        btn.addEventListener("click", function () {
+          document.getElementById("student_yellow").innerHTML = 'Your hand is down in the Yellow list.'
+          $.ajax({
+            url: '/disable_yellow/',
+            method: 'GET',
+          });
+        });
+      </script>
+
+      {%endif%}
+
+  <!-- here -->
+
+
+      <!-- {% if is_instructor or request.user.is_superuser %}
+      <div class="thumbnail">
+        <div class="caption">
+          <div class="row">
+            <div class="col-md6 col-sm-12">
+              <dl class="dl-horizontal" style="margin-bottom:0">
+                <dt> # Students:</dt>
+                <dd><code>{{num_students}}</code></dd>
+                {% if course.enable_independent_pool %}
+                <dt> # Supervised:</dt>
+                <dd><code>{{num_supervised}}</code></dd>
+                <dt> # Independent:</dt>
+                <dd><code>{{num_independent}}</code></dd>
+                {% endif %}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%endif%} -->
+
+
+
+      {% if is_ta %}
+      <div class="thumbnail">
+        <div class="caption">
+          <div class="row">
+            <div class="col-md-8">
+              <iframe id="polling-student" scrolling="no" onload="resizeIframe(this)"  src="/polling/student" width="100%" frameborder="0"></iframe>
+            </div>
+            
+            <div class="col-md-4">
+              <h3>Message Board</h3>
+              <iframe id="message-instructor" src="/message/instructor" width="100%" height="400px" frameborder="0"></iframe>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="thumbnail">
+        <div class="caption">
+          <!-- <h3>Students</h3> -->
+          <div class="row">
+            <div class="col-md12 col-sm-10">
+              <dl class="dl-horizontal" style="margin-bottom:0">
+                <dt> Total #TA reviews:</dt>
+                <dd><code>{{total_reviews}}</code></dd>
+                <dt> My total #reviews: </dt>
+                <dd><code>{{user_total_reviews}}</code></dd>
+                <dt> #Time Spent [hh:mm:ss]:</dt>
+                <dd><code>{{timer}}</code></dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-success btn-ms" id="start_timer">
+          <span class="glyphicon glyphicon-user"></span> Start Timer
+        </button>
+        <button class="btn btn-danger btn-ms" id="stop_timer">
+          <span class="glyphicon glyphicon-user"></span> Stop Timer
+        </button>
+      </div>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("start_timer")
+        btn.addEventListener("click", function () {
+          if (!confirm('You are about to start you timer. Are you sure?')) {
+            e.preventDefault();
+          }
+          $.ajax({
+            url: '/start_timer/',
+            method: 'GET',
+            success: function (data) {
+              alert(data['response']);
+            }
+          });
+        });
+      </script>
+
+      <script type="text/javascript">
+        var btn = document.getElementById("stop_timer")
+        btn.addEventListener("click", function () {
+          if (!confirm('You are about to stop your timer. Are you sure?')) {
+            e.preventDefault();
+          }
+          $.ajax({
+            url: '/stop_timer/',
+            method: 'GET',
+            success: function (data) {
+              alert(data['response']);
+            }
+          });
+        });
+      </script>
+
+
+      {%endif%}
+
+      <div>
+        {% if is_ta %}
+        <a class="btn btn-primary" href="/review/{{ course.id }}/request_next/"> <span
+            class="glyphicon glyphicon-pencil"></span> Request the next submission to review</a>
+        {% endif %}
+        </br>
+      </div>
+
+      <!-- <h2 class="page-header">Dashboard</h2> -->
+
+      <!-- <div class="thumbnail">
+        <div class="caption">
+          <h3>General course information</h3>
+          
+          <div class="row">
+            <div class="col-md-6 col-sm-12">
+          
+              <dl class="dl-horizontal">
+                <dt>Display Name</dt>
+                <dd>{{ course.displayname }}</dd>
+
+                
+                {% if not request.user.is_superuser %}
+                <dt>My role</dt>
+                <dd>{{ coursemember.role | title }}</dd>
+                {% endif %}
+               
+
+                <dt>Student code</dt>
+                <dd><code>{{ course.stucode }}</code></dd>
+                
+                {% if is_instructor or is_ta or request.user.is_superuser %}
+   
+                <dt>Instructor code</dt>
+                <dd><code>{{ course.instructor_code }}</code></dd>
+            
+                <dt>TA code</dt>
+                <dd><code>{{ course.tascode }}</code></dd>
+
+                <dt>Visible to students</dt>
+                <dd>{{ course.browsable }}</dd>
+            
+                <dt>Archived</dt>
+                <dd>{{ course.archived }}</dd>
+            
+                {% endif %}
+            
+              </dl>
+            </div>
+          
+            <div class="col-md-6 col-sm-12">   
+          
+              {% if is_instructor or is_ta or request.user.is_superuser %}
+ 
+              <div class="btn-group-vertical btn-group-veritcal-justified" role="group" aria-label="...">
+                {% if not is_ta %}
+                  <a class="btn btn-primary" href="/course/{{ course.id }}/edit/">
+                    <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
+                  </a>
+                {% endif %}
+                <a class="btn btn-info" href="/course/{{ course.id }}/list_users/">
+                  <span class="glyphicon glyphicon-user"></span> Display Users
+                </a>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div> -->
+
+    </div>
+
+    <div class="col-xs-11 col-sm-11 col-md-12 col-xs-offset-0.5 col-md-offset-0.5 col-sm-offset-0.5" style="padding-top: 0.1px;">
+      <div class="thumbnail">
+        <div class="caption">
+          <h3>Tasks to be completed</h3>
+
+          {% if todos|length == 0 %}
+          <div class="well">No todo items.</div>
+          {% else %}
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Deadline</th>
+                <th>Link</th>
+                <th>Extra</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% load typeof %}
+              {% for todo in todos %}
+              <tr class="{% if todo.deadline_passed %}bg-danger{% endif %}">
+                {% if todo|typeof == "Assignment" %}
+                <td><a href="{% url 'assignment:view' todo.id %}">{{ todo.name }}</a></td>
+                <td> {{ todo.deadline }} {% if todo.deadline_passed %}(passed) {%else%} (Remaning time:
+                  {{todo.time_until_deadline_passed }}){% endif %} </td>
+                <td>
+                  {% submission_create_button todo '' 'Create my submission' %}
+                </td>
+                <td>---</td>
+                {% elif todo|typeof == "ReviewAssignment" and todo.submission.calibration_id == 0%}
+                <td><a href="{% url 'assignment:submission_view' todo.submission.id %}">
+                    Review for {{ todo.submission.assignment.name }}{% if todo.question %}<small> ({{ todo.question.title }})</small>{% endif %}
+                  </a></td>
+                <td>{{ todo.deadline }}{% if todo.deadline_passed %} <strong>(passed)</strong>{%else%} (Remaning time:
+                  {{todo.time_until_deadline_passed }}){% endif %}</td>
+                <td><a href="/review/{{ todo.id }}/create/" target="">Start my review</a></td>
+                <td><a href="/calibration/{{ todo.submission.assignment.id }}/request/" target="">Request
+                    calibration</a></td>
+                {% elif todo|typeof == "ReviewAssignment" and todo.submission.calibration_id != 0 %}
+                <td><a href="{% url 'assignment:submission_view' todo.submission.id %}">Calibration review for {{ todo.submission.assignment.name }}</a></td>
+                <td>---</td>
+                <td><a href="/calibration/{{ todo.id }}/create/" target="">Start my calibration review</a></td>
+                <td>---</td>
+                {% elif todo|typeof == "EvaluationAssignment" %}
+                <td><a href="{% url 'review:view' todo.review.id %}">Review evaluation for {{ todo.review.submission.assignment.name }}</a></td>
+                <td>{{ todo.deadline }}{% if todo.deadline_passed %} <strong>(passed)</strong>{% endif %}</td>
+                <td><a href="/evaluation/{{ todo.id }}/create/" target="">Start my evaluation</a></td>
+                <td>---</td>
+                {% elif todo|typeof == "InaptReport" %}
+                <td>Report for {{ todo.review.submission.assignment.name }}</td>
+                <td>---</td>
+                <td><a href="{% url 'grade:report_view' todo.id %}" target="">Respond to report</a></td>
+                {% else %}
+                <td>Appeal for {{ todo.submission.assignment.name }}</td>
+                <td>---</td>
+                <td><a href="{% url 'grade:appeal_view' todo.id %}" target="">Respond to appeal</a></td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          {% endif %}
+          <!-- <p><a href="/assignment/list_for_course/" class="btn btn-primary" role="button">
+               <span class="glyphicon glyphicon-share-alt" aria-hidden="true"></span> Go to Assignments
+             </a></p>  
+          <p><a href="/review/my_reviews_of_other_submissions/" class="btn btn-primary" role="button">
+            <span class="glyphicon glyphicon-share-alt" aria-hidden="true"></span> Go to Reviews</a></p> -->
+        </div>
+
+      <!-- 
+        {% if not is_instructor %}
+        {% if course.id == 1 or course.id == 25 %}
+        <div>
+            <a href="/calibration/283/request/" target="">Request calibration for Week 1</a> </br>
+            <a href="/calibration/284/request/" target="">Request calibration for Essay 1</a> </br>
+            <a href="/calibration/292/request/" target="">Request calibration for Essay 2</a> </br>
+            <a href="/calibration/294/request/" target="">Request calibration for Essay 3</a> </br>
+            <a href="/calibration/297/request/" target="">Request calibration for Essay 4</a> </br>
+            <a href="/calibration/300/request/" target="">Request calibration for Essay 5</a> </br>
+
+
+      {% endif %}
+      {% endif %}
+
+        </div> -->
+      </div>
+
+
+
+    </div>
+  </div>
+</div>
+
+
+    {%if is_student %}
+
+    <div class="col-xs-11 col-sm-11 col-md-12 col-xs-offset-0.5 col-md-offset-0.5 col-sm-offset-0.5">
+      <div class="thumbnail">
+        <div class="caption">
+      <h3>Grades</h3>
+      <div class="panel panel-default"> 
+
+      {% load tag_review_exists %}
+      {% load deadline_not_passed %}
+      {% load get_pending_reviews %}
+      {% load has_review %}
+      {% load get_my_reviews %}
+    {% if grade_items|length == 0  %}
+    <div class="well">No grades yet.</div>
+    {% else %}
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>My submission</th>
+          <th>Grade</th>
+          <th>Grading Method</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for g_item in grade_items %}
+          <tr>
+            {% if g_item|typeof == "AssignmentSubmission" and g_item.assignment.assignment_type == "text"  %}
+              <td >
+                <a href="/assignment/submission/{{ g_item.id }}/view/" target="">
+                  {{ g_item.assignment.name }}
+                </a>
+              </td>
+              <td>{% submission_status g_item True %}</td>
+              <td >
+                      {{ g_item.final_grading_method }}
+                        </td>
+            {% endif %}
+        {% endfor %}
+                  {% if g_item.evaluation_grade %}
+                    {{ g_item.evaluation_grade | floatformat }} / {{ g_item.max_evaluation_grade }}
+                  {% endif %}
+                </td>
+
+          </tr>
+      </tbody>
+    </table>
+  {% endif %}
+  
+  </div>
+</div>
+</div>
+</div>
+
+  {%endif%}
+
+
+
+
+
+
+  {%if is_instructor or is_ta %}
+  <!-- TAs overview -->
+
+  <div class="col-xs-11 col-sm-11 col-md-12 col-xs-offset-0.5 col-md-offset-0.5 col-sm-offset-0.5" style="padding-top: 0.1px;">
+    <div class="thumbnail">
+      <div class="caption">
+        <h3>Teaching Assistants</h3>
+
+        {% if not course.has_ta %}
+        <div class="well">No TAs assigned to this course yet.</div>
+        {% else %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-6">Name</th>
+              <th class="text-right">
+                # Reviews (pending)
+              </th>
+              <th class="text-right">
+                # Appeals (pending)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ta in ta_stats %}
+            <tr class="">
+              <td>{{ ta.name }}</td>
+              <td
+                class="text-right {% if ta.reviews.late %}bg-danger{% elif ta.reviews.pending %}bg-warning{% endif %}">
+                {% if ta.reviews.late %}<small class="text-muted">(late)&nbsp;&nbsp; </small>{% endif %}
+                {{ta.reviews.total}} ({{ta.reviews.pending}})
+              </td>
+              <td class="text-right">
+                {{ta.appeal.total}} ({{ta.appeal.pending}})
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Assignments overview -->
+  <div class="col-xs-11 col-sm-11 col-md-12 col-xs-offset-0.5 col-md-offset-0.5 col-sm-offset-0.5" style="padding-top: 0.1px;">
+    <div class="thumbnail">
+      <div class="caption">
+        <h3>Assignments</h3>
+
+        {% if not course.has_ta %}
+        <div class="well">No TAs assigned to this course yet.</div>
+        <!-- TODO -->
+        {% else %}
+        <table class="table">
+          <thead>
+            <tr>
+              <th class="col-md-6">Name</th>
+              <th class="text-right">
+                Submissions
+              </th>
+              <th class="text-right">
+                TA Reviews
+              </th>
+              <th class="text-right">
+                Instructor Reviews
+              </th>
+              <th class="text-right">
+                Student Reviews
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for assignment in course.assignment_set.all %}
+            <tr class="">
+              <td>
+                <a href="{% url 'review:assignment_review_list' assignment.id %}">
+                  <strong>{{ assignment.name }}</strong>
+                </a>
+              </td>
+              <td class="text-right">
+                {{ assignment.assignmentsubmission_set.all.count }} <small>/ {{ student_count }}</small>
+              </td>
+              <td class="text-right">
+                {{ assignment.ta_reviews_count }}
+              </td>
+              <td class="text-right">
+                {{ assignment.instructor_reviews_count }}
+              </td>
+              <td class="text-right">
+                {{ assignment.student_reviews_count }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+
+
+  {% endblock %}
+</div>

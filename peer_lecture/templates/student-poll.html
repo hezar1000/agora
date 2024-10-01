@@ -1,0 +1,29 @@
+{% include "base-lecture.html" %}
+
+{% load static %}
+
+{% block content %}
+
+    <script>
+        if (window.location.href.includes('?stop-poll=true')) {
+            // remove query string from url
+            window.history.replaceState({}, document.title, "/polling/student/");
+        }
+    </script>
+
+    <div style="margin: 10px;">
+        {% if poll %}
+        <h3>Polling</h3>
+        {% include "view-poll-student.html" %}
+        {% endif %}
+
+        {% if results %}
+        {% include "view-results.html" %}
+        {% endif %}
+    </div>
+
+    <script>
+        parent.resizeIframe(this.frameElement);
+    </script>
+
+{% endblock %}

@@ -1,0 +1,323 @@
+<style>
+    .ql-pick-window-button::after {
+        content: 'Pick Window';
+        display: inline-block;
+        width: 100px;
+    }
+
+    input[type="date"] {
+        appearance: none;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 6px;
+        color: #333;
+        background-color: #fff;
+        font-size: 16px;
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+        color: #999;
+    }
+
+    fieldset span { font-size: 12px; }
+
+    input[name="poll-title"] {
+        width: 50%
+    }
+
+    @media screen and (max-width: 800px) {
+        input[name="poll-title"] {
+            width: 100%
+        }
+    }
+</style>
+
+<div>
+
+    <form method="post" onsubmit="return checkCreatePollForm()">
+
+        {% csrf_token %}
+
+        <fieldset>
+            <legend>Title</legend>
+            {% if edit_poll %}
+            <input class="form-control" type="text" name="poll-title" value="{{ edit_poll.title }}">
+            {% else %}
+            <input class="form-control" type="text" name="poll-title">
+            {% endif %}
+        </fieldset>
+
+        <fieldset>
+            <input name="id" type="hidden" value='{{lecture.lecture_id}}'>
+            <input name="saved-poll-id" type="hidden" value='{{edit_poll.poll_id}}'>
+            <legend>Poll Display</legend>
+
+            <div id="poll-editor" style="height: 600px;"></div>
+
+            <input type="hidden" id="poll-data" name="poll-data" hidden>
+        </fieldset>
+
+        <fieldset>
+            <legend>Answer</legend>
+            <span>Double click to edit</span>
+
+            <div class="options-container" style="margin-top: 10px;">
+                {% if edit_poll %}
+
+                    {% for answer in edit_poll.answer_options %}
+                    <input type="radio" id="answer{{ forloop.counter }}" name="answer" value="{{ answer }}" {% if answer == edit_poll.answer %} checked {% endif %}>
+                    <label class="btn btn-default" for="answer{{ forloop.counter }}">{{ answer }}</label>
+                    {% endfor %}
+                
+                <input type="radio" id="answerNone" name="answer" value="None" {% if edit_poll.answer == "None" %} checked {% endif %}>
+                <label class="btn btn-default" for="answerNone">None</label>
+                {% else %}
+
+                <input type="radio" id="answer1" name="answer" value="A">
+                <label class="btn btn-default" for="answer1">A</label>
+
+                <input type="radio" id="answer2" name="answer" value="B">
+                <label class="btn btn-default" for="answer2">B</label>
+
+                <input type="radio" id="answer3" name="answer" value="C">
+                <label class="btn btn-default" for="answer3">C</label>
+
+                <input type="radio" id="answerNone" name="answer" value="None" checked>
+                <label class="btn btn-default" for="answerNone">None</label>
+                    
+                {% endif %}
+
+                <div id="add-remove-poll-answers" class="btn-group">
+                    <span onclick="addAnswerOption()" class="btn btn-default glyphicon glyphicon-plus"></span>
+                    <span onclick="removeAnswerOption()" class="btn btn-default glyphicon glyphicon-minus"></span>
+                </div>
+
+                {% if edit_poll %}
+                <!-- hidden inputs to store all the radio button values -->
+                    {% for answer in edit_poll.answer_options %}
+                    <input type="hidden" name="answer-option" value="{{ answer }}">
+                    {% endfor %}
+                {% else %}
+                <!-- hidden inputs to store all the radio button values -->
+                <input type="hidden" name="answer-option" value="A">
+                <input type="hidden" name="answer-option" value="B">
+                <input type="hidden" name="answer-option" value="C">
+                {% endif %}
+                <input type="hidden" name="answer-option" value="None">
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Options</legend>
+
+            <div class="options-container">
+
+                {% if not edit_poll %}
+                <input type="radio" id="optionNotAnom" name="options-anonymity" value="true">
+                <label class="btn btn-default" for="optionNotAnom">Save only Participation</label>
+
+                <input type="radio" id="optionAnom" name="options-anonymity" value="false" checked>
+                <label class="btn btn-default" for="optionAnom">Save Participation and Answer</label>
+                {% else %}
+                <input type="radio" id="optionNotAnom" name="options-anonymity" value="true" {% if edit_poll.dont_save_answer %} checked {% endif %}>
+                <label class="btn btn-default" for="optionNotAnom">Save only Participation</label>
+
+                <input type="radio" id="optionAnom" name="options-anonymity" value="false" {% if not edit_poll.dont_save_answer %} checked {% endif %}>
+                <label class="btn btn-default" for="optionAnom">Save Participation and Answer</label>
+                {% endif %}
+
+            </div>
+        </fieldset>
+
+        {% if lecture and not edit_poll %}
+        <button type="submit" class="btn btn-primary" name="start-poll">Start</button>
+        {% endif %}
+        <button type="submit" class="btn btn-success" name="save-poll">Save</button>
+        <button type="submit" class="btn btn-danger" name="view-create-poll">Cancel</button>
+
+    </form>
+</div>
+
+<script>
+    $(document).ready(function () {
+
+        function addAnswerOption() {
+            var newId = "answer" + ($("input[type=radio][name=answer]").length);
+            var newLabel = $('<label class="btn btn-default" for="' + newId + '">' + newId + '</label>');
+            var newRadioButton = $('<input type="radio" id="' + newId + '" name="answer" value="' + newId + '">');
+
+            newRadioButton.insertBefore("#answerNone"); // Insert before the radio button with name="answerNone"
+            newLabel.insertBefore("#answerNone");
+
+            newLabel.dblclick(function () { editOptionName(this) });
+
+            var answerValues = $("input[name=answer-option]");
+            var newAnswerValue = $('<input type="hidden" name="answer-option" value="' + newId + '">');
+            newAnswerValue.insertBefore(answerValues.last());
+        }
+
+        function removeAnswerOption() {
+            var radioButtons = $("input[type=radio][name=answer]");
+            var labels = $("label[for^=answer]");
+
+            if (radioButtons.length <= 3) return;
+            
+            var secondLastRadioButton = radioButtons.eq(radioButtons.length - 2);
+            var secondLastLabel = labels.eq(labels.length - 2);
+
+            if (secondLastRadioButton.is(":checked")) {
+                var lastRadioButton = radioButtons.last();
+                lastRadioButton.prop("checked", true);
+            }
+
+            secondLastRadioButton.remove();
+            secondLastLabel.remove();
+
+            // remove the hidden input that stores the value of the removed radio button which should be the 2nd last one
+            $("input[name=answer-option]").eq($("input[name=answer-option]").length - 2).remove();
+        }
+
+        $("label.btn").dblclick(function () { editOptionName(this) });
+
+        window.addAnswerOption = addAnswerOption;
+        window.removeAnswerOption = removeAnswerOption;
+
+  });
+
+  function editOptionName (e) {
+        var labelText = $(e).text();
+        var labelName = $(e).attr("for");
+        var radioBtn = $("#" + labelName);
+
+        var hiddenInput = document.getElementsByName("answer-option").item(Array.from(document.getElementsByName("answer-option")).findIndex((e) => e.value == radioBtn.val()));
+
+        if (labelName == "answerNone") return;
+
+        var inputElement = $("<input>")
+            .attr("type", "text")
+            .addClass("edit-label-input")
+            .addClass("form-control")
+            .val(labelText)
+            .css("width", "100px")
+            .css("display", "inline");
+
+        $(e).hide().after(inputElement);
+
+        inputElement.focus();
+
+        inputElement.blur(function () {
+            var newText = $(this).val();
+            $(this).hide().siblings("label[for='" + labelName + "']").text(newText).show();
+            radioBtn.val(newText);
+            hiddenInput.value = newText;
+        });
+
+        inputElement.keypress(function (e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                var newText = $(this).val();
+                $(this).hide().siblings("label[for='" + labelName + "']").text(newText).show();
+                radioBtn.val(newText);
+                hiddenInput.value = newText;
+            }
+        });
+    }
+</script>
+
+<script>
+    const pollEditor = document.getElementById('poll-editor');
+    const pollData = document.getElementById('poll-data')
+
+    const canIRun = navigator.mediaDevices.getDisplayMedia
+
+    let toolbarOptions = [
+        [{ 'size': ['small', false, 'large', 'huge'] }],
+        ['bold', 'italic', 'underline'],
+        ['blockquote', 'code-block'],
+
+        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+        [{ 'indent': '-1'}, { 'indent': '+1' }],
+
+        [ 'link', 'image'],
+        [{ 'align': [] }],
+
+        ['clean'],
+        ['pick-window-button']
+    ];
+
+    let quill = new Quill('#poll-editor', {
+        theme: 'snow',
+        placeholder: 'Enter poll text here...',
+        modules: {
+            toolbar: toolbarOptions,
+            imageResize: {
+                displaySize: true
+            },
+        }
+    });
+
+    // check if {{edit_poll}}, then insert {{ poll.poll_data|safe }} into quill editor
+    {% if edit_poll %}
+    quill.root.innerHTML = `{{ edit_poll.poll_data|safe }}`;
+    {% endif %}
+
+    const toolbar = document.getElementsByClassName('ql-toolbar')[0];
+    const pickWindowButton = toolbar.querySelector('.ql-pick-window-button');
+
+    if (pickWindowButton) {
+        pickWindowButton.addEventListener('click', () => canIRun ? getWindow() : {});
+    }
+
+    const getWindow = async () => {
+    
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: { mediaSource: 'screen' },
+        })
+        // get correct video track
+        const track = stream.getVideoTracks()[0]
+        // init Image Capture and not Video stream
+        const imageCapture = new ImageCapture(track)
+        // take first frame only
+        const bitmap = await imageCapture.grabFrame()
+        // destory video track to prevent more recording / mem leak
+        track.stop()
+
+        const dataURL = await createDataURLFromBitmap(bitmap);
+        const imgTag = `<img src="${dataURL}" />`;
+
+        // append image into quill editor
+        quill.clipboard.dangerouslyPasteHTML(quill.getLength(), imgTag);
+    }
+
+    function createDataURLFromBitmap(bitmap) {
+        const canvas = document.createElement('canvas');
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0, bitmap.width, bitmap.height);
+        
+        dataUrl = canvas.toDataURL('image/jpeg');
+        canvas.remove();
+
+        return dataUrl;
+    }
+</script>
+
+<script>
+    function checkCreatePollForm() {
+        if (event.submitter.name == 'view-create-poll' ||
+            event.submitter.name == 'cancel-create-poll') return true;
+
+        if (document.querySelector('input[name="poll-title"]').value == '') {
+            alert('Please enter a title.');
+            return false;
+        }
+
+        const data = quill.root.innerHTML;
+
+        if (data == '<p><br></p>') pollData.value = '';
+        else pollData.value = data;
+
+        return true;
+    }
+</script>

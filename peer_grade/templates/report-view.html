@@ -1,0 +1,121 @@
+{% extends 'base-review-view.html' %}
+
+{% load submission_view %}
+
+{% block submission_main %}
+    {% submission_view_extra_q request.user model.submission components 'review-view-rubric-answers.html' questions %}
+{% endblock %}
+
+{% block header %}
+    {% load field_utils %}
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h5>
+                Reported Review
+            </h5>
+        </div>
+
+        <div class="panel-body">
+            The following review has been marked as inappropriate for the following reason:
+            <blockquote style="font-size: 10pt; font-style: italic">
+                {{ report.reason }}
+            </blockquote>
+            Please investigate the report and either flag or dimiss it:
+            <div>
+                <a class="btn btn-danger"
+                    href="{% url 'grade:flag_review' model.id %}">
+                    <span class="glyphicon glyphicon-flag"></span>
+                    Flag
+                </a>
+                <a class="btn btn-warning"
+                    href="{% url 'grade:report_dismiss' model.id %}"
+                    data-toggle="confirmation"
+                    data-singleton="true"
+                    data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove">
+                    <span class="glyphicon glyphicon-remove"></span>
+                    Dismiss
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% load static %}
+
+     <script src={% static 'js/timeme.min.js' %}></script>
+    <script type="text/javascript">
+        // Initialize library and start tracking time
+        TimeMe.initialize({
+        currentPageName: "my-home-page", // current page
+        idleTimeoutInSeconds: 30 // seconds
+        });
+        // Retrieve time spent on current page
+        var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+        TimeMe.callAfterTimeElapsedInSeconds(5, function(){
+        console.log("The user has been actively using the page for 5 seconds! Let's prompt them with something.");
+        });
+        var isSafari = /constructor/i.test(window.HTMLElement) || (function (p) { return p.toString() === "[object SafariRemoteNotification]"; })(!window['safari'] || (typeof safari !== 'undefined' && safari.pushNotification));
+        console.log(isSafari);
+        {#var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;#}
+        {#if (iOS){#}
+        TimeMe.setIdleDurationInSeconds(30);
+        {#TimeMe.setCurrentPageName("NAME_OF_THE_PAGE");#}
+        TimeMe.initialize();
+        var isOnIOS = navigator.userAgent.match(/iPad/i) || navigator.userAgent.match(/iPhone/i) || navigator.userAgent.match(/iPod/i);
+        var eventName = isOnIOS ? "pagehide" : "beforeunload";
+        var objappVersion = navigator.appVersion;
+        var browserAgent = navigator.userAgent;
+        var browserName = navigator.appName;
+        var browserVersion = '' + parseFloat(navigator.appVersion);
+        var browserMajorVersion = parseInt(navigator.appVersion, 10);
+        var Offset, OffsetVersion, ix;
+
+        // For Chrome
+        if ((OffsetVersion = browserAgent.indexOf("Chrome")) != -1) {
+            browserName = "Chrome";
+            browserVersion = browserAgent.substring(OffsetVersion + 7);
+        }
+        if (browserName==="Chrome") {
+            console.log(browserName);
+            window.addEventListener(eventName, function (event) {
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.open("POST","{% url 'grade:report_timer' %}", false);
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+            xmlhttp.send("timeSpent=" + timeSpentOnPage) ;
+            var url = window.location.href;
+            var result = timeSpentOnPage +' ' +url;
+            xmlhttp.send(result);
+            console.log(xmlhttp.status);
+            console.log(window.location.href);});
+            window.onbeforeunload = function (event) {
+            xmlhttp=new XMLHttpRequest();
+            xmlhttp.open("POST","{% url 'grade:report_timer' %}", true);
+            console.log('OPENED: ', xmlhttp.status);
+            var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+            var url = window.location.href;
+            var result = timeSpentOnPage +' ' +url;
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            console.log("Time spent on page");
+            console.log(timeSpentOnPage);
+            xmlhttp.send(result);
+            console.log(xmlhttp.status);
+            console.log(window.location.href);}
+        }
+        else
+        {
+        window.onbeforeunload = function (event) {
+        xmlhttp=new XMLHttpRequest();
+        xmlhttp.open("POST","{% url 'grade:report_timer' %}", false);
+        console.log('OPENED: ', xmlhttp.status);
+        var timeSpentOnPage = TimeMe.getTimeOnCurrentPageInSeconds();
+        var url = window.location.href;
+        var result = timeSpentOnPage +' ' +url;
+        xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        console.log("Time spent on page");
+        console.log(timeSpentOnPage);
+        xmlhttp.send(result);
+        console.log(xmlhttp.status);
+        console.log(window.location.href);};}
+    </script>
+{% endblock %}

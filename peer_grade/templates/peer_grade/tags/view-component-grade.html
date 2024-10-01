@@ -1,0 +1,31 @@
+{% if can_see_grade %}
+    <form method="POST" action="{% url 'grade:set_manual_component_grade' component_id %}">
+        {% csrf_token %}
+        <div class="centerflex">
+            <div class=""><strong>Grade:</strong></div>
+            <div class="" style="flex: 1; padding-left: 15px">
+                {% if can_edit %}
+                    <input name="grade" type="number" value="{{ grade }}" min="0" max="{{ max_grade }}" style="max-width:50px"/>
+                {% elif grade_available %}
+                    {{ grade }}
+                {% endif %}
+                {% if can_edit or grade_available %}
+                    / {{ max_grade }}
+                    {% if method %}<small>&nbsp;&nbsp;&nbsp;(Grading method: {{ method }} grading)</small>{% endif %}
+                {% else %}
+                    <div class="mtatooltip" data-toggle="tooltip" data-placement="bottom"
+                        title="Sorry, we are running a bit behind schedule">
+                        Not available
+                    </div>
+                {% endif %}
+            </div>
+            <!-- TODO: warn button + use Ajax (maybe we need delete manual grade button?) -->
+            {% if can_edit %}
+                <button class="btn btn-warning"
+                    data-toggle="confirmation" data-singleton="true" data-placement="left">
+                    Override
+                </button>
+            {% endif %}
+        </div>
+    </form>
+{% endif %}

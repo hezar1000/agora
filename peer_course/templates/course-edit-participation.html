@@ -1,0 +1,44 @@
+{% extends "form_simp_base_participation.html" %}
+
+{% block content %}
+
+<!--
+<a class="btn btn-secondary" href="/course/{{ course.id }}/">Return to the Course Homepage</a>
+-->
+
+<div class="container-fluid">
+  
+<div class="col-md-10 col-md-offset-2">  
+
+    <h2 class="page-header">Edit the Course <!--{{ course.displayname }}--></h2>
+
+    <form method='post' action="/course/{{ course.id }}/edit/">
+        {% csrf_token %}
+
+        {% for field in formCourse %}
+            <div class="form-group row">
+                <div class="col-md-4 col-form-label">
+                    {{ field.label_tag }} 
+                </div>
+                <div class="col-md-4">
+                    {{ field }}
+                </div>
+            </div>
+        {% endfor %}
+
+        <input type="submit" class="btn btn-primary" value="Update Configuration">
+
+    </form> 
+
+              <div class="btn-group" role="group" aria-label="...">
+                {% if course.browsable %}
+                  <a class="btn btn-default" href="/course/{{ course.id }}/modify/?action=hide">Hide the course</a>
+                {% else %}
+                  <a class="btn btn-success" href="/course/{{ course.id }}/modify/?action=show">Show the course</a>
+                {% endif %} 
+              </div>
+
+</div>
+</div>
+
+{% endblock %}

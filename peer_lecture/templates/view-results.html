@@ -1,0 +1,186 @@
+<style>
+    #instructor-canvas-container {
+        width: 60%;
+        height: 60%;
+    }
+
+    #student-canvas-container {
+        width: 80%;
+        height: 80%;
+        margin: 0 auto;
+    }
+
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 5px 0;
+    }
+
+    .bar {
+        background-color: #3498db;
+        color: white;
+        padding: 5px;
+        position: relative;
+    }
+
+    .bar-label,
+    .option-label {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .bar-label {
+        top: -20px;
+        /* Adjust the distance above the bar */
+    }
+
+    .option-label {
+        bottom: -20px;
+        /* Adjust the distance below the bar */
+    }
+
+    {% for option, data in results.items %}
+        .bar.{{option}} {
+            width: {{ data.ratio }}%;
+        }
+    {% endfor %}
+
+    .results-container {
+        display: flex;
+        margin-top: 20px;
+    }
+
+    .results-container span {
+        cursor: pointer;
+        line-height: 70px;
+        margin-right: 20px;
+        font-size: 20px;
+    }
+
+    .results-container span:hover {
+        color: red;
+    }
+</style>
+
+<div class="results-container">
+
+    {% if results %}
+    <div><span onclick="closeResults()" class="glyphicon glyphicon-remove-circle"></span></div>
+    <div><h3>Poll Results
+        {% if course_member.is_instructor %}
+            <a id="download-results" href="" class="btn btn-primary">Download Results</a>
+            <a id="download-graph" href="" class="btn btn-warning">Download Graph</a>
+        {% endif %}
+    </h3></div>
+    {% endif %}
+
+</div>
+
+<script>
+    red = '#FF6666';
+    green = '#66FF66';
+    blue = '#66B2FF';
+
+    parent.resizeIframe(this.frameElement);
+
+    function createPoll(results) {
+        const canvas = document.getElementById('horizontal-bar-chart');
+        if (!canvas) return;
+
+        let myChart;
+
+        if (window.myChart) {
+            myChart = window.myChart;
+            myChart.data.datasets[0].data = Object.values(results.results);
+            myChart.update();
+        } else {
+            const ctx = canvas.getContext('2d');
+            const ans = results.answer;
+            const labels = Object.keys(results.results);
+            const data = Object.values(results.results);
+            const colors = ans === "None" ? blue : labels.map(label => (label === ans ? green : red));
+
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: false,
+                    }
+                }
+            });
+
+            window.myChart = myChart;
+        }
+    }
+
+    let update_poll_runner = () => {
+        console.log('Updating poll');
+
+        $.ajax({
+                type: 'GET',
+                data: {
+                    'update-results': "{{poll.pk}}"
+                },
+                success: function (data) {
+                    const results = JSON.parse(data);
+                    createPoll(results);
+                },
+                error: function (error) {
+                    console.error("Error sending message:", error);
+                  }
+            });
+    }
+</script>
+
+{% if course_member.is_instructor %}
+<div id="instructor-canvas-container">
+    <canvas id="horizontal-bar-chart"></canvas>
+</div>
+{% else %}
+<div id="student-canvas-container">
+    <canvas id="horizontal-bar-chart"></canvas>
+</div>
+{% endif %}
+
+<script>
+    let closeResults = () => window.location.reload();
+
+    {% if results %}
+    const results = JSON.parse('{{ results|safe }}');
+    const poll_id = results.poll_id;
+
+    {% if course_member.is_instructor %}
+    const downloadResults = document.getElementById('download-results');
+    downloadResults.href = `/course/{{ course.id }}/export_poll_participation_data/?poll_id=${poll_id}`;
+
+    const downloadGraph = document.getElementById('download-graph');
+    downloadGraph.addEventListener("click", () => {
+        const canvas = document.getElementById('horizontal-bar-chart');
+        const image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+        downloadGraph.setAttribute("href", image);
+        downloadGraph.setAttribute("download", `poll-${poll_id}.png`);
+    })
+    {% endif %}
+    
+    createPoll(results);
+    {% endif %}
+</script>

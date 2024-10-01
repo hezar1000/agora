@@ -1,0 +1,29 @@
+{% extends "form_simp_base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-8 col-md-offset-2">
+      <h2 class="page-header">Submit an appeal for {{ submission.assignment.name }}</h2>
+      <form action="{% url 'grade:appeal_create' sid=submission.id %}" method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label for="request">Please enter your request below</label>
+          <textarea class="form-control" id="request" name="request"
+            rows="5"
+            minlength="300"
+            maxlength="3000">
+          </textarea>
+        </div>
+
+        <input type="submit" class="btn btn-primary" value="Submit"
+          data-toggle="confirmation"
+          data-content="After submitting an appeal, you can't edit/delete it!">
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

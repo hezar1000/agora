@@ -1,0 +1,61 @@
+{% include "base-lecture.html" %}
+
+{% load static %}
+
+<script>
+    var update_poll;
+
+    if (window.location.href.includes('?stop-poll=true')) {
+        window.history.replaceState({}, document.title, "/polling/instructor/");
+
+        if (update_poll !== undefined) {
+            clearInterval(update_poll);
+        }
+    }
+</script>
+
+<script>
+    parent.resizeIframe(this.frameElement);
+</script>
+
+{% block content %}
+
+    {% if results %}
+    {% include "view-results.html" %}
+    {% endif %}
+
+    {% if not poll %}
+    <form method="post">
+        {% csrf_token %}
+
+        {% if create_poll or view_saved_polls or not lecture %}
+        <h3>Polling</h3>
+        <button type="submit" class="btn {% if create_poll %} btn-primary {% endif %}" name="view-create-poll">Create a Poll</button>
+        <button type="submit" class="btn {% if view_saved_polls %} btn-primary {% endif %}" name="view-saved-polls">View Saved Polls</button>
+        {% elif lecture %}
+            {% if not create_poll or not view_saved_polls %}
+            <h3>Polling</h3>
+            <button type="submit" class="btn btn-primary" name="enable-polling">Start a New Poll</button>
+            {% endif %}
+        {% endif %}
+    </form>
+    {% endif %}
+
+    {% if poll and not results %}
+    {% include "view-poll-instructor.html" %}
+    {% include "view-results.html" %}
+
+    <script>
+        update_poll = setInterval(update_poll_runner, 2000);
+    </script>
+    {% endif %}
+
+    {% if create_poll and not poll %}
+        {% include "create-poll.html" %}
+    {% endif %}
+        
+    {% if view_saved_polls and not poll %}
+        {% include "view-saved-polls.html" %}
+    {% endif %}
+
+{% endblock %}

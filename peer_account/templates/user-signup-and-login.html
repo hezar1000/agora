@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Standard Meta -->
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+
+  <!-- Site Properties -->
+  <title>MTA</title>
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/reset.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/site.css">
+
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/container.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/grid.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/header.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/image.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/menu.css">
+
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/divider.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/segment.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/form.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/input.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/button.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/list.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/message.css">
+  <link rel="stylesheet" type="text/css" href="/static/dist/components/icon.css">
+
+  <script src="/static/js/jquery.min.js"></script>
+  <script src="/static/js/jquery.pjax.js"></script>
+  <script src="/static/dist/components/form.js"></script>
+  <script src="/static/dist/components/transition.js"></script>
+  
+  <style type="text/css">
+    body {
+      background-color: #002145;
+    }
+    body > .grid {
+      height: 100%;
+    }
+    .image {
+      margin: 8px;
+      margin-top: 30px;
+    }
+    .column {
+      max-width: 450px;
+    }
+  </style>
+  <script>
+  $(document)
+    .ready(function() {
+      $('.ui.form')
+        .form({
+          fields: {
+            username: {
+              identifier  : 'username',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your Student/Employee ID'
+                },
+                {
+                  type   : 'regExp[/^[a-zA-Z0-9_.]{2,16}$/]',
+                  prompt : 'Student/Employee ID must be only contain 2-16 characters (lower/upper case, digits, underline, dot)',
+                }
+              ]
+            },
+            email: {
+              identifier  : 'email',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your e-mail'
+                },
+                {
+                  type   : 'email',
+                  prompt : 'Please enter a valid e-mail'
+                }
+              ]
+            },
+            password: {
+              identifier  : 'password',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your password'
+                },
+                {
+                  type   : 'length[6]',
+                  prompt : 'Your password must be at least 6 characters'
+                }
+              ]
+            },
+            'n-password': {
+              identifier  : 'n-password',
+              rules: [
+                {
+                  type    : 'match[password]',
+                  prompt  : "Passwords don't match",
+                }
+              ]
+            },
+            first_name: {
+              identifier  : 'first_name',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your first name'
+                },
+              ]
+            },
+            last_name: {
+              identifier  : 'last_name',
+              rules: [
+                {
+                  type   : 'empty',
+                  prompt : 'Please enter your last name'
+                },
+              ]
+            },
+          }
+        })
+      ;
+    })
+  ;
+  </script>
+</head>
+<body>
+
+  
+<div class="ui middle aligned center aligned grid">
+
+  
+  <div class="column">
+    <!-- <img src="/static/images/ubc-logo-narrow.png" class="ui image"> -->
+    <!-- <h2 class="ui teal image header"></h2> -->
+    
+      <h1 class="ui inverted header" style="font-size:4em">
+        <a href="http://www.cs.ubc.ca/~hzarkoob/MechanicalTA.html" style="color: rgb(255, 255, 255)">Agora</a>
+      </h1>
+
+    {% if is_login %}
+      <form class="ui large form" method="POST" action="{% url 'account:login' %}">
+    {% else %}
+      <form class="ui large form" method="POST" action="{% url 'account:signup' %}">
+    {% endif %}
+      {% csrf_token %}
+      <input type="text" name="next" value="{{ next }}" style="display:none;" >
+
+      <div class="ui stacked segment">
+        {% if user_form.errors %}
+          <div class="ui red message">
+              {% for field, errors in user_form.errors.items %}
+                {% for error in errors %}
+                  {{ error }}
+                  {% if not foorloop.last %}
+                    <br/>
+                  {% endif %}
+                {% endfor %}
+                {% if not foorloop.last %}
+                  <br/>
+                {% endif %}
+              {% endfor %}
+          </div>
+        {% endif %}
+        {% if is_failure %}
+          <div class="ui red message">
+            Invalid Username or Password
+          </div>
+        {% elif is_success %}
+          <div class="ui green message">
+            Welcome to Agora!
+          </div>
+        {% elif is_login %}
+          <div class="ui blue message">
+            <!-- Do not use your UBC Campus Wide Login account. -->
+            Please enter your username and password.
+          </div>
+        {% endif %}
+
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="credit card alternative icon"></i>
+            <input type="text" name="{% if is_login %}stid{% else %}username{% endif %}" placeholder="Agora username">
+          </div>
+        </div>
+        <div class="field">
+          <div class="ui left icon input">
+            <i class="lock icon"></i>
+            <input type="password" name="password" placeholder="Password">
+          </div>
+        </div>
+
+        {% if is_login %}
+          <div class="ui fluid large blue submit button">Login</div>
+        {% else %}
+          <div class="field">
+            <div class="ui left icon input">
+              <i class="repeat icon"></i>
+              <input type="password" name="n-password" placeholder="Re-enter Your Password">
+            </div>
+          </div>
+          <div class="field">
+            <div class="ui left icon input">
+              <i class="mail icon"></i>
+              <input type="text" name="email" placeholder="E-mail address">
+            </div>
+          </div>
+          <div class="field">
+            <div class="ui left icon input">
+              <i class="user icon"></i>
+              <input type="text" name="first_name" placeholder="First name">
+            </div>
+          </div>
+          <div class="field">
+            <div class="ui left icon input">
+              <i class="users icon"></i>
+              <input type="text" name="last_name" placeholder="Last name">
+            </div>
+          </div>
+          <div class="ui fluid large blue submit button">Sign Up</div>
+        {% endif %}
+
+      </div>
+
+      <div class="ui error message"></div>
+
+    </form>
+
+    {% if is_login %}
+      <div class="ui message">
+        New to Agora? <a href="{% url 'account:signup' %}">Sign Up</a>
+      </div>
+    {% else %}
+      <div class="ui message">
+        Already have an account? <a href="{% url 'account:login' %}">Log in</a>
+      </div>
+    {% endif %}
+    
+  </div>
+</div>
+
+</body>
+
+</html>

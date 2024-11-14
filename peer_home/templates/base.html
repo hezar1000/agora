@@ -104,11 +104,6 @@
           {% if request.user.is_superuser %}
             <li><a href="/admin/">Adminstration</a></li>
           {% endif %}
-          <li><a href="/assignment/list_for_course/">
-            {% if 'assignment' in request.resolver_match.namespaces %}<strong>{% endif %}
-              Assignments
-            {% if 'assignment' in request.resolver_match.namespaces %}</strong>{% endif %}
-          </a></li>
           
           <!-- will be redirected to my_reviews if is_student -->
 

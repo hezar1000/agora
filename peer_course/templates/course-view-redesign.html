@@ -264,17 +264,7 @@
             <!-- You currently have <span style="color: green">{{green_points}}</span> points from the <span style="color: green">Green</span>, <span style="color: blue">{{blue_points}}</span> points from the <span style="color: blue">Blue</span>, and <span style="color: red">{{red_points}}</span> points from the <span style="color: red">Red</span> lists. -->
             <!-- You have gained <span id='daily_points' style="color: blue">{{total_points_today}}</span> new participation points today. -->
             <!-- You currently have <span id = 'total_points' style="color: blue">{{total_points}}</span> total participation points. -->
-            {% if course.id == 1 or course.id == 26 or course.id == 27 or course.id == 30 or course.id == 32 %}
             <p style="font-size: medium">
-              Realistic Dependability Estimate: <span style="color: blue; font-weight: bold;"> {{dependability_mean}}
-              </span> </br>
-              Pessimistic Dependability Estimate: <span style="color: blue; font-weight: bold;"> {{dependability_min}}
-              </span> </br>
-
-              {% if coursemember.is_independent == False%}
-              <span style="color: red"> You should do at least 3 calibrations before the next essay deadline. </span>
-              {%endif%}
-
               <!-- {% if coursemember.qualified == False%}
               <span style="color: red"> You have not gotten full mark on this week's quiz yet. </span> </br>
               {%endif%} -->
@@ -284,11 +274,7 @@
               Participation Points:
               <span id='daily_points' style="color: blue; font-weight: bold">{{total_points_today}}</span> +
               <span id='daily_bonus' style="color: blue; font-weight: bold">{{total_points_bonus}}</span> (Bonus) <br>
-              {%else%}
-              Participation Points:
-              <span id='daily_points' style="color: blue; font-weight: bold">{{total_points_today}}</span> +
-              <span id='daily_bonus' style="color: blue; font-weight: bold">{{total_points_bonus}}</span> (Bonus)
-              {%endif%}
+
             </p>
 
           </div>
@@ -1716,57 +1702,25 @@
           </div>
         </div>
 
-
-        <script type="text/javascript">
-          var btn = document.getElementById("start_timer")
-          btn.addEventListener("click", function () {
-            if (!confirm('You are about to start you timer. Are you sure?')) {
-              e.preventDefault();
-            }
-            $.ajax({
-              url: '/start_timer/',
-              method: 'GET',
-              success: function (data) {
-                alert(data['response']);
-              }
-            });
-          });
-        </script>
-
-        <script type="text/javascript">
-          var btn = document.getElementById("stop_timer")
-          btn.addEventListener("click", function () {
-            if (!confirm('You are about to stop your timer. Are you sure?')) {
-              e.preventDefault();
-            }
-            $.ajax({
-              url: '/stop_timer/',
-              method: 'GET',
-              success: function (data) {
-                alert(data['response']);
-              }
-            });
-          });
-        </script>
-
+     
 
         {%endif%}
 
+        </div>
+
+
+        <script>
+          let iframesLoaded = 0;
+          const totalIframes = 2;
+    
+          function iframeLoaded() {
+            iframesLoaded++;
+            if (iframesLoaded === totalIframes) {
+              all_iframes_loaded();
+            }
+          }
+        </script>
+
+        {% endblock %}
+
       </div>
-
-
-    <script>
-      let iframesLoaded = 0;
-      const totalIframes = 2;
-
-      function iframeLoaded() {
-        iframesLoaded++;
-        if (iframesLoaded === totalIframes) {
-          all_iframes_loaded();
-        }
-      }
-    </script>
-
-    {% endblock %}
-
-  </div>

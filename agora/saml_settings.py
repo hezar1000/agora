@@ -29,7 +29,7 @@ QJDZ2JS3t1qx3TV3PlT2hpsuEAEjXBphJNdZ/E6gRCtNAs9WvmucwLXDmJk5HWtr
 aU7Aueo="""
 
 # You probably want to change this for your own server
-SAML_ENTITY_ID = "https://mta.students.cs.ubc.ca/"
+SAML_ENTITY_ID = "https://agora.students.cs.ubc.ca/"
 
 AUTHENTICATION_BACKENDS = [
     "django_saml2_pro_auth.auth.Backend",
@@ -48,7 +48,7 @@ SAML_CONTACTS = {
     "support": {"given_name": "Hedayat Zarkoob", "email_address": "hzarkoob@cs.ubc.ca"},
 }
 
-error_message = """You have successfully logged in but you do not have access to the MTA application.
+error_message = """You have successfully logged in but you do not have access to the agora application.
 <br/>
 Please <strong><a href="%s">logout</a></strong> and login again with an account that contains your <strong>{item}</strong>.
 <br/>
@@ -133,9 +133,9 @@ SAML_PROVIDERS = [
             # You probably want to change this for your own server
             "organization": {
                 "en-US": {
-                    "name": "MTA",
+                    "name": "agora",
                     "displayname": "Agora",
-                    "url": "https://mta.students.cs.ubc.ca/",
+                    "url": "https://agora.students.cs.ubc.ca/",
                 }
             },
             # You probably want to change this for your own server

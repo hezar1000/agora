@@ -8,11 +8,11 @@ export python=python3
 # TODO: you should use your domain name here if you have one
 export server_address=`curl ipecho.net/plain`
 
-dbname="mta_db"
-dbuser="mta"
+dbname="agora_db"
+dbuser="agora"
 # TODO: you should choose a password before continuing
-export dbpass=""
-export linuxuser="mta"
+export dbpass="test"
+export linuxuser="agora"
 
 
 install_postgresql() {
@@ -50,8 +50,8 @@ sudo tee >> /etc/sudoers <<EOF
 ${linuxuser} ALL=(ALL) NOPASSWD:ALL
 EOF
 
-# login as mta
-cp install_user.sh /home/mta
+# login as agora
+cp install_user.sh /home/agora
 cp -r ~/.ssh /home/${linuxuser}
 sudo chown -R ${linuxuser}:${linuxuser} /home/${linuxuser}/
 sudo chmod go-w /home/${linuxuser}/

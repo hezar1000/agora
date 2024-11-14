@@ -31,14 +31,14 @@ sudo chown -R ${linuxuser}:www-data /var/${linuxuser}/
 
 # We don't currently have backups
 # crontab -l | { cat; echo "0 0 * * * /home/${linuxuser}/${linuxuser}/daily_simple_backup.sh"; } | crontab -
-crontab -l | { cat; echo "*/5 * * * * python3 /home/mta/agora/manage.py runcrons >> /var/mta/log/cronjob.log"; } | crontab -
+crontab -l | { cat; echo "*/5 * * * * python3 /home/agora/agora/manage.py runcrons >> /var/agora/log/cronjob.log"; } | crontab -
 
 sudo mkdir -p /etc/uwsgi
 sudo ln -s `pwd`/uwsgi.ini /etc/uwsgi/
 sudo chown -R ${linuxuser}:www-data /etc/uwsgi/
 # sudo openssl dhparam -out /etc/ssl/dhparam.pem 2048
 
-sed -i "s/mta.students.cs.ubc.ca/${server_address}/g" nginx.conf
+sed -i "s/agora.students.cs.ubc.ca/${server_address}/g" nginx.conf
 sed -i "s/%IP%/${server_address}/g" agora/development_settings.py
 sed -i "s/%PASS%/${dbpass}/g" agora/development_settings.py
 sed -i "s/#PROD //g" agora/development_settings.py

@@ -1,6 +1,6 @@
 import requests
 
-host = "https://stg-mta.students.cs.ubc.ca"
+host = "https://stg-agora.students.cs.ubc.ca"
 password = "agoraagora"
 enrollment_code = "08fc044f"
 sessions = {}
@@ -17,7 +17,7 @@ def raise_green_hand(session):
         "X-CSRFToken": csrf_token,
         "Referer": url,
         "Origin": host,
-        "Host": "stg-mta.students.cs.ubc.ca"
+        "Host": "stg-agora.students.cs.ubc.ca"
     }
     
     response = session.post(url, headers=headers)
@@ -38,7 +38,7 @@ def join_course(session):
         "X-CSRFToken": csrf_token,
         "Referer": url,
         "Origin": host,
-        "Host": "stg-mta.students.cs.ubc.ca"
+        "Host": "stg-agora.students.cs.ubc.ca"
     }
     
     data = {
@@ -64,7 +64,7 @@ def login(stid, password):
         "X-CSRFToken": csrf_token,
         "Referer": url,
         "Origin": host,
-        "Host": "stg-mta.students.cs.ubc.ca"
+        "Host": "stg-agora.students.cs.ubc.ca"
     }
 
     data = {
@@ -92,7 +92,7 @@ def add_student(session, username):
         "X-CSRFToken": csrf_token,
         "Referer": url,
         "Origin": host,
-        "Host": "stg-mta.students.cs.ubc.ca"
+        "Host": "stg-agora.students.cs.ubc.ca"
     }
     
     data = {

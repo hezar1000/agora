@@ -4,4 +4,4 @@ git pull
 python3 manage.py migrate
 python3 manage.py collectstatic --no-input
 sudo systemctl restart nginx
-sudo systemctl restart mta_uwsgi
+sudo systemctl restart agora_uwsgi

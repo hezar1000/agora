@@ -28,7 +28,7 @@ def _(environment, **kw):
 
 
 class User(HttpUser, SocketIOUser):
-    host = "https://stg-mta.students.cs.ubc.ca"
+    host = "https://stg-agora.students.cs.ubc.ca"
     # host = "http://localhost:8000"
     wait_time = between(30, 600)
     
@@ -90,7 +90,7 @@ class User(HttpUser, SocketIOUser):
         if not self.user:
             return
 
-        auth_url = f"wss://stg-mta.students.cs.ubc.ca/ws/1/?auth_id={self.user}"
+        auth_url = f"wss://stg-agora.students.cs.ubc.ca/ws/1/?auth_id={self.user}"
         if not self.connected:
             self.connect(auth_url)
 

@@ -1,15 +1,15 @@
 [Unit]
-Description=MTA Daphne
+Description=Agora Daphne
 After=network.target
 
 
 [Service]
 Type=simple
-ExecStart=/home/mta/agora/venv/bin/daphne -p 8080 agora.asgi:application
+ExecStart=/home/agora/agora/venv/bin/daphne -p 8080 agora.asgi:application
 Restart=on-failure
-User=mta
-Group=mta
-WorkingDirectory=/home/mta/agora/
+User=agora
+Group=agora
+WorkingDirectory=/home/agora/agora/
 
 Environment="DJANGO_SETTINGS_MODULE=agora.development_settings"
 

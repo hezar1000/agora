@@ -1,5 +1,5 @@
 [Unit]
-Description=MTA uWSGI
+Description=Agora uWSGI
 After=syslog.target
 
 [Service]

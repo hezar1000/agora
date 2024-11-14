@@ -19,6 +19,7 @@ from peer_course.base import *
 from peer_course.models import CourseMember
 from peer_course.decorators import chosen_course_required
 from peer_home.popup_widgets import PopupUtils
+from .models import GradingItem
 
 
 from .forms import *
@@ -35,8 +36,22 @@ class GradeViews:
     @staticmethod
     @login_required
     @chosen_course_required
-    def show_grade_book():
-        pass
+    def show_grade_book(request):
+        cid = request.session["course_id"]
+        course = Course._default_manager.get(id=cid)
+        request.session["course_id"] = course.id
+        coursemember = CourseBase.get_course_member(request.user, course.id)
+        render_dict=dict()
+        if coursemember.role == 'student':
+            # with open('./vzF3THBgrUoGkqhA.json', 'r') as fp:
+            #     data = json.load(fp)
+            # render_dict["review_grades"] = data[coursemember.user.username]
+            participation_grades = GradingItem.objects.filter(gradee = coursemember, grade_type = 'Participation').order_by('-grading_period')
+            render_dict['participation_grades'] = participation_grades
+            return render(request, "gradebook.html", render_dict) 
+        
+        if coursemember.role == 'instructor':
+            pass
 
     @staticmethod
     @login_required

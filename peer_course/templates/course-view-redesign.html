@@ -231,14 +231,14 @@
               {% endif %}
             </form> -->
 
-            <a class="btn btn-info" href="/course/{{ course.id }}/list_users/">
+            <a class="btn btn-primary" href="/course/{{ course.id }}/list_users/">
               <span class="glyphicon glyphicon-user"></span> Display Users
             </a>
 
             {% if not is_ta %}
-            <a class="btn btn-primary" href="/course/{{ course.id }}/edit/">
+            <!-- <a class="btn btn-primary" href="/course/{{ course.id }}/edit/">
               <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
-            </a>
+            </a> -->
 
             <div class="btn-group" style="padding: 0; margin: 0;">
               <button class="btn btn-warning dropdown-toggle" data-toggle="dropdown" aria-haspopup="true"
@@ -1648,17 +1648,11 @@
           </div>
         </div>
         <div class="thumbnail">
-          <button class="btn btn-danger " id="disqualify_all">
-            <span class="glyphicon glyphicon-erase"></span> Disqualify Everyone
-          </button>
-          <a class="btn btn-warning " href="/course/{{ course.id }}/import_ci/">
-            <span class="glyphicon glyphicon-user"></span> Import Dependability Scores
-          </a>
-          <a class="btn btn-warning " href="/course/{{ course.id }}/export_ci/">
-            <span class="glyphicon glyphicon-user"></span> Export Dependability Scores
-          </a>
           <a class="btn btn-primary " href="/grade/upload_grading_items">
             <span class="glyphicon glyphicon-pencil"></span> Upload Grading Items
+          </a>
+          <a class="btn btn-danger" href="/course/{{ course.id }}/edit/">
+            <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
           </a>
         </div>
 

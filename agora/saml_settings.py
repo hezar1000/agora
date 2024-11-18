@@ -42,8 +42,8 @@ SAML_REDIRECT = "/"
 
 SAML_CONTACTS = {
     "technical": {
-        "given_name": "Farzad Abdolhosseini",
-        "email_address": "farzadab@cs.ubc.ca",
+        "given_name": "Hedayat Zarkoob",
+        "email_address": "hzarkoob@cs.ubc.ca",
     },
     "support": {"given_name": "Hedayat Zarkoob", "email_address": "hzarkoob@cs.ubc.ca"},
 }

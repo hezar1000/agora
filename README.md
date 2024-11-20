@@ -54,6 +54,11 @@ sudo apt install nginx daphne supervisor mysql-server redis
    ```bash
    sudo ln -s $(pwd)/nginx.conf /etc/nginx/sites-enabled/agora_nginx.conf
    ```  
+(or
+   ```bash
+   sudo ln -s $(pwd)/nginx.conf /etc/nginx/conf.d/agora_nginx.conf
+   ``` 
+)
 3. Restart Nginx:  
    ```bash
    sudo systemctl restart nginx

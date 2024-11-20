@@ -143,7 +143,7 @@ sudo apt install nginx daphne supervisor mysql-server redis
    python manage.py collectstatic --noinput
    ```  
 
-### Step 7: Redeploy by:
+### Step 7: Redeploy
    ```bash
    python3 manage.py migrate
    python manage.py collectstatic --noinput

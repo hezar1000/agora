@@ -65,7 +65,6 @@ sudo apt install nginx daphne supervisor mysql-server redis
 
 #### Step 4.2: Configure **Daphne**  
 1. Verify the `daphne.service` file contains correct paths and settings for your application.  
-2. Place `daphne.service` in the appropriate directory:  
 
 #### Step 4.3: Set Up **Supervisor**  
 1. Verify and update paths in the `supervisord.conf` file.  
@@ -152,3 +151,8 @@ sudo apt install nginx daphne supervisor mysql-server redis
    sudo systemctl restart supervisor
    ```  
 
+### Additional Information
+For more information about Agora, feel free to check out our paper:
+
+Agora: Motivating and Measuring Engagement in Large-Class Discussions
+https://dl.acm.org/doi/abs/10.1145/3649217.3653540

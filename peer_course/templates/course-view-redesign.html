@@ -342,326 +342,297 @@
           }
         </script>
 
-{% if is_student %}
+        {% if is_student %}
 
-<div class="row">
-    <div class="col-md-6" style="text-align: center">
-        <button class="btn btn-hand btn-success" id='hand_green'></button>
-        <button class="btn btn-hand btn-primary" id='hand_blue'></button>
-        <button class="btn btn-hand btn-danger" id='hand_red'></button>
-        <button class="btn btn-hand btn-warning" id='hand_yellow'></button>
-        <br>
+        <div class="row">
+          <div class="col-md-6" style="text-align: center">
+            <button class="btn btn-hand btn-success" id='hand_green'></button>
+            <button class="btn btn-hand btn-primary" id='hand_blue'></button>
+            <button class="btn btn-hand btn-danger" id='hand_red'></button>
+            <button class="btn btn-hand btn-warning" id='hand_yellow'></button>
+            <br>
             <h3 id="hand-notif"></h3>
-        </div>
+          </div>
 
-        <div class="col-md-6">
+          <div class="col-md-6">
             <h3>Message Board</h3>
-            <iframe id="message-student" src="/message/student" width="100%" height="400px" onload="iframeLoaded()" frameborder="0"></iframe>
+            <iframe id="message-student" src="/message/student" width="100%" height="400px" onload="iframeLoaded()"
+              frameborder="0"></iframe>
+          </div>
         </div>
-    </div>
 
-    <div class="row">
-        <iframe id="polling-student" scrolling="no" onload="resizeIframe(this); iframeLoaded()" src="/polling/student" width="100%" frameborder="0"></iframe>
-    </div>
+        <div class="row">
+          <iframe id="polling-student" scrolling="no" onload="resizeIframe(this); iframeLoaded()" src="/polling/student"
+            width="100%" frameborder="0"></iframe>
+        </div>
 
-    <script>
-        iFrameResize({
-            heightCalculationMethod: 'documentElementOffset'
-        }, '#polling-student')
-    </script>
+        <script>
+          iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-student')
+        </script>
 
-    <script type="text/javascript">
-        function is_another_hand_up(b) {
-            if (btn_green_up && b != btn_green_up) 
-                return true;
-            
-
-
-            if (btn_blue_up && b != btn_blue_up) 
-                return true;
-            
-
-
-            if (btn_red_up && b != btn_red_up) 
-                return true;
-            
-
-
-            if (btn_yellow_up && b != btn_yellow_up) 
-                return true;
-            
-
+        <script type="text/javascript">
+          function is_another_hand_up(b) {
+            if (btn_green_up && b != btn_green_up) return true;
+            if (btn_blue_up && b != btn_blue_up) return true;
+            if (btn_red_up && b != btn_red_up) return true;
+            if (btn_yellow_up && b != btn_yellow_up) return true;
 
             return false;
-        }
+          }
 
-        let hand_notif = document.getElementById("hand-notif");
+          let hand_notif = document.getElementById("hand-notif");
 
-        document.getElementById("hand_green").addEventListener("click", function () {
+          document.getElementById("hand_green").addEventListener("click", function () {
             if (is_another_hand_up(btn_green_up)) {
-                alert("You cannot raise your hand in more than one list at the same time.");
-                return;
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
             }
 
             let btn = document.getElementById("hand_green");
             let url = ""
 
-            if (btn_green_up) 
-                url = '/disable/';
-             else 
-                url = '/enable/';
-             sendAction(url, 'GET', {}, function (data) {
+            if (btn_green_up) url = '/disable/';
+            else url = '/enable/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
                 if (btn_green_up) {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                    btn_green_up = false;
-                    hand_notif.innerHTML = "";
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_green_up = false;
+                  hand_notif.innerHTML = "";
                 } else {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                    btn_green_up = true;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_green_up = true;
 
-                    hand_notif.style.color = "#198754";
-                    hand_notif.innerHTML = "Hand raised in Green list";
+                  hand_notif.style.color = "#198754";
+                  hand_notif.innerHTML = "Hand raised in Green list";
                 }
+              }
             });
-        });
+          });
 
-        document.getElementById("hand_blue").addEventListener("click", function () {
+          document.getElementById("hand_blue").addEventListener("click", function () {
             if (is_another_hand_up(btn_blue_up)) {
-                alert("You cannot raise your hand in more than one list at the same time.");
-                return;
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
             }
 
             let btn = document.getElementById("hand_blue");
             let url = ""
 
-            if (btn_blue_up) 
-                url = '/disable_blue/';
-             else 
-                url = '/enable_blue/';
-             sendAction(url, 'GET', {}, function (data) {
+            if (btn_blue_up) url = '/disable_blue/';
+            else url = '/enable_blue/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
                 if (btn_blue_up) {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                    btn_blue_up = false;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_blue_up = false;
 
-                    hand_notif.innerHTML = "";
+                  hand_notif.innerHTML = "";
                 } else {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                    btn_blue_up = true;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_blue_up = true;
 
-                    hand_notif.style.color = "#0d6efd";
-                    hand_notif.innerHTML = "Hand raised in Blue list";
+                  hand_notif.style.color = "#0d6efd";
+                  hand_notif.innerHTML = "Hand raised in Blue list";
                 }
+              }
             });
-        });
+          });
 
-        document.getElementById("hand_red").addEventListener("click", function () {
+          document.getElementById("hand_red").addEventListener("click", function () {
             if (is_another_hand_up(btn_red_up)) {
-                alert("You cannot raise your hand in more than one list at the same time.");
-                return;
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
             }
 
             let btn = document.getElementById("hand_red");
             let url = ""
 
-            if (btn_red_up) 
-                url = '/disable_red/';
-             else 
-                url = '/enable_red/';
-             sendAction(url, 'GET', {}, function (data) {
+            if (btn_red_up) url = '/disable_red/';
+            else url = '/enable_red/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                // console.log(btn)
+
                 if (btn_red_up) {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                    btn_red_up = false;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_red_up = false;
 
-                    hand_notif.innerHTML = "";
+                  hand_notif.innerHTML = "";
                 } else {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                    btn_red_up = true;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_red_up = true;
 
-                    hand_notif.style.color = "#dc3545";
-                    hand_notif.innerHTML = "Hand raised in Red list";
+                  hand_notif.style.color = "#dc3545";
+                  hand_notif.innerHTML = "Hand raised in Red list";
                 }
+              }
             });
-        });
+          });
 
-        document.getElementById("hand_yellow").addEventListener("click", function () {
+
+          document.getElementById("hand_yellow").addEventListener("click", function () {
             if (is_another_hand_up(btn_yellow_up)) {
-                alert("You cannot raise your hand in more than one list at the same time.");
-                return;
+              alert("You cannot raise your hand in more than one list at the same time.");
+              return;
             }
 
             let btn = document.getElementById("hand_yellow");
             let url = ""
 
-            if (btn_yellow_up) 
-                url = '/disable_yellow/';
-             else 
-                url = '/enable_yellow/';
-             sendAction(url, 'GET', {}, function (data) {
+            if (btn_yellow_up) url = '/disable_yellow/';
+            else url = '/enable_yellow/';
+
+            $.ajax({
+              url: url,
+              method: 'GET',
+              success: function (data) {
+                // console.log(btn)
+
                 if (btn_yellow_up) {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_yellow_up = false;
+
+                  hand_notif.innerHTML = "";
+                } else {
+                  btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                  btn_yellow_up = true;
+
+                  hand_notif.style.color = "#ffc107";
+                  hand_notif.innerHTML = "Hand raised in Yellow list";
+                }
+              }
+            });
+          });
+
+        </script>
+
+        <script type="text/javascript">
+          window.onload = () => {
+            update();
+          }
+
+          function update() {
+            $.ajax({
+              url: '/check_status/',
+              method: 'GET',
+              success: function (data) {
+                if (data['disbale_green']) {
+                  let hand = document.getElementById("hand_green");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_green_up = false;
+
+                  if (hand_notif.innerHTML.includes("Green")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_green");
+                  hand.disabled = false;
+
+                  if (data['status_green'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_green_up = false;
+                    if (hand_notif.innerHTML.includes("Green")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_green_up = true;
+
+                    hand_notif.style.color = "#198754";
+                    hand_notif.innerHTML = "Hand raised in Green list";
+                  }
+
+                }
+
+                if (data['disbale_blue']) {
+                  let hand = document.getElementById("hand_blue");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_blue_up = false;
+
+                  if (hand_notif.innerHTML.includes("Blue")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_blue");
+                  hand.disabled = false;
+
+                  if (data['status_blue'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_blue_up = false;
+
+                    if (hand_notif.innerHTML.includes("Blue")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_blue_up = true;
+
+                    hand_notif.style.color = "#0d6efd";
+                    hand_notif.innerHTML = "Hand raised in Blue list";
+                  }
+                }
+
+                if (data['disbale_red']) {
+                  let hand = document.getElementById("hand_red");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_red_up = false;
+
+                  if (hand_notif.innerHTML.includes("Red")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_red");
+                  hand.disabled = false;
+
+                  if (data['status_red'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                    btn_red_up = false;
+
+                    if (hand_notif.innerHTML.includes("Red")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    btn_red_up = true;
+
+                    hand_notif.style.color = "#dc3545";
+                    hand_notif.innerHTML = "Hand raised in Red list";
+                  }
+                }
+
+                if (data['disbale_yellow']) {
+                  let hand = document.getElementById("hand_yellow");
+                  hand.disabled = true;
+                  hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
+                  btn_yellow_up = false;
+
+                  if (hand_notif.innerHTML.includes("Yellow")) hand_notif.innerHTML = "";
+                } else {
+                  let hand = document.getElementById("hand_yellow");
+                  hand.disabled = false;
+
+                  if (data['status_yellow'].includes('hand is down')) {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
                     btn_yellow_up = false;
 
-                    hand_notif.innerHTML = "";
-                } else {
-                    btn.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
+                    if (hand_notif.innerHTML.includes("Yellow")) hand_notif.innerHTML = "";
+                  } else {
+                    hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
                     btn_yellow_up = true;
 
                     hand_notif.style.color = "#ffc107";
                     hand_notif.innerHTML = "Hand raised in Yellow list";
+                  }
                 }
+                document.getElementById("daily_points").innerHTML = data['total_points_today'];
+                document.getElementById("daily_bonus").innerHTML = data['total_bonus_points'];
+              }
             });
-        });
-    </script>
+          }
+        </script>
 
-    <script type="text/javascript">
-        window.onload = () => {
-            update();
-        }
-
-        function update() {
-            $.ajax({
-                url: '/check_status/',
-                method: 'GET',
-                success: function (data) {
-                    if (data['disbale_green']) {
-                        let hand = document.getElementById("hand_green");
-                        hand.disabled = true;
-                        hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                        btn_green_up = false;
-
-                        if (hand_notif.innerHTML.includes("Green")) 
-                            hand_notif.innerHTML = "";
-                        
-
-
-                    } else {
-                        let hand = document.getElementById("hand_green");
-                        hand.disabled = false;
-
-                        if (data['status_green'].includes('hand is down')) {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                            btn_green_up = false;
-                            if (hand_notif.innerHTML.includes("Green")) 
-                                hand_notif.innerHTML = "";
-                            
-
-
-                        } else {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                            btn_green_up = true;
-
-                            hand_notif.style.color = "#198754";
-                            hand_notif.innerHTML = "Hand raised in Green list";
-                        }
-
-                    }
-
-                    if (data['disbale_blue']) {
-                        let hand = document.getElementById("hand_blue");
-                        hand.disabled = true;
-                        hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                        btn_blue_up = false;
-
-                        if (hand_notif.innerHTML.includes("Blue")) 
-                            hand_notif.innerHTML = "";
-                        
-
-
-                    } else {
-                        let hand = document.getElementById("hand_blue");
-                        hand.disabled = false;
-
-                        if (data['status_blue'].includes('hand is down')) {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                            btn_blue_up = false;
-
-                            if (hand_notif.innerHTML.includes("Blue")) 
-                                hand_notif.innerHTML = "";
-                            
-
-
-                        } else {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                            btn_blue_up = true;
-
-                            hand_notif.style.color = "#0d6efd";
-                            hand_notif.innerHTML = "Hand raised in Blue list";
-                        }
-                    }
-
-                    if (data['disbale_red']) {
-                        let hand = document.getElementById("hand_red");
-                        hand.disabled = true;
-                        hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                        btn_red_up = false;
-
-                        if (hand_notif.innerHTML.includes("Red")) 
-                            hand_notif.innerHTML = "";
-                        
-
-
-                    } else {
-                        let hand = document.getElementById("hand_red");
-                        hand.disabled = false;
-
-                        if (data['status_red'].includes('hand is down')) {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                            btn_red_up = false;
-
-                            if (hand_notif.innerHTML.includes("Red")) 
-                                hand_notif.innerHTML = "";
-                            
-
-
-                        } else {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                            btn_red_up = true;
-
-                            hand_notif.style.color = "#dc3545";
-                            hand_notif.innerHTML = "Hand raised in Red list";
-                        }
-                    }
-
-                    if (data['disbale_yellow']) {
-                        let hand = document.getElementById("hand_yellow");
-                        hand.disabled = true;
-                        hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                        btn_yellow_up = false;
-
-                        if (hand_notif.innerHTML.includes("Yellow")) 
-                            hand_notif.innerHTML = "";
-                        
-
-
-                    } else {
-                        let hand = document.getElementById("hand_yellow");
-                        hand.disabled = false;
-
-                        if (data['status_yellow'].includes('hand is down')) {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-up"></span>`;
-                            btn_yellow_up = false;
-
-                            if (hand_notif.innerHTML.includes("Yellow")) 
-                                hand_notif.innerHTML = "";
-                            
-
-
-                        } else {
-                            hand.innerHTML = `<span class="glyphicon glyphicon-hand-down"></span>`;
-                            btn_yellow_up = true;
-
-                            hand_notif.style.color = "#ffc107";
-                            hand_notif.innerHTML = "Hand raised in Yellow list";
-                        }
-                    }
-                    document.getElementById("daily_points").innerHTML = data['total_points_today'];
-                    document.getElementById("daily_bonus").innerHTML = data['total_bonus_points'];
-                }
-            });
-        }
-    </script>
-
-{% endif %}
+        {%endif%}
 
         {% if is_instructor or request.user.is_superuser %}
 
@@ -1684,6 +1655,22 @@
             <span class="glyphicon glyphicon-pencil"></span> Edit Configurations
           </a>
         </div>
+
+        <script type="text/javascript">
+          var btn = document.getElementById("disqualify_all")
+          btn.addEventListener("click", function () {
+            if (!confirm('You are about to disqualify every student to do peer reviews. Are you sure?')) {
+              e.preventDefault();
+            }
+            $.ajax({
+              url: '/disqualify_all/',
+              method: 'GET',
+              success: function () {
+                alert("Every student was disqualified to do peer reviews. They can qualify themselves again by finishing their weekly quiz.");
+              }
+            });
+          });
+        </script>
 
 
         {%endif%}

@@ -1656,22 +1656,6 @@
           </a>
         </div>
 
-        <script type="text/javascript">
-          var btn = document.getElementById("disqualify_all")
-          btn.addEventListener("click", function () {
-            if (!confirm('You are about to disqualify every student to do peer reviews. Are you sure?')) {
-              e.preventDefault();
-            }
-            $.ajax({
-              url: '/disqualify_all/',
-              method: 'GET',
-              success: function () {
-                alert("Every student was disqualified to do peer reviews. They can qualify themselves again by finishing their weekly quiz.");
-              }
-            });
-          });
-        </script>
-
 
         {%endif%}
 

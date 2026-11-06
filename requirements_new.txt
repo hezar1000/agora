@@ -23,7 +23,7 @@ python3-saml==1.16.0
 # Agora model/view dependencies
 beautifulsoup4==4.15.0
 django-multiselectfield==1.0.1
-Pillow==12.3.0
+Pillow==13.0.0
 arrow==1.4.0
 numpy==2.4.3
 pandas==3.0.5

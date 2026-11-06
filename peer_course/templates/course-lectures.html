@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "blocks/course-admin-style.html" %}
+<main class="container" id="main-content">
+  <p><a href="{% url 'course:view' cid=course.id %}">{{ course.displayname }}</a></p>
+  <h1>Lectures</h1>
+  {% if sessions %}
+    <table class="table table-striped">
+      <thead>
+        <tr><th scope="col">Date</th><th scope="col">Lecture</th><th scope="col">Attendance</th></tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+          <tr>
+            <td>{{ s.session_date|date:"D j M" }}</td>
+            <td>
+              <a href="{% url 'course:lecture' cid=course.id sid=s.id %}">{{ s.display_name }}</a>
+              {% if not s.counts_for_participation %}<span class="text-muted">&mdash; not graded</span>{% endif %}
+            </td>
+            <td>
+              {% if s.roll_calls %}
+                Taken{% if s.to_follow_up %} &middot; <strong>{{ s.to_follow_up }} to follow up or check</strong>{% endif %}
+              {% else %}
+                <span class="text-muted">&mdash;</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="text-muted">No lectures have been held yet.</p>
+  {% endif %}
+</main>
+{% endblock %}

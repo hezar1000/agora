@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Agora live-session maintenance every minute
+Documentation=file:/srv/agora/current/prod_setup.txt
+
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=1s
+Persistent=true
+Unit=agora-live-sessions.service
+
+[Install]
+WantedBy=timers.target

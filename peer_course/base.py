@@ -1,23 +1,63 @@
 from django.core.exceptions import PermissionDenied
-import uuid
+import secrets
+from datetime import timedelta
 
-import csv, io
+from django.utils import timezone
+from django.db.models import Q
 
 
+from . import passphrase
 from .models import *
+from .models import INSTRUCTOR_ROLES, STAFF_ROLES
 
 # Create your views here.
 
 
 class CourseBase:
-    @staticmethod
-    def create(user, name, browsable, archived):
-        "Create the course"
 
-        c = Course(displayname=name, browsable=browsable, archived=archived)
-        c.stucode = str(uuid.uuid3(uuid.NAMESPACE_DNS, name + "/STU"))[0:8]
-        c.tascode = str(uuid.uuid3(uuid.NAMESPACE_DNS, name + "/TAS"))[0:8]
-        c.instructor_code = str(uuid.uuid3(uuid.NAMESPACE_DNS, name + "/INS"))[0:8]
+    @staticmethod
+    def _secure_code(nbytes=18):
+        return secrets.token_urlsafe(nbytes)
+
+    @staticmethod
+    def _student_code():
+        """A code a class can be told out loud; see peer_course.passphrase."""
+        return passphrase.generate()
+
+    @staticmethod
+    def generate_unique_code(nbytes=18, max_attempts=100, make=None):
+        """A code no other course is using.
+
+        `make` builds each candidate and defaults to a random token, which is
+        right for the TA and instructor codes: those are pasted into an email
+        once, and whoever types the instructor code becomes an instructor. The
+        student code is made of words instead, because a room full of people
+        has to be able to type it off a slide.
+        """
+        make = make or (lambda: CourseBase._secure_code(nbytes))
+        for _ in range(max_attempts):
+            code = make()
+            if not Course.objects.filter(
+                Q(stucode=code)
+                | Q(tascode=code)
+                | Q(instructor_code=code)
+            ).exists():
+                return code
+        raise RuntimeError("Unable to generate a unique enrollment capability")
+
+    @staticmethod
+    def create(user, name, browsable, agora_mode = True, archived = False, on_list = False):
+        "Create the course"
+        if not name or not name.strip():
+            raise ValueError("Course name cannot be empty")
+        c = Course(displayname=name, browsable=browsable, archived=archived, agora_mode=agora_mode, on_list=on_list)
+        expires_at = timezone.now() + timedelta(days=180)
+        c.stucode = CourseBase.generate_unique_code(make=CourseBase._student_code)
+        c.tascode = CourseBase.generate_unique_code()
+        c.instructor_code = CourseBase.generate_unique_code()
+        c.student_code_expires_at = expires_at
+        c.ta_code_expires_at = expires_at
+        c.instructor_code_expires_at = expires_at
         c.save()
 
         return c
@@ -51,14 +91,14 @@ class CourseBase:
     def is_instructor(user, cid, superuser_fine=True):
         if user.is_superuser and superuser_fine:
             return True
-        return CourseBase.get_user_role(user, cid) == "instructor"
+        return CourseBase.get_user_role(user, cid) in INSTRUCTOR_ROLES
 
     @staticmethod
     def is_instructor_some_course(user, superuser_fine=True):
         if user.is_superuser and superuser_fine:
             return True
         return CourseMember._default_manager.filter(
-            user=user, role="instructor"
+            user=user, role__in=INSTRUCTOR_ROLES, active=True
         ).exists()
 
     @staticmethod
@@ -73,27 +113,23 @@ class CourseBase:
             return True
         if cm is None:
             return False
-        return cm.role in ['instructor', 'ta']
+        return cm.role in STAFF_ROLES
 
-
-    @staticmethod
-    def is_independent(user, cid):
-
-        if user.is_superuser:
-            return False
-
-        cm = CourseBase.get_course_member(user, cid)
-        return cm.is_independent
 
     @staticmethod
     def get_course_member(user, cid):
-        return CourseMember._default_manager.filter(
+        coursemember = CourseMember._default_manager.filter(
             course__id=cid, user=user, active=True
         ).first()
-
-    @staticmethod
-    def get_graders(cid):
-        return CourseBase.get_tas(cid)
+        if coursemember is None and user.is_superuser:
+            course = Course._default_manager.get(id=cid)
+            coursemember = CourseMember(
+                course=course,
+                user=user,
+                role='superuser',  
+                active=True,
+            )
+        return coursemember
 
     @staticmethod
     def get_course_students(cid):
@@ -139,48 +175,37 @@ class CourseBase:
                 raise AssertionError(
                     "Your membership in this course has been deactivated, please contact course staff"
                 )
-        cm = CourseMember._default_manager.create(course=course, user=user, role=role, qualified=False)
+        cm = CourseMember._default_manager.create(course=course, user=user, role=role)
         return cm
 
     @staticmethod
     def enroll(user, code):
         "Enroll a user in a course"
 
-        c = Course._default_manager.filter(instructor_code=code).first()
+        now = timezone.now()
+        c = Course._default_manager.filter(
+            instructor_code=code,
+            instructor_code_expires_at__gt=now,
+        ).first()
         if c is not None:
             return CourseBase._enroll(user, c, "instructor")
 
-        c = Course._default_manager.filter(browsable=True, stucode=code).first()
+        c = Course._default_manager.filter(
+            browsable=True,
+            stucode=code,
+            student_code_expires_at__gt=now,
+        ).first()
         if c is not None:
             return CourseBase._enroll(user, c, "student")
 
-        c = Course._default_manager.filter(tascode=code).first()
+        c = Course._default_manager.filter(
+            tascode=code,
+            ta_code_expires_at__gt=now,
+        ).first()
         if c is not None:
             return CourseBase._enroll(user, c, "ta")
 
         return None
-
-    @staticmethod
-    def import_student_cis(csv_file, supervised_threshold, cid):
-        count=0
-        decoded_file = csv_file.read().decode('utf-8-sig')
-        io_string = io.StringIO(decoded_file)
-        for row in csv.reader(io_string, delimiter=',', quotechar='|'):
-            stus= CourseMember._default_manager.filter(user__username=row[0], course__id=cid)
-            stu=stus[0]
-            stu.lower_confidence_bound= float(row[1])
-            stu.markingload=  float(row[2])
-            stu.upper_confidence_bound= float(row[3])
-            if supervised_threshold is not None:                   
-                if stu.lower_confidence_bound < supervised_threshold :
-                    stu.is_independent= False
-                else:
-                    stu.is_independent= True
-            stu.save()
-            count=count+1
-
-        return count
-
 
 class CoursePermissions:
     @staticmethod

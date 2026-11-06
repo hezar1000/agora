@@ -5,23 +5,36 @@
 {% block content %}
 
   <script>
+    const renderedMessageIds = new Set();
+    function rememberRenderedMessages() {
+      document.querySelectorAll('.message[data-message-id]').forEach(node => {
+        renderedMessageIds.add(String(node.dataset.messageId));
+      });
+    }
+    document.addEventListener('DOMContentLoaded', rememberRenderedMessages);
 
     window.addEventListener('message', function(event) {
+        if (event.origin !== window.location.origin) return;
         const data = event.data;
         let key = data.key;
         let value = data.value;
         
         if (key == "message") {
-          if (!$(".message-container").has(".message").length) window.location.reload();
-          
+          rememberRenderedMessages();
+          const messageId = String(value || '');
+          if (!/^\d+$/.test(messageId) || renderedMessageIds.has(messageId)) return;
           $.ajax({
             type: "GET",
             beforeSend: function (xhr, settings) {
               xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
             },
-            data: { "get-messages": true },
+            data: { "get-messages": true, "message-id": messageId },
             success: function (response) {
+              const deliveredId = String(response.message_id || '');
+              if (!deliveredId || renderedMessageIds.has(deliveredId)) return;
+              $(".message-container > p").remove();
               $(".message-container").append(response.html_content);
+              renderedMessageIds.add(deliveredId);
             },
             error: function (error) {
               console.error("Error sending message:", error);
@@ -78,7 +91,6 @@
       data: { "reply-message": message_reply,
               "message-id": message_id },
       success: function (response) {
-        console.log("Message sent successfully");
         window.location.reload();
       },
       error: function (error) {
@@ -101,7 +113,6 @@
         },
         data: { "broadcast-message": message_id },
         success: function (response) {
-          console.log("Message sent successfully");
           window.location.reload();
         },
         error: function (error) {
@@ -124,7 +135,6 @@
         },
         data: { "block-user": user_id },
         success: function (response) {
-          console.log("Message sent successfully");
           window.location.reload();
         },
         error: function (error) {
@@ -149,7 +159,6 @@
         },
         data: { "hide-message": message_id },
         success: function (response) {
-          console.log("Message sent successfully");
           window.location.reload();
         },
         error: function (error) {

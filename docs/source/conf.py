@@ -107,7 +107,7 @@ html_static_path = ["_static"]
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "MechanicalTAdoc"
+htmlhelp_basename = "Agoradoc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -133,7 +133,7 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "MechanicalTA.tex",
+        "Agora.tex",
         "Agora Documentation",
         "Farzad Abdolhosseini",
         "manual",
@@ -145,7 +145,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "mechanicalta", "Agora Documentation", [author], 1)]
+man_pages = [(master_doc, "agora", "Agora Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -156,10 +156,10 @@ man_pages = [(master_doc, "mechanicalta", "Agora Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "MechanicalTA",
+        "Agora",
         "Agora Documentation",
         author,
-        "MechanicalTA",
+        "Agora",
         "One line description of project.",
         "Miscellaneous",
     )

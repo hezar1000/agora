@@ -1,0 +1,172 @@
+{% comment %}
+  Attendance mode, on the instructor's lecture screen only.
+
+  Every list opens and the instructor names one out loud. The list to name is
+  fetched from /course/<id>/attendance/, which only an instructor can read;
+  nothing a student's browser receives says which list it is. See
+  peer_course/attendance.py.
+{% endcomment %}
+<style>
+  .attendance-panel { background: #fff; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0; padding: 12px 14px; }
+  .attendance-panel .btn { min-height: 44px; }
+  .attendance-panel h3 { font-size: 16px; margin: 0 0 6px; }
+  .attendance-panel__say { border-radius: 4px; color: #fff; font-size: 22px; margin: 6px 0 10px; padding: 12px 14px; }
+  .attendance-panel__say--green { background: #3c763d; }
+  .attendance-panel__say--blue { background: #245580; }
+  .attendance-panel__say--red { background: #a94442; }
+  .attendance-panel__say--yellow { background: #f0ad4e; color: #1d1d1d; }
+  .attendance-panel__counts { font-size: 15px; margin: 0 0 10px; }
+  .attendance-panel__row { align-items: center; border-top: 1px solid #eee; display: flex; flex-wrap: wrap; gap: 8px; padding: 6px 0; }
+  .attendance-panel__who { flex: 1 1 220px; }
+  .attendance-panel__done { color: #555; }
+</style>
+<section class="attendance-panel" id="attendance-panel" aria-labelledby="attendance-panel-heading">
+  <h3 id="attendance-panel-heading">Attendance</h3>
+  <div id="attendance-panel-body">
+    <p class="text-muted">Loading&hellip;</p>
+  </div>
+</section>
+<script>
+  (function () {
+    const base = "/course/{{ course.id }}/attendance/";
+    const csrf = "{{ csrf_token }}";
+    const body = document.getElementById("attendance-panel-body");
+    let refreshTimer = null;
+    let inFlight = false;
+
+    function esc(value) { return escapeHtml(value == null ? "" : String(value)); }
+
+    function post(path, data) {
+      return $.ajax({
+        url: base + path, method: "POST", data: data || {},
+        headers: { "X-CSRFToken": csrf, "X-Requested-With": "XMLHttpRequest" },
+      }).done(render).fail(function (xhr) {
+        const message = (xhr.responseJSON && xhr.responseJSON.error) || "That did not work. Try again.";
+        if (window.notify) window.notify(message, "error");
+        load();
+      });
+    }
+
+    // Between roll calls the instructor can always take another one; a lecture
+    // may need two. The last roll call's wrong-list students stay listed below
+    // until each is checked.
+    function renderIdle(state) {
+      body.innerHTML = `
+        <button class="btn btn-primary" id="attendance-start" type="button">Take attendance</button>
+        <span class="text-muted">Name one list aloud; check hands raised in other lists.</span>
+        ${state.last ? renderLast(state.last) : ""}`;
+      document.getElementById("attendance-start").addEventListener("click", function () {
+        this.disabled = true;
+        post("start/");
+      });
+    }
+
+    function renderOpen(state) {
+      const check = state.check;
+      const counts = state.lists.map(l =>
+        `${esc(l.label)}: <strong>${check.counts[String(l.id)] || 0}</strong>`).join(" &middot; ");
+      const options = state.lists.map(l =>
+        `<option value="${l.id}"${l.id === check.announced_list ? " selected" : ""}>${esc(l.label)}</option>`).join("");
+      body.innerHTML = `
+        <div class="attendance-panel__say attendance-panel__say--${esc(check.announced_colour)}">
+          Say: &ldquo;Put your hand up in the <strong>${esc(check.announced_label)}</strong> list.&rdquo;
+        </div>
+        <p class="attendance-panel__counts">
+          <strong>${check.right_list}</strong> in ${esc(check.announced_label)},
+          <strong>${check.other_lists}</strong> in other lists
+          <span class="text-muted">(${counts})</span>
+        </p>
+        <p>
+          <button class="btn btn-danger" id="attendance-close" type="button">
+            <span class="glyphicon glyphicon-stop"></span> Close attendance
+          </button>
+          <label class="text-muted" style="font-weight: normal; margin-left: 12px;">
+            Named a different list?
+            <select id="attendance-announce" class="input-sm">${options}</select>
+          </label>
+        </p>
+        <p class="text-muted">Calling on students is paused until attendance closes: a call would credit every hand that is up.</p>`;
+      document.getElementById("attendance-close").addEventListener("click", function () {
+        this.disabled = true;
+        post("close/");
+      });
+      document.getElementById("attendance-announce").addEventListener("change", function () {
+        post("announce/", { list: this.value });
+      });
+    }
+
+    function renderLast(last) {
+      const s = last.summary;
+      const waiting = last.review.filter(r => r.status === "unreviewed").length;
+      let html = `
+        <p style="margin-top: 10px;"><strong>Last roll call (${esc(last.announced_label)}):</strong>
+          ${s.attended} of ${s.enrolled} counted present.
+          ${last.review.length ? `${last.review.length} raised a hand in the wrong list${waiting ? `, <strong>${waiting} still to call on</strong>` : ""}.` : "Nobody raised a hand in the wrong list."}
+          <a href="${esc(last.dashboard_url)}">Lecture page</a></p>`;
+      last.review.forEach(r => {
+        const settled = r.status !== "unreviewed";
+        html += `
+          <div class="attendance-panel__row" data-record="${r.id}">
+            <span class="attendance-panel__who"><strong>${esc(r.name)}</strong>
+              <span class="text-muted">${esc(r.student_id)} &middot; hand in ${esc(r.lists.join(", "))}</span>
+              ${settled ? `<span class="attendance-panel__done">&mdash; ${esc(r.status_label)}</span>` : ""}</span>
+            <button class="btn btn-success btn-sm" type="button" data-status="confirmed"${r.status === "confirmed" ? " disabled" : ""}>In class</button>
+            <button class="btn btn-danger btn-sm" type="button" data-status="not_in_class"${r.status === "not_in_class" ? " disabled" : ""}>Not in class</button>
+          </div>`;
+      });
+      return html;
+    }
+
+    // Once this lecture's last roll call is finished -- every wrong-list
+    // student checked, or none -- the panel takes no space on the teaching
+    // screen and Take attendance moves beside Start/End Lecture.
+    const panel = document.getElementById("attendance-panel");
+    const headerStart = document.getElementById("attendance-start-header");
+    if (headerStart) headerStart.addEventListener("click", function () {
+      this.disabled = true;
+      post("start/");
+    });
+
+    let rollCallOpen = false;
+    function render(state) {
+      rollCallOpen = !!state.open;
+      const finished = !state.open && !!state.last &&
+        !state.last.review.some(r => r.status === "unreviewed");
+      panel.style.display = finished ? "none" : "";
+      if (headerStart) {
+        headerStart.style.display = finished ? "" : "none";
+        headerStart.disabled = false;
+      }
+      if (finished) { body.innerHTML = ""; return; }
+      if (state.open) renderOpen(state); else renderIdle(state);
+    }
+
+    body.addEventListener("click", function (event) {
+      const button = event.target.closest("button[data-status]");
+      if (!button) return;
+      const row = button.closest("[data-record]");
+      button.disabled = true;
+      post(`record/${row.dataset.record}/`, { status: button.dataset.status });
+    });
+
+    let queued = false;
+    function load() {
+      if (inFlight) { queued = true; return; }
+      inFlight = true;
+      $.ajax({ url: base, method: "GET" }).done(render).always(function () {
+        inFlight = false;
+        if (queued) { queued = false; load(); }
+      });
+    }
+
+    // Every hand raised in the room fires a broadcast; a lecture hall raising
+    // hands at once must not become a request per hand. At most one fetch per
+    // interval, and never starved while hands keep arriving.
+    window.refreshAttendance = function (always) {
+      if (!rollCallOpen && !always) return;
+      if (refreshTimer) return;
+      refreshTimer = setTimeout(function () { refreshTimer = null; load(); }, 500);
+    };
+    load();
+  })();
+</script>

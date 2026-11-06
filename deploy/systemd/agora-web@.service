@@ -1,0 +1,65 @@
+[Unit]
+Description=Agora ASGI worker on 127.0.0.1:%i
+Documentation=file:/srv/agora/current/prod_setup.txt
+After=network-online.target redis-server.service
+Wants=network-online.target redis-server.service
+PartOf=agora-web.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=agora
+# Group stays agora. /etc/agora/saml/* is root:agora 0640, and systemd
+# does not add the user's supplementary groups once Group= is set, so any
+# other primary group loses access to the SAML keypair and the service
+# fails to start. Nginx only reads the static root, which is world
+# readable, so it needs nothing here.
+Group=agora
+WorkingDirectory=/srv/agora/current
+# EnvironmentFile may override this example hostname for another deployment.
+Environment=AGORA_PROBE_HOST=agora.students.cs.ubc.ca
+EnvironmentFile=/etc/agora/agora.env
+Environment=DJANGO_SETTINGS_MODULE=mta2.settings
+Environment=PYTHONUNBUFFERED=1
+ExecStartPre=/usr/bin/bash /srv/agora/current/deploy/preflight.sh
+# Daphne's NCSA access logger includes the query string. Disable it by running
+# at verbosity 0 without --access-log; Nginx is the canonical query-free access
+# log, while application warnings/errors continue to journald.
+ExecStart=/srv/agora/current/.venv/bin/daphne --verbosity 0 --bind 127.0.0.1 --port %i --proxy-headers mta2.asgi:application
+# Liveness proves only that this worker can answer HTTP. Deployment readiness
+# is checked separately so a Redis/database outage is not mistaken for a dead
+# process. Double dollars pass the variable reference through systemd to sh.
+ExecStartPost=/bin/sh -ec 'for attempt in 1 2 3 4 5 6 7 8 9 10; do /usr/bin/curl --fail --silent --show-error --max-time 2 --header "Host: $${AGORA_PROBE_HOST}" --header "X-Forwarded-Proto: https" "http://127.0.0.1:%i/health/live/" >/dev/null && exit 0; sleep 1; done; exit 1'
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agora-web-%i
+Restart=on-failure
+RestartSec=3
+TimeoutStartSec=60
+TimeoutStopSec=30
+KillSignal=SIGTERM
+UMask=0027
+
+# Limit the impact of a compromised application worker. Agora must be able to
+# write only uploaded media and its configured log directory.
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+# ProtectSystem=strict makes this load-bearing: a media root outside
+# these paths lets the service start and then fail every upload.
+# Persistent data lives outside any release tree so a redeploy
+# cannot orphan it.
+ReadWritePaths=/home/agora/agora-data/media /var/log/agora
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true
+
+[Install]
+WantedBy=agora-web.target

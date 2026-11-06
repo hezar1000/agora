@@ -1,0 +1,55 @@
+{% comment %}
+  Styling for the settings pages: one consistent shape for every settings
+  screen, so an instructor meets one page, not two.
+
+  Sizes are in px, not rem. Bootstrap 3 sets html{font-size:10px} and puts 14px
+  on the body, so a rem here is 10px and every rem-based size comes out about a
+  third smaller than it reads -- 1.15rem for a heading is 11.5px, smaller than
+  the text underneath it.
+{% endcomment %}
+<style>
+  .settings-header {
+    border-bottom: 1px solid #e5e5e5;
+    margin: 24px 0 20px;
+    padding-bottom: 12px;
+  }
+  .settings-header__title { font-size: 28px; margin: 0; }
+  .settings-header__course { color: #666; margin: 5px 0 0; font-size: 16px; }
+
+  /* A long page needs a way to get down it without scrolling past everything. */
+  .settings-nav { margin-bottom: 24px; line-height: 2; }
+  .settings-nav a { display: inline-block; margin-right: 18px; font-size: 14px; }
+
+  .settings-group {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 20px 20px 6px;
+    margin-bottom: 20px;
+  }
+  .settings-group__title { font-size: 18px; margin: 0 0 4px; font-weight: 600; }
+  .settings-group__hint { color: #666; margin: 0 0 18px; }
+
+  /* Inputs stop at a readable width instead of spanning the whole column. */
+  .settings-field { margin-bottom: 18px; max-width: 540px; }
+  .settings-field > label { font-weight: 600; margin-bottom: 4px; }
+  .settings-field .checkbox { margin: 0; }
+  .settings-field .checkbox label { font-weight: 400; }
+  .settings-field__help { color: #666; margin: 5px 0 0; font-size: 13px; }
+  .settings-field__error { color: #a94442; margin: 5px 0 0; }
+
+  /* Sections whose controls are still hand-built get the same heading
+     treatment, so one page does not read as two. */
+  .settings-legacy-heading {
+    font-size: 18px; font-weight: 600;
+    margin: 28px 0 12px; padding-top: 8px;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  /* Save stays reachable from anywhere on the page. */
+  .settings-actions {
+    position: sticky; bottom: 0; z-index: 10;
+    background: #fff; border-top: 1px solid #e5e5e5;
+    padding: 14px 0; margin-top: 24px;
+  }
+</style>

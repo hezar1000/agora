@@ -14,6 +14,10 @@ admin.site.register(Course, CourseAdmin)
 class CourseMemberAdmin(admin.ModelAdmin):
     pass
 
+class CourseSessionAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(CourseSession, CourseSessionAdmin)
 
 admin.site.register(CourseMember, CourseMemberAdmin)
 

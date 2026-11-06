@@ -1,0 +1,12 @@
+[Unit]
+Description=Agora ASGI worker pool
+# 8090-8093, not 8080-8083. The deployed stack holds the latter under
+# Supervisor, so binding them would either fail or, worse, leave the
+# readiness probe interrogating the old application. Running the new
+# pool alongside lets it be verified before Nginx is repointed, and
+# leaves the old pool warm as the rollback.
+Requires=agora-web@8090.service agora-web@8091.service agora-web@8092.service agora-web@8093.service
+After=agora-web@8090.service agora-web@8091.service agora-web@8092.service agora-web@8093.service
+
+[Install]
+WantedBy=multi-user.target

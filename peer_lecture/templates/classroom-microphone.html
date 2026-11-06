@@ -1,0 +1,48 @@
+{% load static %}
+<link rel="stylesheet" href="{% static 'lecture/microphone.css' %}?v=20261009d">
+<section class="classroom-microphone{% if is_instructor %} classroom-microphone--instructor{% endif %}" data-classroom-microphone
+         data-course="{{ course.pk }}" data-user="{{ request.user.pk }}"
+         data-instructor="{% if is_instructor %}true{% else %}false{% endif %}"
+         aria-label="Classroom microphone">
+  <div class="classroom-microphone__heading">
+    <strong>Classroom microphone</strong>
+  </div>
+  <p data-status role="status" aria-live="polite">Connecting classroom audio…</p>
+  {% if is_instructor %}
+  <div class="classroom-microphone__quick">
+    <button type="button" class="btn btn-default" data-mute aria-live="polite" disabled>Microphone off</button>
+    <button type="button" class="btn btn-primary" data-start disabled>Start classroom sound</button>
+  </div>
+  <details class="classroom-microphone__settings" {% if sound_only %}open{% endif %}>
+    <summary>Sound settings</summary>
+    <div class="classroom-microphone__controls">
+      <label><input type="checkbox" data-sound disabled> Play sound on this device</label>
+      <label>Volume <input type="range" data-volume min="0" max="100" value="50" aria-label="Classroom speaker volume"></label>
+      <button type="button" class="btn btn-default" data-test>Test speakers</button>
+      {% if not sound_only %}<a href="{% url 'home:sound_only' course.pk %}" target="_blank" rel="noopener">Open sound-only mode</a>{% endif %}
+    </div>
+  {% else %}
+  <div class="classroom-microphone__controls">
+    <button type="button" class="btn btn-primary" data-start disabled hidden>Start microphone</button>
+    <button type="button" class="btn btn-danger" data-stop hidden>Stop microphone</button>
+    <label hidden>Microphone <select data-device aria-label="Microphone to use"></select></label>
+  </div>
+  {% endif %}
+  <p class="classroom-microphone__hint">
+    {% if is_instructor %}
+    Keep sound off on your iPad and start it on the laptop connected to the room speakers.
+    Start at a low volume. Only one device plays classroom sound at a time.
+    {% else %}
+    Keep your phone close to your mouth and away from the room speakers. A headset or earbud microphone
+    hears you far better than the room: connect one, and once your microphone is on, choose it under Microphone.
+    Stop your microphone when you finish.
+    Your microphone starts only when you choose to turn it on. Agora does not record this audio. Timing and connection diagnostics are saved to help troubleshoot problems.
+    {% endif %}
+  </p>
+  <small>Connection: <span data-connection>Idle</span> · Idea and initial prototype by
+    <a href="https://github.com/Guolinn/classroom-mic" target="_blank" rel="noopener">Guolin Wang</a>.</small>
+  <div data-diagnostics></div>
+  {% if is_instructor %}</details>{% endif %}
+  <audio playsinline></audio>
+</section>
+<script type="module" src="{% static 'lecture/microphone.js' %}?v=20261009d"></script>

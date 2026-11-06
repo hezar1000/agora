@@ -1,29 +1,46 @@
 {% include "base-lecture.html" %}
-
 {% load static %}
 
 {% block content %}
 
-    <script>
-        if (window.location.href.includes('?stop-poll=true')) {
-            // remove query string from url
-            window.history.replaceState({}, document.title, "/polling/student/");
-        }
-    </script>
+<script>
+  if (window.location.href.includes('?stop-poll=true')) {
+    window.history.replaceState({}, document.title, "/polling/student/");
+  }
+</script>
 
-    <div style="margin: 10px;">
-        {% if poll %}
-        <h3>Polling</h3>
-        {% include "view-poll-student.html" %}
-        {% endif %}
+<div style="margin: 10px;">
 
-        {% if results %}
-        {% include "view-results.html" %}
-        {% endif %}
-    </div>
+  {# 1) DO NOT render live poll unless show_live_poll is true (Agora launch) #}
+  {% if poll and show_live_poll %}
+    <h3>Polling</h3>
+    {% include "view-poll-student.html" %}
+  {% endif %}
 
-    <script>
-        parent.resizeIframe(this.frameElement);
-    </script>
+  {# 2) Results (when a poll just ended). Pass embedded so we can hide the button when inside Agora #}
+  {% if results %}
+    {% include "view-results.html" with embedded=embedded %}
+  {% endif %}
+
+  {# 3) Hide the “View Past Poll Results” button when embedded inside Agora #}
+  {% if not embedded %}
+    <form method="post" style="margin-top:1rem;">
+      {% csrf_token %}
+      <button type="submit"
+              name="view-saved-polls"
+              class="btn {% if view_saved_polls %}btn-primary{% endif %}">
+        View Past Poll Results
+      </button>
+    </form>
+  {% endif %}
+
+  {% if view_saved_polls %}
+    {% include "view-saved-polls.html" with saved_polls=saved_polls is_student=True course_id=course_id %}
+  {% endif %}
+</div>
+
+<script>
+  parent.resizeIframe(this.frameElement);
+</script>
 
 {% endblock %}

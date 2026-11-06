@@ -1,247 +1,430 @@
 {% load static %}
-
-<style>
-    #view-saved-polls {
-        margin: 0 auto;
-        width: 80%;
-        height: 1000px;
-        overflow-y: scroll;
-        opacity: 0;
-    }
-
-    #view-poll {
-        padding: 20px;
-        margin: 20px;
-        border-bottom: 2px solid #ddd;
-    }
-
-    #poll-container {
-        border: 3px solid #ddd;
-        padding: 10px;
-        text-align: center;
-    }
-
-    #poll-data {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-
-    #poll-container > div:not(#poll-data) > p {
-        display: inline-block;
-        margin: 10px;
-    }
-
-    #poll-data {
-        border: none !important;
-    }
-
-    #poll-header {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        cursor: pointer;
-    }
-
-    #poll-actions {
-        display: flex;
-        flex-direction: row;
-    }
-
-    #poll-actions div:nth-child(2) {
-        margin-left: 20px;
-        margin-top: 5px;
-    }
-
-    #poll-actions h4 {
-        margin: 0;
-        cursor: pointer;
-    }
-
-    #view-polls-menu {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        margin: 20px auto;
-        width: 80%;
-    }
-
-    #search {
-        margin: 20px auto;
-        width: 80%;
-    }
-
-    @media screen and (max-width: 400px) {
-        #poll-header {
-            flex-direction: column;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        #poll-actions div {
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #poll-actions button {
-            width: 100%;
-        }
-    }
-
-</style>
-
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'peer_lecture/polls.css' %}">
+{% endblock %}
 {% if not saved_polls %}
-<p>No saved polls yet.</p>
+{% if not is_student %}
+<p> No Saved polls, create or upload one. </p>
+<div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <label for="polls-file-input" style="margin-left: 15px;">Upload Polls (JSON):</label>
+        <input type="file" id="polls-file-input" accept=".json" class="form-control-file" style="display: inline-block;">
+        <button type="button" class="btn btn-success" id="upload-polls-btn">Upload</button>
+    </div>
+    <small id="upload-status" class="form-text text-muted" style="display: block; margin-top: 5px;"></small>
+</div>
+{% endif %}
 {% endif %}
 
 {% if saved_polls %}
-<div id="search">
-    <input onkeyup="search(this)" type="text" class="form-control" name="search-poll" placeholder="Search poll...">
+<div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+    <div id="search" style="width: 70%;">
+        <input aria-label="Search polls by title..." type="text" class="form-control" id="search-poll" placeholder="Search polls by title...">
+    </div>
+    <div id="sort">
+        <select aria-label="Sort polls select" id="sort-polls-select" class="form-control">
+            <option value="default" selected disabled>Sort by...</option>
+            <option value="alpha-asc">Alphabetical (A-Z)</option>
+            <option value="alpha-desc">Alphabetical (Z-A)</option>
+            <option value="date-desc">Most Recently Used</option>
+            <option value="date-asc">Least Recently Used</option>
+        </select>
+    </div>
+</div>
+
+{% if not is_student %}
+
+<div style="margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <button type="button" class="btn btn-info" id="download-polls-btn">
+            Download All Polls (JSON)
+        </button>
+        <label for="polls-file-input" style="margin-left: 15px;">Upload Polls (JSON):</label>
+        <input type="file" id="polls-file-input" accept=".json" class="form-control-file" style="display: inline-block;">
+        <button type="button" class="btn btn-success" id="upload-polls-btn">Upload</button>
+    </div>
+    <small id="upload-status" class="form-text text-muted" style="display: block; margin-top: 5px;"></small>
 </div>
 {% endif %}
 
-<div id="view-saved-polls">
+{% endif %}
 
-    {% for poll in saved_polls  %}
-    
-        <form id="view-poll" method="post" onsubmit="return validateForm()">
-            {% csrf_token %}
-            <input type="hidden" name="saved-poll-id" value="{{poll.poll_id}}">
-
-            <div id="poll-header">
-                <div id="poll-title">
-                    <h4>{{ poll.title }}</h4>
-                </div>
-    
-                <div id="poll-actions">
-                    <div>
-                        {% if lecture %}
-                        <input name="id" type="hidden" value='{{lecture.lecture_id}}'>
-                        <button type="submit" class="btn btn-success" name="start-poll">Start</button>
-                        {% endif %}
-                        <button type="submit" class="btn btn-primary" name="edit-poll">Edit</button>
-                        <button type="submit" class="btn btn-warning" name="clone-poll">Clone</button>
-                        <button type="submit" class="btn btn-danger" name="delete-poll">Delete</button>
-                    </div>
-
-                    <div id="poll-container-toggle"><h4 class="glyphicon glyphicon glyphicon-plus"></h4></div>
-                </div>
-    
+<div id="view-saved-polls" data-is-student="{{ is_student|yesno:'true,false' }}">
+    {% for poll in saved_polls %}
+    <form id="view-poll"
+          method="post"
+          class="poll-form"
+          data-title="{{ poll.title }}"
+          data-start-time="{% if poll.most_recent_start_time %}{{ poll.most_recent_start_time.isoformat }}{% else %}null{% endif %}">
+        {% csrf_token %}
+        <input type="hidden" name="saved-poll-id" value="{{ poll.poll_id }}">
+        {% for opt in poll.answer_options %}
+            <input type="hidden" name="list-option" value="{{ opt }}">
+        {% endfor %}
+        <div id="poll-header">
+            <div id="poll-title">
+                <h4>{{ poll.title }}</h4>
             </div>
 
+            <div id="poll-actions">
+                <div>
+                    {% if not is_student %}
+                    {% if lecture %}
+                    <input name="id" type="hidden" value="{{ lecture.lecture_id }}">
+                    <button type="submit" class="btn btn-success" name="start-poll">Start</button>
+                    {% endif %}
+
+                    <button type="submit" class="btn btn-success" name="toggle-visibility">
+                        {% if poll.is_visible_to_students %}Hide{% else %}Show{% endif %}
+                    </button>
+                    <button type="submit" class="btn btn-primary" name="edit-poll">Edit</button>
+                    <button type="submit" class="btn btn-warning" name="clone-poll">Duplicate</button>
+                    <button type="submit" class="btn btn-danger" name="delete-poll">Delete</button>
+                    {% endif %}
+                </div>
+                <div id="poll-container-toggle">
+                    <span class="poll-toggle-icon">◄</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="collapsible-content" style="display: none;">
             <div id="poll-container">
-                <div id="poll-data">{{ poll.poll_data|safe }}</div>
-
+            <div id="poll-data" class="poll-data">{{ poll.safe_poll_data|safe }}</div>
                 <hr style="border-width: 2px;">
-
                 <div>
                     {% for answer in poll.answer_options %}
-                        <p {% if answer == poll.answer %} style="font-weight: bold;" {% endif %}>{{ answer }}</p>
+                    <p {% if poll.answer and answer in poll.answer %} style="font-weight: bold;" {% endif %}>{{ answer }}</p>
                     {% endfor %}
-
                     <p {% if poll.answer == "None" %} style="font-weight: bold;" {% endif %}>None</p>
                 </div>
-                
                 <div>
                     <p {% if poll.dont_save_answer %} style="font-weight: bold;" {% endif %}>Save only Participation</p>
                     <p {% if not poll.dont_save_answer %} style="font-weight: bold;" {% endif %}>Save Participation and Answer</p>
                 </div>
             </div>
 
-        </form>
+            <div class="view-results-block">
+                <ul class="inline-instances-list"
+                    data-poll-id="{{ poll.poll_id }}"
+                    data-course-id="{{ course_id }}"
+                      data-url-template="{% if is_student %}
+                         {% url 'home:get_all_instances_student' cid=0 saved_poll_id=0 %}
+                       {% else %}
+                         {% url 'home:get_all_instances' cid=0 saved_poll_id=0 %}
+                       {% endif %}"
+                    data-my-answer-template="{% url 'home:get_my_answer_json' poll_id=0 %}"
+                    data-results-loaded="false">
 
-    
+                    <li class="loading-results">Loading results...</li>
+                </ul>
+            </div>
+        </div>
+    </form>
     {% endfor %}
 
-</div>
-
-
 <script>
-
-    window.addEventListener('DOMContentLoaded', (event) => {
-        // Wait for the DOM to be fully loaded
-        const pollContainers = document.querySelectorAll('#poll-container');
-        
-        // Hide all poll containers initially
-        pollContainers.forEach((container) => {
-            container.style.display = 'none';
-        });
-
-        document.querySelector('#view-saved-polls').style.opacity = '1';
-    });
-
-    function validateForm() {
-        if (event.submitter.name === 'delete-poll') return confirm('Are you sure you want to delete this poll?');
-        
-        return true;
-    }
-
-    function togglePollContainer(event) {
-        const pollContainer = this.closest('#view-poll').querySelector('#poll-container');
-        const arrowIcon = this.querySelector('h4.glyphicon');
-
-        if (pollContainer.style.display === 'none' || pollContainer.style.display === '') {
-            pollContainer.style.display = 'block';
-            arrowIcon.classList.remove('glyphicon-plus');
-            arrowIcon.classList.add('glyphicon-minus');
-        } else {
-            pollContainer.style.display = 'none';
-            arrowIcon.classList.remove('glyphicon-minus');
-            arrowIcon.classList.add('glyphicon-plus');
-        }
-    }
-
-    // Add click event listeners to the toggle elements
-    const toggleElements = document.querySelectorAll('#poll-container-toggle, #poll-title, #poll-header');
-    toggleElements.forEach(element => {
-        element.addEventListener('click', function (event) {
-            if (element.id === 'poll-container-toggle') {
-                // Prevent the event from bubbling up to the #poll-title and #poll-header elements
-                event.stopPropagation();
+document.addEventListener('DOMContentLoaded', function() {
+        function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    const downloadBtn = document.getElementById('download-polls-btn');
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', function() {
+            this.innerHTML = 'Downloading...';
+            this.disabled = true;
+            fetch("{% url 'home:download_all_polls_json' %}")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // convert the data back to a JSON string, pretty-printed
+                    const jsonString = JSON.stringify(data, null, 2);
+                    const blob = new Blob([jsonString], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'course_polls_backup.json'; 
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(a.href);
+                    this.innerHTML = 'Download All Polls (JSON)';
+                    this.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error downloading polls:', error);
+                    this.innerHTML = 'Error! Try Again';
+                    this.disabled = false;
+                });
+        });
+    }
+    const uploadBtn = document.getElementById('upload-polls-btn');
+    const fileInput = document.getElementById('polls-file-input');
+    const uploadStatus = document.getElementById('upload-status');
 
-            if (event.target.closest('button')) {
+    if (uploadBtn) {
+        uploadBtn.addEventListener('click', function() {
+            const file = fileInput.files[0];
+            if (!file) {
+                uploadStatus.textContent = 'Please select a file first.';
+                uploadStatus.className = 'form-text text-danger';
                 return;
             }
 
-            togglePollContainer.call(this, event);
-        });
-    });
+            uploadBtn.innerHTML = 'Uploading...';
+            uploadBtn.disabled = true;
+            uploadStatus.textContent = '';
 
-    const search = (e) => {
-        const search = e.value.toLowerCase();
-        const polls = document.querySelectorAll('#view-poll');
+            const formData = new FormData();
+            formData.append('polls_file', file);
 
-        polls.forEach(poll => {
-            const title = poll.querySelector('#poll-title h4').textContent.toLowerCase();
-            if (title.indexOf(search) != -1) {
-                poll.style.display = 'block';
-            } else {
-                poll.style.display = 'none';
-            }
+            fetch("{% url 'home:upload_all_polls_json' %}", { 
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    uploadStatus.textContent = data.message + ' Reloading...';
+                    uploadStatus.className = 'form-text text-success';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500); 
+                } else {
+                    throw new Error(data.error || 'Unknown upload error');
+                }
+            })
+            .catch(error => {
+                console.error('Error uploading polls:', error);
+                uploadStatus.textContent = `Error: ${error.message}`;
+                uploadStatus.className = 'form-text text-danger';
+                uploadBtn.innerHTML = 'Upload';
+                uploadBtn.disabled = false;
+            });
         });
     }
-    
-    // for each .view-poll-data in the document, create a quill editor
-    document.querySelectorAll('#poll-data').forEach(editorContainer => {
-        let quill = new Quill(editorContainer, {
-            theme: 'snow',
-            readOnly: true,
-        });
+});
+</script>
 
-        quill.getModule('toolbar').container.style.display = 'none';
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const pollForms = document.querySelectorAll('.poll-form');
+    const searchInput = document.getElementById('search-poll');
+    const savedPollsContainer = document.getElementById('view-saved-polls');
+    const isStudent = savedPollsContainer.dataset.isStudent === 'true';
 
-        const setEditorHeight = () => {
-            quill.root.style.height = 'auto'; // Reset height to auto to calculate the actual height
-            const contentHeight = quill.root.offsetHeight;
-            editorContainer.style.height = contentHeight + 'px';
-        }
-
-        setEditorHeight();
-
-        quill.root.querySelectorAll('img').forEach(img => {
-            img.addEventListener('load', setEditorHeight);
+    document.querySelector('#view-saved-polls').style.opacity = '1';
+    searchInput?.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase();
+        pollForms.forEach(form => {
+            const title = form.dataset.title.toLowerCase();
+            form.style.display = title.includes(query) ? 'block' : 'none';
         });
     });
+    document.querySelectorAll('#poll-header').forEach(header => {
+        header.addEventListener('click', function (event) {
+            if (event.target.closest('button')) { return; }
+
+            const collapsibleContent = this.nextElementSibling;
+            const icon = this.querySelector('.poll-toggle-icon');
+            const isHidden = collapsibleContent.style.display === 'none';
+
+            collapsibleContent.style.display = isHidden ? 'block' : 'none';
+            icon.classList.toggle('expanded', isHidden);
+
+            if (isHidden) {
+                const resultsList = collapsibleContent.querySelector('.inline-instances-list');
+                if (resultsList && resultsList.dataset.resultsLoaded === 'false') {
+                    resultsList.dataset.resultsLoaded = 'loading';
+                    
+                    const { pollId, courseId, urlTemplate } = resultsList.dataset;
+                    const finalUrl = urlTemplate.replace('0/poll-instances/0', `${courseId}/poll-instances/${pollId}`);
+
+                    fetch(finalUrl)
+                        .then(response => response.json())
+                        .then(data => {
+                            resultsList.innerHTML = ''; // Clear the "Loading..." message
+                            if (data.instances && data.instances.length > 0) {
+                                data.instances.forEach(instance => {
+                                const { courseId, myAnswerTemplate } = resultsList.dataset;
+                                const downloadUrl = `/course/${courseId}/export_poll_participation_data/?poll_id=${instance.id}`;
+                                const csvLink = isStudent
+                                    ? ''
+                                    : `<a href="${downloadUrl}" class="btn btn-sm btn-primary">Download CSV</a>`;
+                                const listItem = document.createElement('li');
+                                listItem.className = 'instance-item';
+                                listItem.innerHTML = `
+                                    <div class="instance-row">
+                                    <span class="instance-date">${instance.date}</span>
+                                    <div class="instance-actions">
+                                        ${csvLink}
+                                        <span class="glyphicon glyphicon-chevron-down graph-toggle-icon"
+                                            data-instance-id="${instance.id}"
+                                            title="Show/Hide Graph"></span>
+                                    </div>
+                                    </div>
+                                    <div class="graph-container" id="graph-container-${instance.id}">
+                                    <canvas id="chart-for-instance-${instance.id}"></canvas>
+                                    <div class="my-answer-line" id="my-answer-${instance.id}" style="margin-top:.5rem;"></div>
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-success download-graph-btn"
+                                            data-instance-id="${instance.id}">
+                                        Download Graph
+                                    </button>
+                                    </div>
+                                `;
+                                resultsList.appendChild(listItem);
+                                if (isStudent) {
+                                    const myAnswerUrl = myAnswerTemplate.replace('/0/', `/${instance.id}/`);
+                                    fetch(myAnswerUrl)
+                                    .then(r => r.ok ? r.json() : Promise.reject(r))
+                                    .then(my => {
+                                        const el = document.getElementById(`my-answer-${instance.id}`);
+                                        if (!el) return;
+
+                                        if (!my.participated) {
+                                        el.textContent = 'You did not submit an answer for this poll.';
+                                        return;
+                                        }
+                                        if (my.dont_save_answer || !my.answer || my.answer.length === 0) {
+                                        el.textContent = 'You participated. (Answer not saved)';
+                                        } else {
+                                        el.textContent = `Your answer: ${my.answer.join(', ')}`;
+                                        }
+                                    })
+                                    .catch(() => {
+                                        const el = document.getElementById(`my-answer-${instance.id}`);
+                                        if (el) el.textContent = 'Could not load your answer.';
+                                    });
+                                }
+                                });
+                            } else {
+                                resultsList.innerHTML = '<li>No results found for this poll.</li>';
+                            }
+                            resultsList.dataset.resultsLoaded = 'true';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching poll instances:', error);
+                            resultsList.innerHTML = '<li>Error loading results. Please try again.</li>';
+                            resultsList.dataset.resultsLoaded = 'false';
+                        });
+                }
+            }
+        });
+    });
+    
+  function norm(v) { return String(v ?? '').trim(); }
+  function renderPollChart(canvasId, resultsData) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !resultsData || !resultsData.results) return;
+
+    const existingChart = Chart.getChart(canvas);
+    if (existingChart) existingChart.destroy();
+
+    const labels = Object.keys(resultsData.results);
+    const data = Object.values(resultsData.results).map(item =>
+      (item && Object.prototype.hasOwnProperty.call(item, 'count')) ? item.count : item
+    );
+
+    const BLUE  = '#337ab7';
+    const GREEN = '#5cb85c';
+    let backgroundColors = new Array(labels.length).fill(BLUE);
+    if (resultsData.poll_type !== 'list') {
+      const correct = Array.isArray(resultsData.answer)
+        ? resultsData.answer.map(norm)
+        : [];
+      backgroundColors = labels.map(lbl => correct.includes(norm(lbl)) ? GREEN : BLUE);
+    }
+
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Response Count',
+          data,
+          backgroundColor: backgroundColors
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: { x: { beginAtZero: true, ticks: { stepSize: 1 } } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+    savedPollsContainer.addEventListener('click', function(event) {
+        const target = event.target;
+        if (target.matches('.graph-toggle-icon')) {
+            const instanceId = target.dataset.instanceId;
+            const graphContainer = document.getElementById(`graph-container-${instanceId}`);
+            const canvas = document.getElementById(`chart-for-instance-${instanceId}`);
+
+            target.classList.toggle('glyphicon-chevron-down');
+            target.classList.toggle('glyphicon-chevron-up');
+            
+            const isGraphHidden = graphContainer.style.display !== 'block';
+            graphContainer.style.display = isGraphHidden ? 'block' : 'none';
+            if (isGraphHidden && !canvas.dataset.chartRendered) {
+                fetch(`/polling/poll-results-json/${instanceId}/`)
+                    .then(res => res.json())
+                    .then(pollResults => {
+                        renderPollChart(`chart-for-instance-${instanceId}`, pollResults);
+                        canvas.dataset.chartRendered = 'true';
+                    })
+                    .catch(err => console.error("Error fetching poll results:", err));
+            }
+        }
+        if (target.matches('.download-graph-btn')) {
+            const instanceId = target.dataset.instanceId;
+            const canvas = document.getElementById(`chart-for-instance-${instanceId}`);
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL("image/png", 1.0);
+            link.download = `poll-results-${instanceId}.png`;
+            link.click();
+        }
+    });
+    const sortSelect = document.getElementById('sort-polls-select');
+    sortSelect?.addEventListener('change', (e) => {
+        const sortValue = e.target.value;
+        const pollsArray = Array.from(document.querySelectorAll('.poll-form'));
+        pollsArray.sort((a, b) => {
+            const titleA = a.dataset.title.toLowerCase();
+            const titleB = b.dataset.title.toLowerCase();
+            const timeA = a.dataset.startTime === 'null' ? null : new Date(a.dataset.startTime);
+            const timeB = b.dataset.startTime === 'null' ? null : new Date(b.dataset.startTime);
+
+            switch (sortValue) {
+                case 'alpha-asc': return titleA.localeCompare(titleB);
+                case 'alpha-desc': return titleB.localeCompare(titleA);
+                case 'date-desc':
+                    if (!timeA) return -1; if (!timeB) return 1; return timeB - timeA;
+                case 'date-asc':
+                    if (!timeA) return -1; if (!timeB) return 1; return timeA - timeB;
+                default: return 0;
+            }
+        });
+        pollsArray.forEach(poll => savedPollsContainer.appendChild(poll));
+    });
+});
 </script>

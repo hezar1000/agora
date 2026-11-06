@@ -1,0 +1,336 @@
+{% comment %}
+  Styling for the parts of the settings page that are Agora's alone: how
+  participation is graded, and the term's lectures. Kept out of
+  blocks/settings-style.html, which styles the generic course settings.
+
+  Sizes are in px. Bootstrap 3 sets html{font-size:10px}, so a rem here is 10px
+  and anything sized in rem renders about a third smaller than it reads.
+{% endcomment %}
+<style>
+  /* --- density ----------------------------------------------------------
+     These sections are twenty label-left, control-right rows. Bootstrap's
+     20px form-group margin plus a help sentence on its own line under each
+     control makes a page nobody scrolls to the end of. The label column is
+     narrower, the help text sits with the control, and a checkbox is one line
+     rather than three. */
+  .settings-dense { margin-top: 4px; }
+  .settings-dense .form-group.row { margin-bottom: 9px; }
+  .settings-dense .col-form-label { padding-top: 6px; font-size: 14px; }
+  .settings-dense .form-control { height: 32px; padding: 4px 10px; }
+  .settings-dense select.form-control { height: 32px; }
+  .settings-dense .form-text { margin-top: 2px; font-size: 12px; line-height: 1.4; }
+  .settings-dense fieldset { margin-bottom: 14px; }
+  .settings-dense legend.h6 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #666; border: 0; margin-bottom: 8px; padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
+  }
+  .settings-dense .checkbox { margin: 0 0 2px; }
+  .settings-dense .checkbox label { font-weight: 400; font-size: 13px; }
+  .settings-dense .settings-legacy-heading { margin: 20px 0 10px; }
+  .settings-dense p.text-muted { margin-bottom: 10px; font-size: 13px; }
+
+  /* --- what the grade actually is, in words ---------------------------- */
+  .grade-summary {
+    background: #f6f8fa;
+    border: 1px solid #dfe3e8;
+    border-left: 4px solid #337ab7;
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin: 0 0 22px;
+  }
+  .grade-summary__lead { margin: 0 0 12px; font-size: 14px; }
+  .grade-summary__measures { list-style: none; margin: 0; padding: 0; }
+  .grade-summary__measure {
+    padding: 10px 0;
+    border-top: 1px solid #e3e7eb;
+  }
+  .grade-summary__measure:first-child { border-top: 0; padding-top: 0; }
+  .grade-summary__name {
+    display: inline-block;
+    font-weight: 600;
+    font-size: 15px;
+    margin-right: 8px;
+  }
+  .grade-summary__share { color: #555; font-size: 13px; }
+  .grade-summary__sentence {
+    display: block;
+    color: #444;
+    font-size: 13px;
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .grade-summary__notes {
+    margin: 12px 0 0;
+    padding-left: 18px;
+    color: #555;
+    font-size: 13px;
+  }
+  .grade-summary__notes li { margin-bottom: 4px; }
+
+  /* --- one measure's own settings -------------------------------------- */
+  .measure-card {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 14px 16px 4px;
+    margin-bottom: 18px;
+  }
+  .measure-card__legend {
+    width: auto;
+    border: 0;
+    margin: 0 0 6px;
+    padding: 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .measure-card__share {
+    font-weight: 400;
+    font-size: 13px;
+    color: #555;
+    margin-left: 6px;
+    white-space: nowrap;
+  }
+  .measure-card__sentence {
+    color: #555;
+    font-size: 13px;
+    margin: 0 0 10px;
+    padding: 0 6px;
+    line-height: 1.5;
+  }
+
+  /* --- the term at a glance -------------------------------------------- */
+  .lecture-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #444;
+  }
+  .lecture-legend__item { display: flex; align-items: center; gap: 6px; }
+  .lecture-chip {
+    display: inline-block;
+    width: 13px; height: 13px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+  }
+  .lecture-chip--lecture { background: #cfe6cf; border-color: #8dbf8d; }
+  .lecture-chip--not-graded { background: #fdebc8; border-color: #e0b45f; }
+  .lecture-chip--no-lecture { background: #ececec; border-color: #c4c4c4; }
+  .lecture-chip--planned { background: #fff; border: 1px dashed #9aa5b1; }
+
+  .lecture-calendar {
+    display: grid;
+    /* Wide enough that a day cell can hold a short lecture name rather than
+       three letters and an ellipsis. */
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 18px;
+    margin-bottom: 16px;
+  }
+  .lecture-month {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 10px 12px 12px;
+    min-width: 0;
+  }
+  .lecture-month__name {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .lecture-month__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .lecture-month__weekday {
+    font-size: 11px;
+    color: #777;
+    text-align: center;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .lecture-day {
+    min-height: 52px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    padding: 2px 3px;
+    font-size: 11px;
+    overflow: hidden;
+  }
+  .lecture-day__number { display: block; color: #555; font-size: 11px; }
+  .lecture-day__name {
+    display: block;
+    font-size: 10px;
+    line-height: 1.2;
+    word-break: break-word;
+    margin-top: 1px;
+    overflow: hidden;
+    /* Two lines of a lecture title, then stop; the full name is in the list. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .lecture-day__name--muted { color: #8a939b; font-style: italic; }
+  .lecture-day--outside { visibility: hidden; }
+  .lecture-day--lecture { background: #cfe6cf; border-color: #8dbf8d; }
+  .lecture-day--not-graded { background: #fdebc8; border-color: #e0b45f; }
+  .lecture-day--no-lecture { background: #ececec; border-color: #c4c4c4; color: #888; }
+  .lecture-day--no-lecture .lecture-day__name { text-decoration: line-through; }
+  .lecture-day--planned { border: 1px dashed #9aa5b1; }
+  .lecture-day--today { box-shadow: inset 0 0 0 2px #337ab7; }
+  /* Removing a day is a cross on the day, not a checkbox on another screen.
+     It sits in the corner so it never pushes the date or the name around. */
+  .lecture-day { position: relative; }
+  .lecture-day__act {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    width: 17px;
+    height: 17px;
+    padding: 0;
+    font-size: 12px;
+    line-height: 15px;
+    text-align: center;
+    border-radius: 3px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.85);
+    /* Visible on a touch screen, which has no hover to reveal it. */
+    opacity: 0.55;
+  }
+  .lecture-day:hover .lecture-day__act,
+  .lecture-day__act:focus { opacity: 1; }
+  .lecture-day__act--remove { color: #a94442; border: 1px solid #e0b4b0; }
+  .lecture-day__act--remove:hover { background: #f7e4e2; }
+  .lecture-day__act--restore { color: #31708f; border: 1px solid #bcd4e6; }
+  .lecture-day__act--restore:hover { background: #eaf3fa; }
+  .lecture-day__act[disabled] { opacity: 0.4; cursor: default; }
+  .lecture-day__name { padding-right: 16px; }
+
+  .queue-choices { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .queue-choice {
+    font-weight: 400; margin: 0; font-size: 13px;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  /* --- the tally and the grade disagreeing --------------------------- */
+  .points-conflict {
+    background: #fcf8e3;
+    border: 1px solid #faebcc;
+    border-radius: 4px;
+    color: #8a6d3b;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+  .points-conflict__lead { margin: 0 0 6px; }
+  .points-conflict ul { margin: 0; padding-left: 18px; }
+
+  .lecture-warning {
+    background: #fcf8e3;
+    border: 1px solid #faebcc;
+    border-radius: 4px;
+    color: #8a6d3b;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  /* --- when lectures repeat -------------------------------------------- */
+  .lecture-subhead {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 26px 0 8px;
+  }
+  .pattern-list { list-style: none; margin: 0 0 10px; padding: 0; }
+  .pattern-list__item {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 14px;
+  }
+  .pattern-list__name { color: #666; margin-left: 8px; font-size: 13px; }
+  .pattern-editor { margin-bottom: 8px; }
+  .pattern-editor__summary {
+    cursor: pointer;
+    color: #337ab7;
+    font-size: 13px;
+    margin-bottom: 10px;
+  }
+  .pattern-editor__row {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .pattern-editor__grid {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr);
+    gap: 10px 14px;
+    align-items: center;
+  }
+  .pattern-editor__label {
+    margin: 0;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+  }
+  .pattern-editor__days { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .pattern-editor__day {
+    font-weight: 400;
+    margin: 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pattern-editor__pair { display: flex; align-items: center; gap: 8px; }
+  .pattern-editor__pair .form-control { max-width: 190px; }
+  .pattern-editor__joiner { color: #777; font-size: 13px; }
+  .pattern-editor__actions { margin-top: 12px; text-align: right; }
+
+  /* --- every lecture, in order ----------------------------------------- */
+  .lecture-table { font-size: 14px; }
+  .lecture-table__date { white-space: nowrap; }
+  .lecture-table__flag { text-align: center; width: 130px; }
+  .lecture-table td, .lecture-table th { vertical-align: middle; }
+  .lecture-row--cancelled > * { opacity: 0.55; }
+  .lecture-row--cancelled .lecture-table__date { text-decoration: line-through; }
+  .lecture-row--ungraded { background: #fffaf0; }
+
+  /* --- narrow screens --------------------------------------------------- */
+  @media (max-width: 767px) {
+    .lecture-calendar { grid-template-columns: minmax(0, 1fr); }
+    .lecture-day { min-height: 38px; }
+    .lecture-day__name { display: none; }
+    .lecture-day__act { opacity: 1; }
+    .pattern-editor__grid { grid-template-columns: minmax(0, 1fr); }
+    .pattern-editor__label { text-align: left; }
+    .pattern-editor__pair { flex-wrap: wrap; }
+
+    /* The table becomes one block per lecture; a 4-column grid at 320px puts
+       two words on each line and the checkboxes off the right edge. */
+    .lecture-table thead { display: none; }
+    .lecture-table, .lecture-table tbody, .lecture-table tr, .lecture-table td,
+    .lecture-table th { display: block; width: auto; }
+    .lecture-table tr {
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+    .lecture-table__flag {
+      text-align: left;
+      width: auto;
+      padding-top: 6px;
+    }
+    .lecture-table__flag::before {
+      content: attr(data-label) ": ";
+      font-size: 13px;
+      color: #555;
+    }
+    .lecture-table__flag input { margin-left: 4px; }
+    .measure-card__share { display: block; margin: 2px 0 0; white-space: normal; }
+  }
+</style>

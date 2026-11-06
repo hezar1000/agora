@@ -1,0 +1,107 @@
+.checkbox-inline {
+  display: flex; 
+  align-items: center;
+
+}
+.checkbox-inline input[type="checkbox"]{
+  width: 1.1em;  
+  height: 1.1em;
+  flex: 0 0 1.1em;
+  accent-color: #007bff;
+}
+
+.horizontal-checkbox-group {
+  display: flex;
+  flex-direction: row; 
+  flex-wrap: nowrap;   
+  align-items: center; 
+  gap: 15px; 
+            
+
+}
+.active-days-container{
+  display: grid;
+  /* grid-template-columns: repeat(5, 1fr); */
+  gap: .25rem 1.2rem;
+  justify-content: start;    
+}
+
+.active-days-container .checkbox-inline{
+  margin: 0;          
+}
+.checkbox-inline label {
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+.form-group {
+  margin-bottom: 1rem; 
+}
+.form-group.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.form-group .col-md-6 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.preset-flex {
+  display: flex;
+  flex-wrap: wrap; 
+  gap: 1rem;       
+}
+
+.preset-block {
+  flex: 1 1 180px;              
+  min-width: 160px; 
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 1rem;
+  background: #f8f9fa; 
+  cursor: pointer;
+  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out, background-color .15s ease-in-out;
+  position: relative; 
+
+  display: flex;          
+  flex-direction: column; 
+}
+
+.preset-block input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+}
+
+.preset-block .preset-title {
+  margin-bottom: 0.75rem; 
+  text-align: center;
+  font-size: 1em;     
+  color: #333;        
+}
+
+.preset-block .preset-desc {
+  font-weight: normal !important; 
+  font-size: 0.875em; 
+  line-height: 1.5;  
+  text-align: left;   
+  color: #555;        
+  flex-grow: 1;       
+}
+
+.preset-block:not(.selected):hover {
+  border-color: #adb5bd;   
+  background-color: #e9ecef; 
+}
+
+.preset-block.selected {
+  border-color: #007bff; 
+  background-color: #e7f3ff; 
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); 
+}
+.preset-block.selected .preset-title {
+  color: #004085; 
+}
+.preset-block.selected .preset-desc {
+  color: #004085;
+}

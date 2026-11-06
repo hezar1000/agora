@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="container" id="main-content" style="max-width: 760px;">
+  <h1 style="font-size: 28px; margin: 24px 0 8px;">Try Agora</h1>
+  <p class="text-muted" style="font-size: 15px;">
+    A class with a lecture already open, and a six-digit code for joining it.
+    Open the join page in another browser &mdash; or hand the code to a room
+    &mdash; and every hand raised behaves exactly as it will in your own
+    course. Nothing here touches a real course, and it deletes itself after
+    {{ lifetime_hours }} hours.
+  </p>
+
+  {% if running %}
+    <h2 style="font-size: 18px; margin-top: 28px;">Running now</h2>
+    <ul style="list-style: none; padding: 0;">
+      {% for course in running %}
+        <li style="border: 1px solid #e5e5e5; border-radius: 4px; padding: 12px 14px; margin-bottom: 8px;">
+          <a href="{% url 'course:sandbox_console' cid=course.id %}"><strong>{{ course.displayname }}</strong></a>
+          <span class="text-muted" style="font-size: 13px;">
+            &middot; code <strong>{{ course.join_code }}</strong>
+            &middot; ends {{ course.sandbox_expires_at|date:"H:i" }}
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if error %}
+    <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" style="margin-top: 20px;">
+    {% csrf_token %}
+    {% if guest %}
+      {% comment %}
+        Signed out: the class gets a temporary instructor, deleted with it.
+        The name is what students see; it is optional.
+      {% endcomment %}
+      <label for="name" style="font-weight: normal;">Your name <span class="text-muted">(optional, shown to students)</span></label>
+      <input id="name" name="name" class="form-control" maxlength="40"
+             placeholder="Demo instructor" style="max-width: 320px; margin-bottom: 12px;">
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-lg">Start a demonstration class</button>
+  </form>
+  {% if guest %}
+    <p class="text-muted" style="font-size: 13px; margin-top: 10px;">
+      No account needed. You will be the instructor of this class only, and
+      that access ends when the class deletes itself.
+    </p>
+  {% endif %}
+
+  {% comment %}
+    No join URL here: there is no code until a class exists, and offering one
+    before then is an instruction a first-time reader cannot follow. The code
+    and the link are on the console, next to each other, once there is one.
+  {% endcomment %}
+  <h2 style="font-size: 15px; margin: 28px 0 8px;">What happens when you press it</h2>
+  <ol class="text-muted" style="font-size: 14px; padding-left: 20px; max-width: 640px;">
+    <li>A class appears with a lecture already running, so hands can go up
+      straight away.</li>
+    <li>You get a six-digit code. Anyone who opens the join page and types it
+      is in, with no account &mdash; a second browser of your own, or a room
+      full of people.</li>
+    <li>Raised hands appear on your screen, and you can call on one at random,
+      exactly as you would in your own course.</li>
+    <li>It deletes itself, along with everyone who joined it.</li>
+  </ol>
+</main>
+{% endblock %}

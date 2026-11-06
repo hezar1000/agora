@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block extra_style %}{% endblock %}
+
+{% block content %}
+{% include "blocks/course-admin-style.html" %}
+<main class="container" id="main-content">
+  <h1>{{ course.displayname }}</h1>
+
+  <p class="course-admin__lead">
+    {% if next_session %}
+      <span class="course-admin__when">
+        {% if session_in_progress %}
+          <strong>A lecture is running now</strong>
+        {% else %}
+          Next lecture: <strong>{{ next_session.display_name }}</strong>
+        {% endif %}
+        &mdash; {{ next_session.session_date|date:"l j F" }},
+        {{ next_session.start_time_pst|time:"H:i" }}&ndash;{{ next_session.end_time_pst|time:"H:i" }}
+      </span>
+    {% else %}
+      <span class="course-admin__when text-muted">No lecture scheduled.</span>
+    {% endif %}
+    <a class="btn btn-primary" href="{% url 'peer_home:agora_dash' %}">
+      {% if is_staff %}Open the lecture screen{% else %}Join the lecture{% endif %}
+    </a>
+  </p>
+
+  {% if selection_policy %}
+    <section class="course-admin__card" aria-labelledby="calling-heading"
+             style="margin-bottom: 24px;">
+      <h2 class="course-admin__title" id="calling-heading">How students are chosen to speak</h2>
+      {% for sentence in selection_policy %}
+        <p>{{ sentence }}</p>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if is_staff %}
+    <div class="course-admin">
+
+      <section class="course-admin__card" aria-labelledby="people-heading">
+        <h2 class="course-admin__title" id="people-heading">People</h2>
+        <p class="course-admin__figure">{{ roster.students }}</p>
+        <p class="text-muted">
+          students, {{ roster.instructors }} instructor{{ roster.instructors|pluralize }},
+          {{ roster.tas }} TA{{ roster.tas|pluralize }}
+        </p>
+        <ul>
+          <li><a href="/course/{{ course.id }}/list_users/">Everyone in this course</a></li>
+        </ul>
+      </section>
+
+      {% if class_participation %}
+        <section class="course-admin__card" aria-labelledby="participation-heading">
+          <h2 class="course-admin__title" id="participation-heading">Participation</h2>
+          <p class="course-admin__figure">{{ class_participation.took_part }}</p>
+          <p class="text-muted">
+            of {{ class_participation.students }} students have taken part
+            across {{ class_participation.lectures }} lecture{{ class_participation.lectures|pluralize }}
+          </p>
+          <ul>
+            <li>Median {{ class_participation.median|floatformat:"-1" }} contributions,
+                most active {{ class_participation.maximum|floatformat:"-1" }}</li>
+          </ul>
+        </section>
+      {% endif %}
+
+      <section class="course-admin__card" aria-labelledby="sessions-heading">
+        <h2 class="course-admin__title" id="sessions-heading">Lectures</h2>
+        {% if upcoming %}
+          <ul>
+            {% for session in upcoming %}
+              <li>
+                {{ session.session_date|date:"j M" }}
+                {{ session.start_time_pst|time:"H:i" }}
+                {% if not session.counts_for_participation %}
+                  <span class="text-muted">&mdash; not graded</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">Nothing scheduled.</p>
+        {% endif %}
+        <ul>
+          <li><a href="{% url 'course:lectures' cid=course.id %}">Past lectures: attendance and what happened</a></li>
+          <li><a href="{% url 'course:edit' cid=course.id %}#weekly-schedule">Change the schedule</a></li>
+        </ul>
+      </section>
+
+      <section class="course-admin__card" aria-labelledby="export-heading">
+        <h2 id="export-heading">Export</h2>
+        <ul>
+          <li><a href="/course/{{ course.id }}/list_users/">Class roster</a></li>
+          <li>
+            <a href="{% url 'peer_home:agora_dash' %}">Participation data</a>
+            <span class="text-muted">&mdash; from the lecture screen</span>
+          </li>
+          {% if is_instructor %}
+            {% comment %}
+              This export existed with nothing linking to it, so the only way
+              to reach it was to know the URL.
+            {% endcomment %}
+            <li><a href="/course/{{ course.id }}/export_message_data/">Student questions and messages</a></li>
+          {% endif %}
+        </ul>
+      </section>
+
+      {% if is_instructor %}
+        <section class="course-admin__card" aria-labelledby="settings-heading">
+          <h2 id="settings-heading">Settings</h2>
+          <ul>
+            <li><a href="{% url 'course:edit' cid=course.id %}">Course settings</a></li>
+            <li><a href="{% url 'course:edit' cid=course.id %}#participation">Participation grading</a></li>
+            <li><a href="{% url 'course:edit' cid=course.id %}#lectures">Lectures and exclusions</a></li>
+          </ul>
+        </section>
+      {% endif %}
+
+    </div>
+  {% elif standing %}
+    <section aria-labelledby="mine-heading">
+      <h2 id="mine-heading">Your participation</h2>
+      {% comment %}
+        The record, not a running grade: a total out of 15 in week two reads
+        as a grade and means nothing yet. Marks are on the details page, for
+        staff.
+      {% endcomment %}
+      <p class="course-admin__figure">{{ standing.totals.raised }}</p>
+      <p class="text-muted">
+        hand raise{{ standing.totals.raised|pluralize }} counted across
+        {{ standing.coverage_count }} of the {{ standing.lectures_counted }} graded lecture{{ standing.lectures_counted|pluralize }} held so far
+        {% if standing.shows_volume %}
+          &middot; {{ standing.volume|floatformat:"-2" }} additional beyond the one per lecture that counts as attendance
+        {% endif %}
+      </p>
+      {% if standing.latest_lecture %}
+        <p class="text-muted">
+          Last lecture{% if standing.latest_lecture.session %} ({{ standing.latest_lecture.session.display_name }}){% endif %}:
+          {{ standing.latest_lecture.raised }} hand raise{{ standing.latest_lecture.raised|pluralize }} counted{% if standing.shows_bonus and standing.latest_lecture.bonus %}
+          + {{ standing.latest_lecture.bonus }} after speaking{% endif %}{% if standing.latest_lecture.percent != None %}
+          &middot; {{ standing.latest_lecture.percent }}%{% endif %}
+        </p>
+      {% endif %}
+      <p>
+        <a href="/course/{{ course.id }}/{{ coursemember.user.id }}/">
+          View details: hand raises counted in every lecture
+        </a>
+      </p>
+    </section>
+  {% else %}
+    <p class="text-muted">
+      Participation grades are not shown for this course.
+    </p>
+  {% endif %}
+</main>
+{% endblock %}

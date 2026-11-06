@@ -1,0 +1,43 @@
+[Unit]
+Description=Run one Agora live-session maintenance pass
+Documentation=file:/srv/agora/current/prod_setup.txt
+After=network-online.target redis-server.service
+Wants=network-online.target redis-server.service
+
+[Service]
+Type=oneshot
+User=agora
+# Group stays agora. /etc/agora/saml/* is root:agora 0640, and systemd
+# does not add the user's supplementary groups once Group= is set, so any
+# other primary group loses access to the SAML keypair and the service
+# fails to start. Nginx only reads the static root, which is world
+# readable, so it needs nothing here.
+Group=agora
+WorkingDirectory=/srv/agora/current
+EnvironmentFile=/etc/agora/agora.env
+Environment=DJANGO_SETTINGS_MODULE=mta2.settings
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/srv/agora/current/.venv/bin/python manage.py manage_live_sessions
+TimeoutStartSec=50
+UMask=0027
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=agora-live-sessions
+
+NoNewPrivileges=true
+PrivateDevices=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+# ProtectSystem=strict makes this load-bearing: a media root outside
+# these paths lets the service start and then fail every upload.
+# Persistent data lives outside any release tree so a redeploy
+# cannot orphan it.
+ReadWritePaths=/home/agora/agora-data/media /var/log/agora
+ProtectControlGroups=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictSUIDSGID=true
+CapabilityBoundingSet=
+LockPersonality=true

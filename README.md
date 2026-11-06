@@ -1,164 +1,42 @@
-# Installation Guide  
+# Agora
 
-To get started, you'll need a fresh Ubuntu installation with a user named "agora" that has **sudo** access (or any other name, though this will require additional modifications to the configuration files below).
+Agora is an in-class participation tracking and grading system: live hand
+raising and selection, participation records and grading schemes, polls,
+messages, and SAML sign-in. It is described in the
+[Agora paper](https://www.cs.ubc.ca/~kevinlb/papers/2024-Agora.pdf).
 
----
+Agora grew out of the [MTA](https://www.cs.ubc.ca/~kevinlb/papers/2024-SIGCSE-MTA2.pdf)
+peer-review codebase. The assignment, submission, peer-review, evaluation,
+calibration, and gradebook runtime code has been removed; its migration modules
+remain only so an existing database can be upgraded without deleting historic
+tables or data.
 
-### Step 1: Clone the Repository and Install Requirements  
-Run the following commands in your terminal:  
-```bash
-git clone https://github.com/hezar1000/agora.git
-cd agora
-```  
+## Start here
 
----
+- Compatibility-only migration policy: [`docs/COMPATIBILITY_MIGRATIONS.md`](docs/COMPATIBILITY_MIGRATIONS.md)
+- Environment template: [`.env.example`](.env.example)
+- Production setup: [`prod_setup.txt`](prod_setup.txt)
+- Hardened systemd units: [`deploy/systemd/`](deploy/systemd/)
+- Classroom microphone: [`docs/CLASSROOM_MICROPHONE.md`](docs/CLASSROOM_MICROPHONE.md)
 
-### Step 2: Set Up a Python Virtual Environment  
-Ensure you have **Python 3.10 or older** installed.  
+## Local development
 
-Create and activate a Python virtual environment:  
-```bash
-python3 -m venv venv  
-source venv/bin/activate  
-```  
+Use Python 3.11 or newer, install `requirements_new.txt`, copy the values from
+`.env.example` into your local environment, and explicitly enable the
+isolated local defaults:
 
-Install the required Python dependencies:  
-```bash
-pip install -r requirements.txt  
-```  
+```text
+DJANGO_ALLOW_INSECURE_LOCAL_DEFAULTS=1
+SAML2_INTEGRATION_ENABLED=0
+```
 
----
+Then run migrations and the complete test suite:
 
-### Step 3: Install Production Server Dependencies  
-For production deployment, install the following tools:  
+```text
+python manage.py migrate
+python manage.py test
+```
 
-- **Nginx** (or an alternative web server)  
-- **Daphne** (or an alternative ASGI server)  
-- **Supervisor** (for process management)  
-- **MySQL** (or an alternative database)  
-- **Redis** (or an alternative key-value store)  
-
-Install them using the following commands:  
-```bash
-sudo apt update  
-sudo apt install nginx daphne supervisor mysql-server redis  
-```  
-
----
-
-### Step 4: Configure Installed Services  
-
-#### Step 4.1: Configure **Nginx** to Proxy Requests to Daphne  
-1. Check and customize the `nginx.conf` file in the repository to ensure the directories and web server settings match your setup.  
-2. Create a symbolic link:  
-   ```bash
-   sudo ln -s $(pwd)/nginx.conf /etc/nginx/sites-enabled/agora_nginx.conf
-   ```  
-(or
-   ```bash
-   sudo ln -s $(pwd)/nginx.conf /etc/nginx/conf.d/agora_nginx.conf
-   ``` 
-)
-
-3. Restart Nginx:  
-   ```bash
-   sudo systemctl restart nginx
-   ```  
-4. Verify Nginx is running:  
-   ```bash
-   sudo systemctl status nginx
-   ```  
-
-#### Step 4.2: Configure **Daphne**  
-1. Verify the `daphne.service` file contains correct paths and settings for your application.  
-
-#### Step 4.3: Set Up **Supervisor**  
-1. Verify and update paths in the `supervisord.conf` file.  
-2. Create a symbolic link:  
-   ```bash
-   sudo ln -s $(pwd)/supervisor.conf /etc/supervisor/conf.d/
-   ```  
-3. Ensure Daphne's instances folder is accessible:  
-   ```bash
-   sudo mkdir -p /run/daphne/
-   sudo chown $(whoami):$(whoami) /run/daphne/
-   ```  
-4. Reload and start Supervisor:  
-   ```bash
-   sudo supervisorctl reread  
-   sudo supervisorctl update  
-   sudo supervisorctl start all
-   ```  
-
----
-
-### Step 5: Configure Databases  
-
-#### MySQL  
-1. Log into MySQL as root:  
-   ```bash
-   sudo mysql
-   ```  
-2. Create a database and user:  
-   ```sql
-   CREATE DATABASE agora_db;  
-   CREATE USER 'agora'@'localhost' IDENTIFIED BY 'your_password';  
-   GRANT ALL PRIVILEGES ON agora_db.* TO 'agora'@'localhost';  
-   FLUSH PRIVILEGES;  
-   ```  
-3. Update `agora/development_settings.py` with your database credentials:  
-   ```python
-   DATABASES = {  
-       'default': {  
-           'ENGINE': 'django.db.backends.mysql',  
-           'NAME': 'agora_db',  
-           'USER': 'agora',  
-           'PASSWORD': 'your_password',  
-       },  
-   }
-   ```  
-4. Run migrations:  
-   ```bash
-   python3 manage.py migrate
-   ```  
-
-#### Redis  
-1. Set up a Redis password in the configuration file:  
-   ```bash
-   sudo nano /etc/redis/redis.conf
-   ```  
-   Add or modify the following line:  
-   ```conf
-   requirepass your_redis_password
-   ```  
-2. Restart Redis:  
-   ```bash
-   sudo systemctl restart redis
-   ```  
-3. Update `agora/development_settings.py` with the Redis credentials:  
-   ```python
-   REDIS_URL = "redis://:your_redis_password@localhost:6379/0"
-   ```  
-
----
-
-### Step 6: Finalize Application Configuration  
-1. Ensure all directories referenced in `agora/development_settings.py` exist and point to the correct paths.  
-2. Collect static files:  
-   ```bash
-   python manage.py collectstatic --noinput
-   ```  
-
-### Step 7: Redeploy
-   ```bash
-   python3 manage.py migrate
-   python manage.py collectstatic --noinput
-   sudo systemctl restart nginx
-   sudo systemctl restart supervisor
-   ```  
-
-### Additional Information
-For more information about Agora, feel free to check out our paper:
-
-Agora: Motivating and Measuring Engagement in Large-Class Discussions
-https://dl.acm.org/doi/abs/10.1145/3649217.3653540
+Production intentionally fails closed when required secrets, hostnames, or the
+database URL are missing. See [`prod_setup.txt`](prod_setup.txt) before
+deploying.

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.urls import reverse
 
 from peer_course.models import Course, display_role
+from peer_course.models import INSTRUCTOR_ROLES
 from peer_course.base import CourseBase
 
 
@@ -19,7 +20,7 @@ def render(request, template_name, context=None, *args, **kwargs):
     if settings.DEBUG == True:
         context["logout_address"] = reverse("account:logout")
     else:
-        context["logout_address"] = reverse("account:saml_logout")
+        context["logout_address"] = reverse("account:logout")
     if "course_id" in request.session:
         if "course" not in context:
             context["course"] = get_object_or_404(
@@ -42,7 +43,7 @@ def render(request, template_name, context=None, *args, **kwargs):
 
             context["is_student"] = user_role == "student"
             context["is_ta"] = user_role == "ta"
-            context["is_instructor"] = user_role == "instructor" or superuser
+            context["is_instructor"] = user_role in INSTRUCTOR_ROLES or superuser
 
             context["is_staff"] = context["is_ta"] or context["is_instructor"]
 

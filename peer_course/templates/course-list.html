@@ -1,9 +1,7 @@
 {% extends "form_simp_base.html" %}
 
 {% block content %}
-
 <div class="container-fluid">
-
   <div class="row col-md-offset-1">
 
     {% if has_visible_course %}
@@ -15,149 +13,295 @@
         {% if courses_as_instructor and length == 0 %}
           <h3>Create a new course to continue.</h3>
         {% elif courses_as_instructor %}
-          <!--<h3>I am an instructor in the following courses:</h3>-->
-          <!--<h3>Please choose a course to continue</h3>-->
-
           <div class="list-group">
             <li class="list-group-item disabled"> Courses enrolled as an Instructor </li>
             {% for cm in courses_as_instructor %}
-              <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
+              <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{ next }}{% endif %}" class="list-group-item">
                 <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
                 {% if not cm.course.browsable %}
-                  <p class="list-group-item-text citem-text">
-                      (Hidden from students)
-                  </p>
+                  <p class="list-group-item-text citem-text">(Hidden from students)</p>
                 {% endif %}
               </a>
             {% endfor %}
           </div>
+        {% endif %}
 
-          <!--
-          <div class="list-group col-md-6">
-          {% for cm in courses_as_instructor %}
-              <div class="list-group-item">
-                <a class="col-md-8" href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}">{{ cm.course.displayname }}
-                {% if cm.course.browsable %}
-                  (Visible to students)
-                {% else %}
-                  (Hidden from students)
-                {% endif %}
-                </a>
-
-                {% if cm.course.browsable %}
-                  <a href="/course/{{ cm.course.id }}/modify/?action=hide">Hide</a>
-                {% else %}
-                  <a href="/course/{{ cm.course.id }}/modify/?action=show">Show</a>
-                {% endif %} 
-
-              </div>
-          {% endfor %}
-          </div>
-          -->
-      {% endif %}
-
-      {% if courses_as_ta and length == 0 %}
-          <h3>No course is availble right now. Come back later.</h3>
-      {% elif courses_as_ta %}
-          <!--<h3>Please choose a course to continue</h3>-->
+        {% if courses_as_ta and length == 0 %}
+          <h3>No course is available right now. Come back later.</h3>
+        {% elif courses_as_ta %}
           <div class="list-group">
             <li class="list-group-item disabled"> Courses enrolled as a TA </li>
             {% for cm in courses_as_ta %}
-            <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
-              <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
-              {% if not cm.course.browsable %}
-                <p class="list-group-item-text citem-text">
-                    (Hidden from students)
-                </p>
-              {% endif %}
-            </a>
+              <a href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{ next }}{% endif %}" class="list-group-item">
+                <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
+                {% if not cm.course.browsable %}
+                  <p class="list-group-item-text citem-text">(Hidden from students)</p>
+                {% endif %}
+              </a>
             {% endfor %}
           </div>
-      {% endif %}
+        {% endif %}
 
-      {% if courses_as_student and length == 0 %}
-          <h3>No course is availble right now. Come back later.</h3>
-      {% elif courses_as_student %}
-          <!--<h3>I am a student in the following courses:</h3>-->
-          <!--<h3>Please choose a course to continue</h3>-->
-
+        {% if courses_as_student and length == 0 %}
+          <h3>No course is available right now. Come back later.</h3>
+        {% elif courses_as_student %}
           <div class="list-group">
             <li class="list-group-item disabled"> Courses enrolled as a Student </li>
             {% for cm in courses_as_student %}
-              <a class="list-group-item" href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{next}}{% endif %}">
+              <a class="list-group-item" href="{% url 'course:view' cid=cm.course.id %}{% if next %}?next={{ next }}{% endif %}">
                 <h4 class="list-group-item-heading citem-heading">{{ cm.course.displayname }}</h4>
               </a>
             {% endfor %}
           </div>
-
-      {% endif %}
-
-      {% if request.user.is_superuser %}
-        {% if courses|length == 0 %}
-        no courses
-        {% else %}
-          <div class="list-group">
-            {% for course in courses %}
-            <a href="{% url 'course:view' cid=course.id %}{% if next %}?next={{next}}{% endif %}" class="list-group-item">
-              <h4 class="list-group-item-heading citem-heading">{{ course.displayname }}</h4>
-              {% if not course.browsable %}
-                <p class="list-group-item-text citem-text">
-                    (Hidden from students)
-                </p>
-              {% endif %}
-            </a>
-          {% endfor %}
-          </div>
         {% endif %}
+
+        {% if request.user.is_superuser %}
+          {% if courses|length == 0 %}
+            <p>No courses.</p>
+          {% else %}
+            <div class="list-group">
+              <li class="list-group-item disabled">Regular Courses</li>
+              {% for course in courses %}
+                {% if "temp" not in course.displayname %}
+                  <a href="{% url 'course:view' cid=course.id %}" class="list-group-item">
+                    <h4 class="list-group-item-heading citem-heading">{{ course.displayname }}</h4>
+                    {% if not course.browsable %}
+                      <p class="list-group-item-text citem-text">(Hidden from students)</p>
+                    {% endif %}
+                  </a>
+                {% endif %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="col-sm-12 col-md-5">
+      {% if request.user.is_superuser %}
+        <div class="page-header">
+          <h2>Create a course</h2>
+        </div>
+        <form method="post" action="/course/create/">
+          {% csrf_token %}
+          <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">Course name </span>
+            <input aria-label="Cname" type="text" class="form-control" placeholder="e.g. CPSC121 {% now 'Y' %}W1"
+                   name="cname" aria-describedby="basic-addon1" required>
+            <span class="input-group-btn">
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </span>
+          </div>
+        </form>
+
+
+        <div class="page-header">
+          <h2>Enroll in a course</h2>
+        </div>
+        <form method="post" action="/course/enroll/">
+          {% csrf_token %}
+          <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">Enrollment code </span>
+            <input aria-label="Coursecode" type="text" class="form-control" placeholder="e.g. 555x555x"
+                   name="coursecode" aria-describedby="basic-addon1">
+            <span class="input-group-btn">
+              <button type="submit" class="btn btn-primary">Enroll</button>
+            </span>
+          </div>
+        </form>
+
+      {% elif courses_as_instructor %}
+          <div class="page-header">
+            <h2>Create a course</h2>
+          </div>
+          <form method="post" action="/course/create/">
+            {% csrf_token %}
+            <div class="input-group">
+              <span class="input-group-addon" id="basic-addon1">Course name </span>
+              <input aria-label="Cname" type="text" class="form-control" placeholder="e.g. CPSC121 {% now 'Y' %}W1"
+                     name="cname" aria-describedby="basic-addon1">
+              <span class="input-group-btn">
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </span>
+            </div>
+          </form>
+          <div class="page-header">
+            <h2>Enroll in a course</h2>
+          </div>
+          <form method="post" action="/course/enroll/">
+            {% csrf_token %}
+            <div class="input-group">
+              <span class="input-group-addon" id="basic-addon1">Enrollment code </span>
+              <input aria-label="Coursecode" type="text" class="form-control" placeholder="e.g. 555x555x"
+                     name="coursecode" aria-describedby="basic-addon1">
+              <span class="input-group-btn">
+                <button type="submit" class="btn btn-primary">Enroll</button>
+              </span>
+            </div>
+          </form>
+
+      {% else %}
+        <div class="page-header">
+          <h2>Enroll in a course</h2>
+        </div>
+        <form method="post" action="/course/enroll/">
+          {% csrf_token %}
+          <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">Enrollment code </span>
+            <input aria-label="Coursecode" type="text" class="form-control" placeholder="e.g. 555x555x"
+                   name="coursecode" aria-describedby="basic-addon1">
+            <span class="input-group-btn">
+              <button type="submit" class="btn btn-primary">Enroll</button>
+            </span>
+          </div>
+        </form>
       {% endif %}
-      </div>
-    {% endif %}
-
-  <div class="col-sm-12 col-md-5">
-  
-    {% if request.user.is_superuser %}
-
-    <div class="page-header">
-      <h2>Create a course</h2>
-    </div>
-    
-    <form method="post" action="/course/create/">
-      {% csrf_token %}
-      
-      <div class="input-group">
-        <span class="input-group-addon" id="basic-addon1">Course name </span>
-        <input type="text" class="form-control" placeholder="e.g. CPSC121 {% now 'Y' %}W1" name="cname" aria-describedby="basic-addon1">
-
-        <span class="input-group-btn">
-          <button type="submit" class="btn btn-primary">Submit</button>
-        </span>
-
-      </div>
-    </form>
-
-    {% else %}
-
-    <div class="page-header">
-      <h2>Enroll in a course</h2>
     </div>
 
-    <form method="post" action="/course/enroll/">
-      {% csrf_token %}
-
-      <div class="input-group">
-        <span class="input-group-addon" id="basic-addon1">Enrollment code </span>
-        <input type="text" class="form-control" placeholder="e.g. 555x555x" name="coursecode" aria-describedby="basic-addon1">
-
-        <span class="input-group-btn">
-          <button type="submit" class="btn btn-primary">Enroll</button>
-        </span>
-
-      </div>
-    </form>
-
-    {% endif %}
-    </div>
   </div>
+
+  {% if GUEST_SESSIONS_ENABLED %}
+    {% comment %}
+      The only way into a demonstration class. Without this the feature is
+      reachable only by typing its URL, which is not a flow.
+
+      Below the course list, and quieter than it, on purpose. When it sat
+      beside the list a student who had just enrolled pressed it twice, became
+      the instructor of two demo classes, and could not find the real course
+      underneath them.
+    {% endcomment %}
+    <div class="row col-md-offset-1">
+      <div class="col-md-10">
+        <hr>
+        <h4 class="text-muted">Try Agora</h4>
+        <p class="text-muted">
+          A throwaway class with a lecture already running and a six-digit code,
+          so you can see how a lecture behaves before using it in your own
+          course. It touches nothing real and deletes itself.
+        </p>
+        <a class="btn btn-default btn-sm" href="{% url 'course:sandbox_start' %}">
+          Start a demonstration class
+        </a>
+      </div>
+    </div>
+  {% endif %}
 </div>
 
+<div class="modal fade" id="firstNameModal" tabindex="-1" role="dialog" aria-labelledby="firstNameModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h4 class="modal-title" id="firstNameModalLabel">Please enter your name</h4>
+      </div>
+
+      <div class="modal-body">
+        <form method="POST" action="{% url 'account:update_name' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="first_name">Your Name</label>
+            <input 
+              type="text"
+              class="form-control"
+              id="first_name"
+              name="first_name"
+              placeholder="Your Name"
+              required
+            >
+          </div>
+
+      <div class="modal-header">
+                  <h4 class="modal-title">Please Read the Terms Below</h4>
+                </div>
+
+                <!-- Scrollable terms container -->
+                <div class="terms-content" style="height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 1rem;">
+                  
+                  <p>
+                    Welcome! Before you start using Agora, please review these guidelines carefully. If you have any questions, contact 
+                    <a href="mailto:agora.help@ubc.ca">agora.help@ubc.ca</a> for clarifications. Understanding these guidelines helps you know what to expect from Agora and what is expected from you.
+                  </p>
+
+                  <h5>Your Personal Information</h5>
+                  <p>When you use Agora:</p>
+                  <ul>
+                    <li>
+                      <strong>Be cautious about what you share:</strong> 
+                      Avoid sharing sensitive information that is not required for classroom activities. Additionally, refrain from disclosing any information with which you are uncomfortable sharing with the rest of the class.
+                    </li>
+                    <li>
+                      <strong>Photo Use:</strong> 
+                      You can choose not to have your photo displayed during classroom activities. To do this, go to your profile settings in Agora and delete your photo.
+                    </li>
+                    <li>
+                      <strong>Need help opting out?</strong> 
+                      If you are having trouble or need help, please reach out to 
+                      <a href="mailto:agora.help@ubc.ca">agora.help@ubc.ca</a>.
+                    </li>
+                  </ul>
+
+                  <h5>What We Collect and Why</h5>
+                  <ul>
+                    <li>
+                      <strong>Participation, messages, and poll responses during class:</strong> 
+                      to enhance classroom discussions and interactions.
+                    </li>
+                    <li>
+                      <strong>Images for identification (optional):</strong> 
+                      If you are comfortable, you can upload your photo to help instructors recognize you during classes.
+                    </li>
+                  </ul>
+                  <p>
+                    All this information is used to support your learning and participation in class. We keep this information only as long as needed to serve its educational purpose, following UBC’s guidelines for retention.
+                  </p>
+
+                  <h5>Follow the Rules</h5>
+                  <p>
+                    By using Agora, you agree to follow the rules outlined here and other UBC policies, such as the Academic Integrity and Student Code of Conduct. These rules help ensure that everyone uses the system fairly and respectfully.
+                  </p>
+
+                </div>
+
+                
+
+                <div class="modal-actions-footer" style="display: flex; align-items: center; margin-top: 15px;">
+                  
+                  <button type="submit" class="btn btn-primary" style="margin-right: 15px;">Save</button>
+                  
+                  <div class="form-check" style="display: flex; align-items: center;"> <input type="checkbox" id="termsCheckbox" required style="margin-right: 8px; flex-shrink: 0;"> <label for="termsCheckbox" style="margin-bottom: 0;">I have read and agree to the terms above.</label>
+                  </div>
+
+                </div>
+              
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var modal = document.getElementById('firstNameModal');
+    var checkbox = modal.querySelector('#termsCheckbox');
+    var submitButton = modal.querySelector('button[type="submit"]');
+    submitButton.disabled = !checkbox.checked;
+    checkbox.addEventListener('change', function() {
+      submitButton.disabled = !checkbox.checked;
+    });
+  });
+</script>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if not user.first_name %}
+<script>
+  $(document).ready(function(){
+    $("#firstNameModal").modal({
+    backdrop: 'static',
+    keyboard: false
+  });
+  });
+</script>
+{% endif %}
 {% endblock %}

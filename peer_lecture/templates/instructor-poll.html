@@ -1,6 +1,9 @@
+<!DOCTYPE html>
 {% include "base-lecture.html" %}
+<!-- The base html -->
 
 {% load static %}
+
 
 <script>
     var update_poll;
@@ -21,13 +24,12 @@
 {% block content %}
 
     {% if results %}
-    {% include "view-results.html" %}
+        {% include "view-results.html" %}
     {% endif %}
 
     {% if not poll %}
     <form method="post">
         {% csrf_token %}
-
         {% if create_poll or view_saved_polls or not lecture %}
         <h3>Polling</h3>
         <button type="submit" class="btn {% if create_poll %} btn-primary {% endif %}" name="view-create-poll">Create a Poll</button>
@@ -39,6 +41,9 @@
             {% endif %}
         {% endif %}
     </form>
+
+    
+   
     {% endif %}
 
     {% if poll and not results %}
@@ -57,5 +62,6 @@
     {% if view_saved_polls and not poll %}
         {% include "view-saved-polls.html" %}
     {% endif %}
+
 
 {% endblock %}

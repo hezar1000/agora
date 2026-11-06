@@ -1,0 +1,280 @@
+Agora production deployment
+===========================
+
+This branch uses one supported production path: nginx in front of four Daphne
+ASGI workers managed by systemd. The old uWSGI and Supervisor definitions were
+removed because they competed for the same application and uWSGI did not serve
+Agora's WebSocket traffic.
+
+Deployment-impact summary
+-------------------------
+
+* Python 3.11 or newer is required.
+* The checkout remains at /home/agora/agora and its virtual environment remains
+  /home/agora/agora/agora_env, preserving the existing Agora paths.
+* Production configuration and secrets move to /etc/agora/agora.env. They must
+  not be stored in the repository.
+* Static files are served by Nginx from /home/agora/agora/staticfiles. Uploaded
+  media remains under /home/agora/agora/media but is never exposed through a
+  public Nginx alias; Django's authenticated file/photo views enforce access.
+* Production should use PostgreSQL via DATABASE_URL. SQLite remains available
+  only for explicitly enabled local development.
+* Enabling this service replaces any running Agora uWSGI/Supervisor services.
+  Disable those old services before starting the new worker pool.
+* Database migrations still require a current, tested database backup. Some
+  schema changes cannot be rolled back safely by reverting application code.
+* New uploaded files are mode 0640 and newly created upload directories are
+  mode 0750. Existing media is not rewritten automatically; audit its owner,
+  group, and modes before deployment so the Agora service can read it without
+  restoring public/other-user access.
+* Temporary instructor sessions created after this release record the exact
+  temporary course they own, so logout removes only that course. Sessions made
+  by an older release have no trustworthy course marker; logout deliberately
+  leaves their courses intact instead of risking deletion of a real course.
+  Inventory and remove any resulting orphaned temporary accounts/courses with
+  an administrator-reviewed one-time cleanup after the rollout.
+
+Host prerequisites
+------------------
+
+1. Install nginx, Redis, PostgreSQL client tools, Python 3.11+ with venv support,
+   curl, git, and util-linux (for flock). Install the XML Security development
+   libraries if pip cannot use a prebuilt xmlsec wheel.
+2. Create the agora user and the following locations:
+
+       /home/agora/agora
+       /home/agora/agora/media
+       /home/agora/agora/staticfiles
+       /var/log/agora
+       /etc/agora
+
+3. Make the checkout and media directory owned by agora. Make /var/log/agora
+   writable by agora and readable by the operational logging group. Keep
+   /etc/agora owned by root and inaccessible to other users.
+4. Clone this repository's `agora` branch into /home/agora/agora and create the
+   virtual environment:
+
+       python3 -m venv /home/agora/agora/agora_env
+       /home/agora/agora/agora_env/bin/python -m pip install --requirement /home/agora/agora/requirements_new.txt
+
+   Keep deploy/preflight.sh executable by the service owner (`chmod 0750
+   /home/agora/agora/deploy/preflight.sh`). The systemd unit invokes it through
+   `/usr/bin/bash` as well, so a checkout that does not preserve executable bits
+   still receives the same fail-closed validation.
+
+Environment and secrets
+-----------------------
+
+1. Copy .env.example to /etc/agora/agora.env and replace every placeholder.
+   The systemd EnvironmentFile format is `NAME=value`; do not add `export`.
+2. At minimum configure a strong DJANGO_SECRET_KEY, DATABASE_URL, REDIS_URL,
+   DJANGO_ALLOWED_HOSTS, DJANGO_CSRF_TRUSTED_ORIGINS, AGORA_PROBE_HOST, and the
+   four DJANGO_*_LOG_FILE paths under /var/log/agora. REDIS_URL, allowed hosts,
+   and trusted origins have no production defaults; localhost values exist only
+   behind the explicit DJANGO_ALLOW_INSECURE_LOCAL_DEFAULTS opt-in. Trusted
+   origins must be comma-separated HTTPS origins whose exact hostnames are in
+   DJANGO_ALLOWED_HOSTS. AGORA_PROBE_HOST must also be one of the allowed
+   hostnames and is used for direct worker probes. Keep
+   DATABASE_CONN_MAX_AGE at 0 in production: persistent per-thread
+   connections leak under Daphne (ASGI) and exhausted PostgreSQL's connection
+   slots during a live lecture. Connections are pooled by psycopg instead
+   (DATABASE_POOL=on by default; per-worker cap via DATABASE_POOL_MAX_SIZE,
+   default 18, sized so four workers stay under max_connections=100). Configure the SAML keys/certificates when SAML is enabled. For the
+   supported SMTP backend, explicitly set DJANGO_EMAIL_BACKEND, EMAIL_HOST,
+   EMAIL_PORT, EMAIL_USE_TLS=true, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD, and
+   DEFAULT_FROM_EMAIL. Blank or example SMTP credentials fail preflight; a
+   deliberately credentialless institutional relay needs a separately reviewed
+   backend/topology instead of silently inheriting empty Brevo credentials.
+   Keep HSTS disabled for the first HTTPS validation. Enable its duration,
+   include-subdomains, and preload options only after confirming that every
+   affected hostname is permanently HTTPS-ready.
+3. Protect the file:
+
+       chown root:agora /etc/agora/agora.env
+       chmod 0640 /etc/agora/agora.env
+
+   Worker startup runs deploy/preflight.sh before Daphne. It rejects the local
+   insecure-default opt-in, debug mode, missing or placeholder/short secrets,
+   wildcard or probe-mismatched hosts, missing/non-HTTPS/cross-host CSRF origins,
+   non-PostgreSQL database URLs, invalid Redis URLs, incomplete or placeholder
+   SMTP configuration, non-positive persistent-connection lifetimes,
+   topology-mismatched storage, and missing/unusable media, static, or log paths. It also runs the
+   Django deployment, migration-drift, pending-migration, Python-version, and
+   ASGI-import checks. `DJANGO_HSTS_SECONDS=0` remains valid only for the
+   documented initial HTTPS validation stage; increasing it is a controlled
+   follow-up after the host audit.
+
+Application initialization
+--------------------------
+
+Run these commands as the agora user with the production environment loaded:
+
+    cd /home/agora/agora
+    /home/agora/agora/agora_env/bin/python manage.py check --deploy
+    /home/agora/agora/agora_env/bin/python manage.py migrate --noinput
+    /home/agora/agora/agora_env/bin/python manage.py collectstatic --noinput
+
+Systemd worker pool and scheduler
+---------------------------------
+
+1. Install deploy/systemd/agora-web@.service, agora-web.target,
+   agora-live-sessions.service, and agora-live-sessions.timer into
+   /etc/systemd/system/.
+   The web unit's `ExecStartPre` is a hard gate: a failed production preflight
+   leaves the worker stopped instead of treating Django security warnings as a
+   successful startup.
+2. Ensure the legacy uWSGI and Supervisor Agora programs are stopped and
+   disabled. Do not run both process-manager configurations together.
+3. Reload systemd and start both the pool and the one-minute maintenance timer:
+
+       systemctl daemon-reload
+       systemctl enable --now agora-web.target
+       systemctl enable --now agora-live-sessions.timer
+       systemctl status agora-web.target 'agora-web@*.service'
+       systemctl status agora-live-sessions.timer
+       systemctl list-timers agora-live-sessions.timer
+
+   The timer and the database-backed scheduler lease provide two layers of
+   overlap protection. Its 50-second service timeout is intentionally shorter
+   than the one-minute interval. A non-zero exit, timeout, missed timer, or a
+   gap longer than two minutes in successful completion messages is an
+   operational alert. Inspect recent runs with:
+
+       journalctl -u agora-live-sessions.service --since '-15 minutes'
+
+   Healthy runs end with "Live-session maintenance completed." A lease-held
+   skip is safe and should be rare; repeated skips indicate a stuck or duplicate
+   runner. The command continues processing other courses after a per-course
+   error, then exits non-zero so systemd monitoring can reliably alert.
+
+   Each worker unit waits for its unauthenticated `/health/live/` endpoint
+   before systemd considers startup complete. Liveness deliberately checks no
+   database or channel dependency; it answers only whether that Daphne/Django
+   process can serve HTTP. Verify all four workers directly when troubleshooting:
+
+       for port in 8080 8081 8082 8083; do
+           curl --fail --header 'Host: agora.students.cs.ubc.ca' \
+               --header 'X-Forwarded-Proto: https' \
+               "http://127.0.0.1:${port}/health/live/"
+       done
+
+   `/health/ready/` additionally performs a minimal `SELECT 1` and a bounded
+   send/receive round trip through the configured Django Channels backend
+   (Redis in production). It returns only `ready` or `unavailable`; a 503 does
+   not reveal which dependency failed. Use readiness for rollout/traffic and
+   dependency alerts, not as a process-restart signal:
+
+       curl --fail https://agora.students.cs.ubc.ca/health/ready/
+
+Nginx and TLS
+-------------
+
+1. Obtain a certificate for agora.students.cs.ubc.ca. The checked-in nginx
+   configuration expects the standard Let's Encrypt live certificate paths.
+2. Install nginx.conf as /etc/nginx/sites-available/agora.conf, enable that site,
+   and remove any competing default or old Agora virtual host.
+3. Validate before reload:
+
+       nginx -t
+       systemctl reload nginx
+
+Nginx is the canonical HTTP/WebSocket access log. Its `agora_no_query` format
+logs `$uri`, never `$request` or `$request_uri`, because SAML Redirect bindings
+carry signed SAMLRequest/SAMLResponse values in the query string. Daphne access
+logging is disabled and application warnings/errors go to journald. After this
+change, securely rotate or remove older Nginx/Daphne logs that may contain SAML
+query payloads, following the institution's retention and incident process.
+
+Do not add a public `/media/` alias. Test authenticated and unauthorized photo
+and file requests through Django after every Nginx change. New upload files and
+directories are private to the service owner/group (0640 and 0750). Inventory
+legacy modes and ensure the `agora:www-data` service identity can traverse and
+read them; do not make media world-readable as a compatibility workaround.
+
+Browser security and frontend assets
+------------------------------------
+
+Agora applies a Content Security Policy from Django. Authenticated poll and
+message pages use the checked-in Quill 1.3.6, image-resize, Chart.js 4.4.0,
+jQuery, and Bootstrap assets. Scheduling uses exact Moment 2.30.1 and
+moment-timezone 0.6.3 (with its current bundled IANA timezone data). Remaining
+CDN assets use exact versions,
+Subresource Integrity hashes, anonymous CORS, and a policy restricted to the
+two required CDN origins. Network connections,
+including WebSockets in supported browsers, are restricted to the same origin;
+do not broaden `connect-src` to the generic `ws:` or `wss:` schemes.
+
+The existing UI has extensive inline scripts, styles, and event handlers, so
+the compatibility policy must temporarily allow `unsafe-inline`; it does not
+allow `unsafe-eval`. Poll authors can currently embed HTTPS images, so `img-src`
+also retains that compatibility exception; image requests may disclose the
+viewer's address to the chosen host. Treat removal of these exceptions as a
+staged change: move
+inline code into reviewed static bundles, replace inline handlers, introduce
+per-response nonces or hashes, run full instructor/student live-session browser
+tests, adopt an approved image proxy/upload path, then tighten `script-src`,
+`style-src`, and `img-src`. Enforcing the strict policy before that work would
+disable core participation controls or existing poll images.
+
+Release blocker: legacy local browser libraries
+------------------------------------------------
+
+The locally served base UI still identifies itself as jQuery 3.1.1, jQuery UI
+1.12.1, and Bootstrap 3.3.7. Those versions predate published XSS fixes in
+jQuery 3.5.0, jQuery UI 1.13.0, and Bootstrap 3.4.1. Serving them locally removes
+CDN drift but does not remove their known browser-library risk; CSP is only
+defense in depth, especially while `unsafe-inline` remains necessary.
+
+Do not treat frontend supply-chain remediation as complete or promote this
+branch to production with that stack. Upgrading it touches nearly every live
+control, modal, tooltip, selector, AJAX callback, poll editor, and embedded
+view. To avoid an untested classroom usability regression, perform the upgrade
+as a controlled staging gate: inventory plugins, replace the three bundles and
+source maps with supported patched versions, run compatibility tooling, and
+exercise the full instructor/student browser matrix (including live polling,
+messages, participation controls, course editing, mobile layouts, keyboard
+operation, and multi-hour sessions). Remove obsolete plugins rather than
+restoring vulnerable compatibility behavior. Record exact asset hashes and the
+browser evidence in the release record.
+
+Routine deployments
+-------------------
+
+1. Take and verify a database backup.
+2. Review the incoming commits and migration plan in a staging environment.
+3. Run ./redeploy.sh as the deployment user. The script refuses dirty or
+   divergent checkouts, serializes deployments, validates dependencies and
+   migrations, and rolls the four workers one at a time to minimize downtime.
+   Systemd gates each worker on `/health/live/`; the deploy then requires
+   `/health/ready/` on that exact worker, including database and Redis/Channels,
+   before advancing to the next port.
+4. Check `systemctl status`, the timer/journal output described above, the
+   query-free Nginx log, /var/log/agora, and the application error logs
+   immediately after deployment.
+
+Dependency maintenance
+----------------------
+
+Direct and transitive dependencies are exact version pins in
+requirements_new.txt. Those pins limit resolver drift; without artifact hashes
+they are not a cryptographic or fully reproducible lock. Before production,
+generate the canonical hash-locked artifact on the supported Linux/Python
+runtime, install and validate it on clean Linux CI/staging hosts, and attach it
+with an SBOM and vulnerability-scan result to the release record. A lock
+resolved on Windows is platform-specific evidence and must not be represented
+as the Linux production lock. GitHub CI runs the full Django test suite, checks
+for missing migrations, and audits the resolved dependency graph. Dependabot
+proposes small weekly updates. Review release notes, exercise staging, and
+merge those updates promptly when security fixes ship.
+
+Early manual starts of scheduled lectures
+----------------------------------------
+Starting a lecture before class (for example, to test classroom audio) uses
+that day's next scheduled lecture, preserving its name and participation
+settings. A lecture already in progress takes precedence over a later one.
+Tomorrow's lectures, cancelled lectures, and ended lectures are not adopted.
+The live lecture stores its session and scheduled end timestamp. It keeps
+that deadline when its grading date is edited and does not consume the manual
+maximum duration or six-hour safety cap during early setup. Unscheduled and
+legacy manual lectures retain their duration and safety cap. Ending a lecture
+explicitly still ends it immediately.

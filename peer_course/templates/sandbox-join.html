@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="container" id="main-content" style="max-width: 420px; text-align: center;">
+  <h1 style="font-size: 26px; margin: 32px 0 6px;">Join with a code</h1>
+  <p class="text-muted" style="font-size: 14px;">
+    {% if member_account %}
+      The six digits are on the screen at the front. You will join as
+      <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>;
+      when the class ends, your membership in it is deleted and nothing else.
+    {% else %}
+      The six digits are on the screen at the front. You do not need an account.
+    {% endif %}
+  </p>
+
+  {% if error %}
+    <div class="alert alert-danger" role="alert" style="text-align: left;">{{ error }}</div>
+  {% endif %}
+
+  <form method="post" style="margin-top: 18px;">
+    {% csrf_token %}
+    <label for="code" class="sr-only">Six-digit code</label>
+    <input id="code" name="code" value="{{ code }}" inputmode="numeric"
+           autocomplete="off" maxlength="6" required
+           class="form-control"
+           style="font-size: 34px; text-align: center; letter-spacing: 8px; height: 60px; margin-bottom: 10px;"
+           placeholder="000000">
+    {% if not member_account %}
+    <label for="name" class="sr-only">Your name</label>
+    <input id="name" name="name" required class="form-control"
+           style="font-size: 17px; text-align: center; height: 46px; margin-bottom: 14px;"
+           placeholder="Your name" maxlength="40">
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-lg btn-block">Join</button>
+  </form>
+</main>
+{% endblock %}

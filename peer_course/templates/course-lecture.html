@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% include "blocks/course-admin-style.html" %}
+<style>
+  .lecture-page__numbers { margin-bottom: 24px; }
+  .lecture-page__rollcall { margin-bottom: 32px; }
+  .lecture-page__rollcall h3 { font-size: 16px; font-weight: 600; margin: 20px 0 8px; }
+  .lecture-page__rollcall table { background: #fff; }
+  .lecture-page__rollcall form { display: inline; margin: 0; }
+  .lecture-page__names { columns: 3 220px; margin: 8px 0 0; padding-left: 18px; }
+  .lecture-page__follow-up { border-left: 4px solid #d9534f; padding-left: 12px; }
+</style>
+<main class="container" id="main-content">
+  <p><a href="{% url 'course:view' cid=course.id %}">{{ course.displayname }}</a>
+     &rsaquo; <a href="{% url 'course:lectures' cid=course.id %}">Lectures</a></p>
+  <h1>{{ session.display_name }}</h1>
+  <p class="course-admin__meta">
+    {{ session.session_date|date:"l j F Y" }}{% if session.start_time_pst %},
+    {{ session.start_time_pst|time:"H:i" }}&ndash;{{ session.end_time_pst|time:"H:i" }}{% endif %}
+    {% if not session.counts_for_participation %}&middot; not graded{% endif %}
+  </p>
+
+  <div class="course-admin lecture-page__numbers">
+    <section class="course-admin__card">
+      <p class="course-admin__figure">{{ numbers.enrolled }}</p>
+      <p class="course-admin__meta">students enrolled</p>
+    </section>
+    <section class="course-admin__card">
+      <p class="course-admin__figure">{{ numbers.students_raised }}</p>
+      <p class="course-admin__meta">students raised a hand ({{ numbers.hands_raised }} hand{{ numbers.hands_raised|pluralize }} in all, not counting attendance)</p>
+    </section>
+    <section class="course-admin__card">
+      <p class="course-admin__figure">{{ numbers.called_on }}</p>
+      <p class="course-admin__meta">time{{ numbers.called_on|pluralize }} a student was called on</p>
+    </section>
+    <section class="course-admin__card">
+      <p class="course-admin__figure">{{ numbers.students_credited }}</p>
+      <p class="course-admin__meta">students credited with participation</p>
+    </section>
+  </div>
+
+  <h2>Attendance</h2>
+  {% if not roll_calls %}
+    <p class="text-muted">No attendance was taken in this lecture. Start it from the lecture screen with <strong>Take attendance</strong>.</p>
+  {% else %}
+    <p><a class="btn btn-default" href="{% url 'course:lecture_attendance_csv' cid=course.id sid=session.id %}">Download attendance (CSV)</a></p>
+  {% endif %}
+
+  {% for roll in roll_calls %}
+    <section class="lecture-page__rollcall" id="roll-call-{{ roll.check.id }}" aria-labelledby="roll-call-{{ roll.check.id }}-heading">
+      <h2 class="h3" id="roll-call-{{ roll.check.id }}-heading">
+        {% if roll_calls|length > 1 %}Roll call {{ forloop.counter }}: {% endif %}
+        {{ roll.check.started_at|time:"H:i" }}, announced list <strong>{{ roll.announced_label }}</strong>
+        {% if roll.check.is_open %}<span class="label label-warning">still open</span>{% endif %}
+      </h2>
+      <p>
+        <strong>{{ roll.summary.attended }}</strong> of {{ roll.summary.enrolled }} counted present by the roll call
+        ({{ roll.summary.present }} in the right list{% if roll.summary.confirmed %}, {{ roll.summary.confirmed }} confirmed after a wrong list{% endif %}{% if roll.summary.added %}, {{ roll.summary.added }} added by hand{% endif %}).
+        {{ roll.summary.not_in_class }} not in class, {{ roll.summary.unreviewed }} not yet checked, {{ roll.summary.no_hand }} with no hand up.
+      </p>
+
+      {% if roll.follow_up %}
+        <div class="lecture-page__follow-up">
+          <h3>Not in class: follow up ({{ roll.follow_up|length }})</h3>
+          <p class="text-muted">Raised a hand in a list that was not announced, and did not answer when called on. The roll call does not count them present; a contribution in this lecture still would.</p>
+          <table class="table table-condensed">
+            <thead><tr><th scope="col">Student</th><th scope="col">Student ID</th><th scope="col">Email</th><th scope="col">Hand in</th><th scope="col">Marked by</th><th scope="col"><span class="sr-only">Change</span></th></tr></thead>
+            <tbody>
+              {% for r in roll.follow_up %}
+                <tr>
+                  <td>{{ r.name }}</td>
+                  <td>{{ r.member.get_user_id }}</td>
+                  <td>{% if r.member.user.email %}<a href="mailto:{{ r.member.user.email }}">{{ r.member.user.email }}</a>{% endif %}</td>
+                  <td>{{ r.list_labels|join:", " }}</td>
+                  <td>{{ r.reviewed_by.get_full_name|default:r.reviewed_by.username|default:"" }}{% if r.reviewed_at %}, {{ r.reviewed_at|time:"H:i" }}{% endif %}</td>
+                  <td>
+                    <form method="post" action="{% url 'course:attendance_review' cid=course.id rid=r.id %}">
+                      {% csrf_token %}<input type="hidden" name="status" value="confirmed">
+                      <button class="btn btn-default btn-xs" type="submit">Was in class after all</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+
+      {% if roll.unreviewed %}
+        <h3>Wrong list, not yet checked ({{ roll.unreviewed|length }})</h3>
+        <table class="table table-condensed">
+          <thead><tr><th scope="col">Student</th><th scope="col">Student ID</th><th scope="col">Hand in</th><th scope="col"><span class="sr-only">Decide</span></th></tr></thead>
+          <tbody>
+            {% for r in roll.unreviewed %}
+              <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ r.member.get_user_id }}</td>
+                <td>{{ r.list_labels|join:", " }}</td>
+                <td>
+                  <form method="post" action="{% url 'course:attendance_review' cid=course.id rid=r.id %}">
+                    {% csrf_token %}<input type="hidden" name="status" value="confirmed">
+                    <button class="btn btn-success btn-xs" type="submit">In class</button>
+                  </form>
+                  <form method="post" action="{% url 'course:attendance_review' cid=course.id rid=r.id %}">
+                    {% csrf_token %}<input type="hidden" name="status" value="not_in_class">
+                    <button class="btn btn-danger btn-xs" type="submit">Not in class</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      {% if roll.confirmed %}
+        <h3>Wrong list, confirmed in class ({{ roll.confirmed|length }})</h3>
+        <table class="table table-condensed">
+          <thead><tr><th scope="col">Student</th><th scope="col">Student ID</th><th scope="col">Hand in</th><th scope="col"><span class="sr-only">Change</span></th></tr></thead>
+          <tbody>
+            {% for r in roll.confirmed %}
+              <tr>
+                <td>{{ r.name }}</td>
+                <td>{{ r.member.get_user_id }}</td>
+                <td>{{ r.list_labels|join:", " }}</td>
+                <td>
+                  <form method="post" action="{% url 'course:attendance_review' cid=course.id rid=r.id %}">
+                    {% csrf_token %}<input type="hidden" name="status" value="not_in_class">
+                    <button class="btn btn-default btn-xs" type="submit">Not in class</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+
+      {% if roll.added %}
+        <h3>Added by hand ({{ roll.added|length }})</h3>
+        <ul>
+          {% for r in roll.added %}
+            <li>{{ r.name }} ({{ r.member.get_user_id }})
+              <form method="post" action="{% url 'course:attendance_remove_added' cid=course.id rid=r.id %}">
+                {% csrf_token %}<button class="btn btn-link btn-xs" type="submit">Remove</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <details>
+        <summary>In the right list ({{ roll.present|length }})</summary>
+        <ul class="lecture-page__names">
+          {% for r in roll.present %}<li>{{ r.name }}</li>{% endfor %}
+        </ul>
+      </details>
+
+      <details>
+        <summary>No hand up ({{ roll.absent|length }})</summary>
+        {% if roll.absent and not roll.check.is_open %}
+          <form method="post" action="{% url 'course:attendance_add_present' cid=course.id check_id=roll.check.id %}" class="form-inline" style="margin: 8px 0;">
+            {% csrf_token %}
+            <label for="add-{{ roll.check.id }}">Mark present</label>
+            <select class="form-control input-sm" id="add-{{ roll.check.id }}" name="member">
+              {% for m in roll.absent %}<option value="{{ m.id }}">{{ m.name }} ({{ m.get_user_id }})</option>{% endfor %}
+            </select>
+            <button class="btn btn-default btn-sm" type="submit">Add</button>
+          </form>
+        {% endif %}
+        <ul class="lecture-page__names">
+          {% for m in roll.absent %}<li>{{ m.name }}</li>{% endfor %}
+        </ul>
+      </details>
+    </section>
+  {% endfor %}
+</main>
+{% endblock %}

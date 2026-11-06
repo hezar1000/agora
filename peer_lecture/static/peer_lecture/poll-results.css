@@ -1,0 +1,114 @@
+#instructor-canvas-container {
+  width: 60%;
+  height: 60%;
+}
+
+#student-canvas-container {
+  width: 80%;
+  height: 80%;
+  margin: 0 auto;
+}
+
+.bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.bar {
+  background-color: #3498db;
+  color: white;
+  padding: 5px;
+  position: relative;
+}
+
+.bar-label,
+.option-label {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.bar-label {
+  top: -20px;
+}
+
+.option-label {
+  bottom: -20px;
+}
+
+{% for option, data in results.items %}
+  .bar.{{option}} {
+      width: {{ data.ratio }}%;
+  }
+{% endfor %}
+
+.results-container {
+display: flex;
+align-items: center;
+}
+
+  .results-container a.btn,
+  .results-container form {
+    flex: 0 1 auto; 
+    margin: 0 5px;
+  }
+
+.results-container form .btn {
+width: 100%;                
+text-align: center;
+}
+
+.results-container span {
+  cursor: pointer;
+  line-height: 70px;
+  margin-right: 20px;
+  font-size: 20px;
+}
+
+.results-container span:hover {
+  color: red;
+}
+
+
+@media screen and (max-width: 768px) {
+
+#poll-results-container {
+position: relative;
+padding: 20px 15px;
+}
+
+.results-container {
+flex-direction: column;
+align-items: stretch;
+}
+
+.results-container h3,
+.results-container a.btn,
+.results-container form {
+margin-bottom: 15px;
+margin-left: 0;
+margin-right: 0;
+width: 100%; 
+}
+
+.results-container h3 {
+text-align: center;
+margin-top: 20px;
+}
+
+.results-container span.glyphicon-remove-circle {
+position: absolute;
+top: 15px;
+right: 15px;
+font-size: 24px;
+}
+}
+
+#instructor-canvas-container,
+#student-canvas-container {
+  width: 95%;
+  height: auto; 
+  margin: 20px auto; 
+}

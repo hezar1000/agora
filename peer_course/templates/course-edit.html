@@ -1,42 +1,553 @@
 {% extends "form_simp_base.html" %}
+{% load queue_names %}
 {% block content %}
+{% load static %}
 
-<!--
-<a class="btn btn-secondary" href="/course/{{ course.id }}/">Return to the Course Homepage</a>
--->
 
-<div class="container-fluid">
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'css/course_edit.css' %}">
+{% endblock %}
 
-  <div class="col-md-10 col-md-offset-2">
+<script>
+  function deleteSession(sessionId) {
+  if (!confirm("Are you sure you want to delete this session?")) {
+    return;
+  }
+  const courseId = "{{ course.id }}";
+  fetch(`/course/${courseId}/delete_session/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json", 
+      "X-CSRFToken": "{{ csrf_token }}"
+    },
+    body: JSON.stringify({ "session_id": sessionId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === "success") {
+      alert("Session deleted successfully.");
+      const container = document.getElementById(`session-container-${sessionId}`);
+      if (container) {
+        container.remove();
+      }
+      window.location.reload();
+    } else {
+      alert("Error: " + data.message);
+    }
+  })
+  .catch(error => {
+    alert("An error occurred: " + error);
+  });
+}
 
-    <h2 class="page-header">Edit the Course <!--{{ course.displayname }}--></h2>
+</script>
+  
 
-    <form id="courseForm" method='post' action="/course/{{ course.id }}/edit/">
-      {% csrf_token %}
+{% comment %}
+  The question-mark icons in the hand-built sections below are Font Awesome,
+  and nothing else on the page loads it.
+{% endcomment %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+      integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+      crossorigin="anonymous">
+{% include "blocks/settings-style.html" %}
+{% include "blocks/lecture-style.html" %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-10 col-md-offset-1">
 
-      {% for field in formCourse %}
-      <div class="form-group row">
-        <div class="col-md-4 col-form-label">
-          {{ field.label_tag }}
+      <header class="settings-header">
+        <h1 class="settings-header__title">Course settings</h1>
+        <p class="settings-header__course">{{ course.displayname }}</p>
+      </header>
+
+      <nav class="settings-nav" aria-label="Settings sections">
+        {% for group in formCourse.fieldsets %}
+          <a href="#{{ group.id }}">{{ group.title }}</a>
+        {% endfor %}
+        <a href="#participation">Participation grading</a>
+        <a href="#weekly-schedule">Lectures</a>
+      </nav>
+
+      <form id="courseForm" method="post" action="/course/{{ course.id }}/edit/">
+        {% csrf_token %}
+
+        {% if formCourse.errors %}
+          {% comment %}
+            These used to reach the instructor only as an alert() telling them
+            to open the browser console. Errors belong on the page.
+          {% endcomment %}
+          <div class="alert alert-danger" role="alert">
+            <strong>Nothing was saved.</strong> Please correct the fields marked below.
+          </div>
+        {% endif %}
+        {{ formCourse.non_field_errors }}
+
+        {% comment %}
+          Round-trips the current value; the Show/Hide button at the foot of
+          the page is what changes it.
+        {% endcomment %}
+        <div style="display: none;">{{ formCourse.browsable }}</div>
+
+        {% for group in formCourse.fieldsets %}
+          {% include "blocks/settings-group.html" %}
+        {% endfor %}
+
+        {% comment %}
+          Generated from the settings above, not written by hand, so an
+          instructor can see whether the policy they mean is the policy they
+          have. Students are shown these same sentences on the course page.
+        {% endcomment %}
+        <section class="settings-group" aria-labelledby="told-heading">
+          <h2 class="settings-group__title" id="told-heading">What students are told</h2>
+          <p class="settings-group__hint">
+            This follows the settings above. Change one and this changes with it.
+          </p>
+          {% for sentence in selection_policy %}
+            <p>{{ sentence }}</p>
+          {% empty %}
+            <p class="text-muted">Nothing to tell them yet.</p>
+          {% endfor %}
+        </section>
+
+      <div class="settings-dense">
+      <h3 id="participation" class="settings-legacy-heading">Participation grading</h3>
+
+      {% if participation_summary %}
+        <div class="grade-summary">
+          <p class="grade-summary__lead">
+            Each student&rsquo;s participation grade is out of
+            <strong>{{ participation_summary.total }} marks</strong>, made up as
+            follows. This is generated from the settings below, so it is always
+            what the course actually does.
+          </p>
+          <ul class="grade-summary__measures">
+            {% for measure in participation_summary.measures %}
+              <li class="grade-summary__measure">
+                <span class="grade-summary__name">{{ measure.heading }}</span>
+                <span class="grade-summary__share">{{ measure.share.phrase }}</span>
+                {% for sentence in measure.sentences %}
+                  <span class="grade-summary__sentence">{{ sentence }}</span>
+                {% endfor %}
+              </li>
+            {% endfor %}
+          </ul>
+          <ul class="grade-summary__notes">
+            {% for line in participation_summary.lines %}<li>{{ line }}</li>{% endfor %}
+          </ul>
         </div>
-        <div class="col-md-4">
-          {{ field }}
+      {% endif %}
+
+      <div class="form-group row">
+        <label class="col-md-4 col-form-label text-md-right"
+               for="{{ scheme_form.preset.id_for_label }}">
+          {{ scheme_form.preset.label }}
+        </label>
+        <div class="col-md-6">
+          {{ scheme_form.preset }}
+          <small class="form-text text-muted">{{ scheme_form.preset.help_text }}</small>
         </div>
       </div>
+
+      <fieldset>
+        <legend class="h6">What counts in a lecture</legend>
+        <div class="form-group row">
+          <label class="col-md-4 col-form-label text-md-right" for="id_included_lists">
+            Queues that count
+          </label>
+          <div class="col-md-6">
+            {% comment %}
+              Labelled with each queue's own name. The choices themselves are
+              still the four colours the database stores, but a course that
+              renamed Green to "Questions" was shown "Green" here and
+              "Questions" everywhere else.
+            {% endcomment %}
+            <div class="queue-choices">
+              {% for choice in formCourse.included_lists %}
+                <label class="queue-choice" for="{{ choice.id_for_label }}">
+                  {{ choice.tag }}
+                  <span>{{ queue_labels|queue_name:choice.data.value }}</span>
+                </label>
+              {% endfor %}
+            </div>
+            <small class="form-text text-muted">
+              A hand raised in a queue that is not ticked is recorded but earns
+              nothing, and calling on that queue picks uniformly at random: the
+              "not spoken yet" and term-long biases apply only to queues that count.
+            </small>
+            {% if formCourse.included_lists.errors %}
+              <div class="invalid-feedback d-block">{{ formCourse.included_lists.errors }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% for field in scheme_form %}
+          {% if field.name == "raise_value" or field.name == "speak_bonus" or field.name == "lecture_cap" %}
+            <div class="form-group row">
+              <label class="col-md-4 col-form-label text-md-right"
+                     for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <div class="col-md-6">
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          {% if field.name == "bonus_after_speaking" %}
+            <div class="form-group row">
+              <div class="col-md-6 col-md-offset-4">
+                <div class="checkbox">
+                  <label>{{ field }} {{ field.help_text }}</label>
+                </div>
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </fieldset>
+
+      <fieldset>
+        <legend class="h6">How lectures add up</legend>
+        {% for field in scheme_form %}
+          {% if field.name == "lectures_expected" or field.name == "dropped_lectures" %}
+            <div class="form-group row">
+              <label class="col-md-4 col-form-label text-md-right"
+                     for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <div class="col-md-6">
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+          {% comment %}
+            A checkbox carries its own sentence, so it reads as one line under
+            the fields it qualifies rather than as a labelled control.
+          {% endcomment %}
+          {% if field.name == "volume_excludes_covered" %}
+            <div class="form-group row">
+              <div class="col-md-6 col-md-offset-4">
+                <div class="checkbox">
+                  <label>{{ field }} {{ field.help_text }}</label>
+                </div>
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </fieldset>
+
+      {{ rubric_formset.management_form }}
+      {% for rubric in rubric_formset %}
+        <fieldset class="measure-card">
+          <legend class="measure-card__legend">
+            {{ rubric.instance.get_measure_display }}
+            {% if rubric.share %}
+              <span class="measure-card__share">{{ rubric.share.phrase }}</span>
+            {% endif %}
+          </legend>
+          {% for sentence in rubric.sentences %}
+            <p class="measure-card__sentence">{{ sentence }}</p>
+          {% endfor %}
+          {% for hidden in rubric.hidden_fields %}{{ hidden }}{% endfor %}
+          {% for field in rubric.visible_fields %}
+            <div class="form-group row">
+              <label class="col-md-4 col-form-label text-md-right"
+                     for="{{ field.id_for_label }}">{{ field.label }}</label>
+              <div class="col-md-8">
+                {{ field }}
+                {% if field.help_text %}
+                  <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </fieldset>
       {% endfor %}
 
-      <input type="submit" class="btn btn-primary" value="Update Configuration">
+      <h3 id="weekly-schedule" class="settings-legacy-heading">Lectures</h3>
+      <p class="text-muted">
+        Every lecture in the term, and which of them count toward the grade.
+        Lectures are created automatically on the days the weekly pattern
+        covers; mark the days you are not teaching so that none appears.
+      </p>
 
-    </form>
+      {% if calendar.months %}
+        <div class="lecture-legend">
+          <span class="lecture-legend__item"><span class="lecture-chip lecture-chip--lecture"></span> Counts toward the grade</span>
+          <span class="lecture-legend__item"><span class="lecture-chip lecture-chip--not-graded"></span> Held, but not graded</span>
+          <span class="lecture-legend__item"><span class="lecture-chip lecture-chip--no-lecture"></span> No lecture</span>
+          <span class="lecture-legend__item"><span class="lecture-chip lecture-chip--planned"></span> The pattern will add one</span>
+        </div>
 
-    <div class="btn-group" role="group" aria-label="...">
-      {% if course.browsable %}
-      <a class="btn btn-default" href="/course/{{ course.id }}/modify/?action=hide">Hide the course</a>
-      {% else %}
-      <a class="btn btn-success" href="/course/{{ course.id }}/modify/?action=show">Show the course</a>
+        <div class="lecture-calendar">
+          {% for month in calendar.months %}
+            <section class="lecture-month" aria-label="{{ month.start|date:'F Y' }}">
+              <h4 class="lecture-month__name">{{ month.start|date:"F Y" }}</h4>
+              <div class="lecture-month__grid" role="grid">
+                {% for name in calendar.weekday_names %}
+                  <div class="lecture-month__weekday" role="columnheader">{{ name }}</div>
+                {% endfor %}
+                {% for week in month.weeks %}
+                  {% for day in week %}
+                    <div class="lecture-day lecture-day--{{ day.kind }}{% if day.outside %} lecture-day--outside{% endif %}{% if day.today %} lecture-day--today{% endif %}"
+                         role="gridcell"
+                         {% if not day.outside and day.kind != "blank" %}
+                           data-date="{{ day.date|date:'Y-m-d' }}"
+                           data-kind="{{ day.kind }}"
+                           title="{{ day.date|date:'l j F Y' }}"
+                         {% endif %}>
+                      <span class="lecture-day__number">{% if not day.outside %}{{ day.date|date:"j" }}{% endif %}</span>
+                      {% if not day.outside and day.lecture %}
+                        <span class="lecture-day__name">{{ day.lecture.display_name }}</span>
+                      {% endif %}
+                      {% comment %}
+                        Removing a lecture from the calendar rather than from a
+                        checkbox two screens down: the cross is on the day it
+                        applies to. A removed day comes back with the same
+                        control, because a lecture called off by mistake at
+                        eight in the morning has to be restorable at nine.
+                      {% endcomment %}
+                      {% if not day.outside and day.kind == "planned" %}
+                        <button type="button" class="lecture-day__act lecture-day__act--remove"
+                                data-date="{{ day.date|date:'Y-m-d' }}" data-skipped="true"
+                                aria-label="No lecture on {{ day.date|date:'l j F Y' }}"
+                                title="No lecture on this day">&times;</button>
+                      {% elif not day.outside and day.kind == "no-lecture" %}
+                        <button type="button" class="lecture-day__act lecture-day__act--restore"
+                                data-date="{{ day.date|date:'Y-m-d' }}" data-skipped="false"
+                                aria-label="Put the lecture on {{ day.date|date:'l j F Y' }} back"
+                                title="Put this lecture back">&#8635;</button>
+                      {% elif not day.outside and day.lecture %}
+                        <button type="button" class="lecture-day__act lecture-day__act--remove"
+                                data-date="{{ day.date|date:'Y-m-d' }}" data-skipped="true"
+                                aria-label="Remove the lecture on {{ day.date|date:'l j F Y' }}"
+                                title="No lecture on this day">&times;</button>
+                      {% endif %}
+                    </div>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            </section>
+          {% endfor %}
+        </div>
+
+        {% if calendar.unplanned %}
+          <p class="lecture-warning">
+            The weekly pattern covers
+            {{ calendar.unplanned|length }} day{{ calendar.unplanned|pluralize }}
+            with no lecture yet. A lecture will appear on each unless you mark
+            it as a day you are not teaching.
+          </p>
+        {% endif %}
       {% endif %}
-    </div>
 
+      <h4 class="lecture-subhead">When lectures repeat</h4>
+      {{ session_formset.management_form }}
+      {% if patterns %}
+        <ul class="pattern-list">
+          {% for pattern in patterns %}
+            <li class="pattern-list__item">
+              <span class="pattern-list__when">{{ pattern.text }}</span>
+              {% if pattern.template.name %}
+                <span class="pattern-list__name">{{ pattern.template.name }}</span>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      <details class="pattern-editor">
+        <summary class="pattern-editor__summary">Change when lectures repeat</summary>
+        {% for subform in session_formset %}
+          {% for hidden in subform.hidden_fields %}{{ hidden }}{% endfor %}
+          <div id="session-container-{{ subform.instance.pk }}" class="pattern-editor__row">
+            {% if subform.non_field_errors or subform.session_end_date.errors or subform.end_time_pst.errors %}
+              <div class="alert alert-danger" role="alert">
+                {{ subform.non_field_errors }}
+                {{ subform.session_end_date.errors }}
+                {{ subform.end_time_pst.errors }}
+              </div>
+            {% endif %}
+            <div class="pattern-editor__grid">
+              <label class="pattern-editor__label" for="{{ subform.active_days.id_for_label }}">On these days</label>
+              <div class="pattern-editor__days">
+                {% for checkbox in subform.active_days %}
+                  <label class="pattern-editor__day" for="{{ checkbox.id_for_label }}">
+                    {{ checkbox.tag }} <span>{{ checkbox.choice_label }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+
+              <label class="pattern-editor__label" for="{{ subform.start_time_pst.id_for_label }}">From</label>
+              <div class="pattern-editor__pair">
+                {{ subform.start_time_pst }}
+                <span class="pattern-editor__joiner">until</span>
+                {{ subform.end_time_pst }}
+              </div>
+
+              <label class="pattern-editor__label" for="{{ subform.session_date.id_for_label }}">Between</label>
+              <div class="pattern-editor__pair">
+                {{ subform.session_date }}
+                <span class="pattern-editor__joiner">and</span>
+                {{ subform.session_end_date }}
+              </div>
+
+              <label class="pattern-editor__label" for="{{ subform.name.id_for_label }}">Called</label>
+              <div>{{ subform.name }}</div>
+            </div>
+            {% if subform.instance.pk %}
+              <div class="pattern-editor__actions">
+                <button type="button" class="btn btn-default btn-sm"
+                        onclick="deleteSession('{{ subform.instance.pk }}')">
+                  Remove this pattern
+                </button>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </details>
+
+      <h4 class="lecture-subhead" id="lectures">Every lecture, in order</h4>
+      <p class="text-muted">
+        Name a lecture to make it recognisable in the gradebook and the export.
+        Clear <em>counts toward the grade</em> for one that was held but should
+        not be marked. Tick <em>no lecture</em> for a day you are not teaching:
+        it counts for nobody, nobody is absent from it, and the weekly pattern
+        leaves it alone.
+      </p>
+
+      {{ lecture_formset.management_form }}
+      {% if lecture_formset.forms %}
+        <div class="table-responsive">
+          <table class="table lecture-table" id="lectures-table">
+            <caption class="sr-only">Lectures in this course, earliest first</caption>
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Name</th>
+                <th scope="col" class="lecture-table__flag">Counts toward the grade</th>
+                <th scope="col" class="lecture-table__flag">No lecture</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for lecture in lecture_formset %}
+                <tr class="{% if lecture.instance.cancelled %}lecture-row--cancelled{% elif not lecture.instance.counts_for_participation %}lecture-row--ungraded{% endif %}">
+                  {% for hidden in lecture.hidden_fields %}{{ hidden }}{% endfor %}
+                  <th scope="row" class="font-weight-normal lecture-table__date">
+                    {{ lecture.instance.session_date|date:"D j M Y" }}
+                    <span class="text-muted d-block small">
+                      {{ lecture.instance.start_time_pst|time:"H:i" }}&ndash;{{ lecture.instance.end_time_pst|time:"H:i" }}
+                    </span>
+                  </th>
+                  <td>
+                    <label class="sr-only" for="{{ lecture.name.id_for_label }}">
+                      Name for the lecture on {{ lecture.instance.session_date|date:"j M Y" }}
+                    </label>
+                    {{ lecture.name }}
+                    {% if lecture.name.errors %}
+                      <div class="invalid-feedback d-block">{{ lecture.name.errors }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="lecture-table__flag" data-label="Counts toward the grade">
+                    <label class="sr-only" for="{{ lecture.counts_for_participation.id_for_label }}">
+                      Count the lecture on {{ lecture.instance.session_date|date:"j M Y" }} toward the grade
+                    </label>
+                    {{ lecture.counts_for_participation }}
+                  </td>
+                  <td class="lecture-table__flag" data-label="No lecture">
+                    <label class="sr-only" for="{{ lecture.cancelled.id_for_label }}">
+                      There is no lecture on {{ lecture.instance.session_date|date:"j M Y" }}
+                    </label>
+                    {{ lecture.cancelled }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">No lectures yet. They appear here once the weekly
+        pattern has created one, or as soon as you add a schedule above.</p>
+      {% endif %}
+
+      </div>
+
+      <div class="settings-actions">
+        <button type="submit" class="btn btn-primary">Save settings</button>
+        <a class="btn btn-link" href="/course/{{ course.id }}/">Cancel</a>
+      </div>
+
+
+
+  <script>
+  // Marking a day as one you are not teaching. A day the weekly pattern covers
+  // has no row to tick a checkbox on, so this creates one that is already
+  // cancelled -- which is also what stops the pattern from filling the slot.
+  (function () {
+    const courseId = "{{ course.id }}";
+    document.querySelectorAll(".lecture-day__act").forEach(function (button) {
+      button.addEventListener("click", function () {
+        const skipping = button.dataset.skipped === "true";
+        const original = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = "\u00b7\u00b7\u00b7";
+        fetch(`/course/${courseId}/set_lecture_skipped/`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({ date: button.dataset.date, skipped: skipping })
+        })
+          .then(function (response) {
+            return response.json().then(function (data) {
+              if (!response.ok || data.error) {
+                throw new Error(data.error || "Could not save that.");
+              }
+              return data;
+            });
+          })
+          .then(function () {
+            // The checkbox further down the page is the same fact, and the
+            // form would post its old value over this one on the next save.
+            window.location.reload();
+          })
+          .catch(function (error) {
+            button.disabled = false;
+            button.innerHTML = original;
+            window.alert(error.message);
+          });
+      });
+    });
+  })();
+  </script>
+
+  {# loop over each session‐form and log its errors #}
+  {% for subform in session_formset.forms %}
+    {% if subform.errors %}
+    <script>
+      const sessErrs{{ forloop.counter0 }} = {{ subform.errors.as_json|safe }};
+      console.error("🔴 SessionForm #{{ forloop.counter }} errors:", sessErrs{{ forloop.counter0 }});
+    </script>
+    {% endif %}
+  {% endfor %}
+    </form>
+    </div>
   </div>
 </div>
 

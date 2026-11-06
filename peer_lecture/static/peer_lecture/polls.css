@@ -1,0 +1,485 @@
+#view-saved-polls {
+margin: 0 auto;
+width: 80%;
+opacity: 0;
+}
+
+.view-results-block {
+    padding: 10px;
+    border: 3px solid #ddd;
+    border-top: 1px solid #e7e7e7; /* Lighter top border to look connected */
+    margin-top: -3px; /* Overlap the bottom border of the container above */
+    background-color: #fafafa;
+}
+
+.inline-instances-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.inline-instances-list .loading-results {
+    color: #777;
+    text-align: center;
+    padding: 10px;
+}
+
+/* ADJUSTMENT TO THE ORIGINAL POLL CONTAINER */
+#poll-container {
+    border: 3px solid #ddd;
+    /* This makes the two blocks appear seamlessly connected */
+    border-bottom: none;
+    padding: 10px;
+    text-align: center;
+}
+
+#view-poll {
+padding: 20px;
+margin: 20px;
+border-bottom: 2px solid #ddd;
+}
+
+
+#poll-data {
+display: flex;
+justify-content: center;
+align-items: center;
+border: none !important;
+}
+
+#poll-header {
+display: flex;
+flex-direction: row;
+justify-content: space-between;
+cursor: pointer;
+}
+
+#poll-actions {
+display: flex;
+flex-direction: row;
+}
+
+#poll-actions div:nth-child(2) {
+margin-left: 20px;
+margin-top: 5px;
+}
+
+#poll-actions h4 {
+margin: 0;
+cursor: pointer;
+}
+
+@media screen and (max-width: 400px) {
+#poll-header {
+flex-direction: column;
+align-items: center;
+margin-bottom: 10px;
+}
+
+#poll-actions div {
+flex-direction: column;
+align-items: center;
+}
+
+#poll-actions button {
+width: 100%;
+}
+}
+
+input[type="radio"] {
+opacity: 0;
+position: fixed;
+width: 0;
+}
+
+.options-container label {
+margin: 5px;
+}
+
+input[type="radio"]:checked+label {
+background-color: rgb(87, 180, 255);
+color: white;
+}
+
+fieldset {
+    margin: 0 0 !important; /* Reduces top/bottom margin */
+    padding: 1em !important;   /* Reduces padding slightly */
+}
+
+.participation-btn {
+    background-color: #e8f5e9; 
+    border-color: #c8e6c9;
+}
+
+.participation-btn.active {
+    background-color: #dcedc8; 
+    border-color: #a5d6a7;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+}
+
+.chat-container {
+display: flex;
+flex-direction: column;
+height: 100vh;
+/* max-height: 80%; */
+}
+
+.message-container {
+flex: 1;
+overflow-y: auto;
+padding: 10px;
+}
+
+.message {
+margin: 10px;
+padding: 10px;
+border-radius: 5px;
+word-wrap: break-word;
+}
+
+.student-message {
+background-color: #e6f7ff;
+}
+
+.message-name {
+/* align center vertically */
+display: flex;
+align-items: center;
+}
+
+.message-name span {
+cursor: pointer;
+font-size: 18px;
+margin-right: 10px;
+}
+
+.message-text {
+margin-top: 5px;
+margin-bottom: 5px;
+margin-left: 20px;
+}
+
+.reply-message {
+margin-left: 20px;
+background-color: #f0f0f0;
+border-left: 4px solid #ccc;
+border-radius: 5px;
+padding: 10px;
+}
+
+.input-container {
+display: flex;
+align-items: center;
+padding: 10px;
+background-color: #f0f0f0;
+}
+
+.form-control {
+width: 90%;
+margin-right: 10px;
+}
+
+.wrapper {width:100%; margin:0 auto;}
+.resize {width:100%; height:auto;}
+
+.wrapper img {
+border: 5px solid black;
+max-width: 100%;
+height: auto;
+}
+
+#view-poll-data {
+border: 3px solid black;
+}
+
+html, body {
+touch-action: manipulation;
+}
+
+.ql-pick-window-button::after {
+content: 'Pick Window';
+display: inline-block;
+width: 100px;
+}
+
+#poll-type-fieldset label {
+background: #fff;
+color: #333;
+border: 1px solid #ccc;
+padding: 6px 12px;
+border-radius: 4px;
+cursor: pointer;
+margin-right: 4px;
+}
+#poll-type-fieldset label.selected {
+background: #337ab7;
+color: #fff;
+border-color: #337ab7;
+box-shadow: 0 0 5px rgba(51,122,183,0.6);
+}
+input[type="date"] {
+appearance: none;
+border: 1px solid #ccc;
+border-radius: 4px;
+padding: 6px;
+color: #333;
+background-color: #fff;
+font-size: 16px;
+}
+input[type="date"]::-webkit-calendar-picker-indicator {
+color: #999;
+}
+
+fieldset span {
+font-size: 12px;
+}
+
+input[name="poll-title"] {
+width: 50%;
+}
+@media screen and (max-width: 800px) {
+input[name="poll-title"] {
+width: 100%;
+}
+}
+
+.edit-label-input {
+width: 100px;
+display: inline;
+}
+.edit-pencil {
+cursor: pointer;
+margin-right: 15px;
+}
+
+.list-button-group .list-text {
+    font-size: 14px; /* Bootstrap's default body font size */
+}
+.list-label {
+display: inline-flex;
+align-items: center;
+}
+.list-label .edit-pencil {
+margin-left: 4px;
+font-size: 0.9em;
+}
+#poll-editor{
+height: 35vh;         
+max-height: 300px;     
+min-height: 180px;     
+}
+
+.list-button-group {
+    display: inline-flex;  /* Use flexbox for nice alignment */
+    align-items: center;   /* Vertically align items in the middle */
+    margin-right: 20px;    /* Add space between each color group */
+    margin-bottom: 10px;   /* Add space on smaller screens if they wrap */
+}
+
+.list-button-group .edit-pencil {
+    margin-left: 5px;      /* Space between the button and its pencil icon */
+    cursor: pointer; /* pencil icon */
+}
+
+/* Optional: Make radio buttons toggle visually like a btn-group */
+.list-button-group input[type="radio"]:checked + label {
+    box-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+}
+
+.checkbox-switch-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.switch-label {
+    margin-left: 10px;
+    font-weight: normal;
+    margin-bottom: 0;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px; /* Smaller width */
+    height: 28px; /* Smaller height */
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px; /* Adjusted size */
+    width: 20px;  /* Adjusted size */
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: #337ab7; /* Bootstrap Primary Blue */
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px); /* Adjusted translation */
+}
+
+.slider.round {
+    border-radius: 28px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+.poll-toggle-icon {
+display: inline-block;
+font-size: 1.2em; 
+color: #333;
+line-height: 1; 
+transition: transform 0.25s ease-in-out; 
+user-select: none; 
+}
+
+.poll-toggle-icon.expanded {
+transform: rotate(-90deg); 
+}
+
+#poll-container > div:not(#poll-data) > p {
+display: inline-block;
+margin: 10px;
+}
+
+#poll-data {
+border: none !important;
+}
+
+#poll-instances-list {
+list-style-type: none;
+padding: 0;
+margin-top: 15px;
+}
+.poll-data {
+display: flex;
+justify-content: center;
+align-items: center;
+border: none !important;
+}
+
+#poll-instances-list li {
+padding: 10px;
+border-bottom: 1px solid #ddd;
+}
+
+#poll-instances-list li:last-child {
+border-bottom: none;
+}
+
+#poll-instances-list a {
+text-decoration: none;
+color: #007bff;
+display: block;
+}
+
+#poll-instances-list a:hover {
+text-decoration: underline;
+background-color: #f0f0f0;
+}
+.instance-item {
+padding: 10px;
+border-bottom: 1px solid #ddd;
+}
+.instance-item:last-child {
+border-bottom: none;
+}
+.instance-row {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.instance-date {
+font-weight: 500;
+flex-grow: 1; 
+}
+.instance-actions {
+display: flex;
+align-items: center;
+}
+.instance-actions .btn {
+margin-left: 10px;
+}
+#poll-instances-list .instance-actions a.btn {
+color: #fff !important; 
+}
+#poll-instances-list .instance-actions a.btn:hover {
+background-color: #0056b3; 
+}
+
+.instance-actions .graph-toggle-icon {
+font-size: 1.5em;
+cursor: pointer;
+color: #5bc0de; 
+margin-left: 8px;
+}
+.instance-actions .graph-toggle-icon:hover {
+color: #31b0d5;
+}
+.graph-container {
+display: none; 
+padding: 15px;
+margin-top: 10px;
+background-color: #f9f9f9;
+border-top: 1px solid #eee;
+text-align: center; 
+}
+.graph-container canvas {
+max-width: 100%;
+margin-bottom: 15px;
+}
+.poll-data .ql-editor {
+height: auto;       
+max-height: 250px;  
+overflow-y: auto;   
+}
+.poll-option {
+color: #007bff; 
+display: inline-block;
+margin: 10px;
+}
+
+.poll-option.correct-answer {
+color: #dc3545; 
+font-weight: bold;
+}
+
+.poll-data img,
+.poll-data .ql-editor img {
+  max-width:100% !important;
+  height:auto !important;
+  width:auto !important;
+  display:block;
+  object-fit:contain;
+}
+
+
+#viewResultsModal.in {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}

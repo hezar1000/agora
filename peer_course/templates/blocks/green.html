@@ -1,0 +1,17 @@
+<div id="color-block-green">
+    <button class="btn btn-success btn-ms" id="next_student" disabled="disabled">
+        <span class="glyphicon glyphicon-user"></span>
+        Next student
+    </button>
+    <button class="btn btn-success btn-ms" id="clear_all" disabled="disabled">
+        <span class="glyphicon glyphicon-erase"></span>
+        Clear
+    </button>
+    <button class="btn btn-success btn-ms" id="enable">
+        Enable
+        {{ course.get_color_config_dict.green.name|default:"Green" }}
+    </button>
+    <span class="glyphicon glyphicon-pencil rename-icon clickable-icon-bg" onclick="renameColor('green')" style="cursor: pointer;"></span>
+
+    <span id="hide_green" class="glyphicon glyphicon-filter clickable-icon-bg" style="cursor: pointer; margin-left: 5px;" onclick="toggleHideList('green')"></span>
+</div>

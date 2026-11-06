@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_style %}
+<link rel="stylesheet" href="{% static 'css/course-view-redesign.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/iframe-resizer/iframeResizer.min.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+<script type="text/javascript">
+    const is_instructor = "{{ is_instructor }}" === "True";
+    const is_student = "{{ is_student }}" === "True";
+    let poll_board;
+
+    function resizeIframe(obj) {
+        obj.style.height = "0";
+        obj.style.height = obj.contentWindow.document.documentElement.scrollHeight + 'px';
+    }
+
+    function iframeLoaded() {
+        if (is_instructor) {
+            poll_board = document.getElementById('polling-instructor').contentWindow;
+        } else {
+            poll_board = document.getElementById('polling-student').contentWindow;
+        }
+    }
+</script>
+
+{% if course %}
+<script>
+    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    const url = `${ws_scheme}://${window.location.host}/ws/{{ course.id }}/`;
+    var socket = new WebSocket(url);
+
+    socket.onmessage = (e) => {
+        let message = JSON.parse(e.data);
+        let key = message.key;
+        switch(key) {
+            case 'start-poll':
+                if (poll_board) poll_board.location.reload();
+                break;
+            case 'stop-poll':
+                if (poll_board) poll_board.location.href += '?stop-poll=true';
+                break;
+            default:
+                break;
+        }
+    };
+    socket.onclose = () => {};
+    socket.onerror = (err) => { console.error('Polls WebSocket error:', err); };
+</script>
+{% endif %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12 col-md-8 col-md-offset-2">
+            <h3>{{ course.displayname }} - Polls</h3>
+            <hr>
+
+            {% if is_instructor or is_ta or request.user.is_superuser%}
+            <div>
+                <iframe id="polling-instructor" scrolling="no" onload="resizeIframe(this); iframeLoaded()"
+                    src="/polling/instructor/" width="100%" frameborder="0"></iframe>
+            </div>
+            <script>
+                iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-instructor');
+            </script>
+            {% else %}
+            <div>
+                <iframe id="polling-student" scrolling="no" onload="resizeIframe(this); iframeLoaded()"
+                    src="/polling/student/" width="100%" frameborder="0"></iframe>
+            </div>
+            <script>
+                iFrameResize({ heightCalculationMethod: 'documentElementOffset' }, '#polling-student');
+            </script>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

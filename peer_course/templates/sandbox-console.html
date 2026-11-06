@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block content %}
+{% comment %}
+  One screen for a demonstration class: the code to read to the room, the
+  instructor's own lecture view, and a student's view of the same lecture
+  beside it. The old one-time session needed a second browser and a second
+  person to show anything at all.
+{% endcomment %}
+<style>
+  .demo-head { display: flex; flex-wrap: wrap; align-items: center; gap: 18px;
+               border-bottom: 1px solid #e5e5e5; padding: 16px 0; margin-bottom: 16px; }
+  .demo-code { font-size: 40px; font-weight: 700; letter-spacing: 6px;
+               line-height: 1; color: #245b8f; }
+  .demo-code__label { font-size: 12px; text-transform: uppercase;
+                      letter-spacing: 0.6px; color: #777; display: block; }
+  .demo-head__spacer { flex: 1 1 auto; }
+  .demo-meta { font-size: 13px; color: #555; }
+  .demo-panes { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+  .demo-pane { border: 1px solid #e5e5e5; border-radius: 4px; overflow: hidden;
+               min-width: 0; }
+  .demo-pane__title { font-size: 13px; font-weight: 600; background: #f6f8fa;
+                      border-bottom: 1px solid #e5e5e5; padding: 7px 10px; }
+  .demo-pane__title span { font-weight: 400; color: #666; }
+  .demo-frame { width: 100%; height: 620px; border: 0; display: block; }
+  .demo-roster { list-style: none; margin: 0; padding: 8px 10px; max-height: 240px;
+                 overflow-y: auto; font-size: 13px; }
+  .demo-roster li { padding: 2px 0; }
+  .demo-roster__up { font-weight: 600; color: #2f6f3e; }
+  .demo-guest { color: #245b8f; }
+  @media (max-width: 991px) { .demo-panes { grid-template-columns: 1fr; }
+                              .demo-frame { height: 460px; } }
+</style>
+<main class="container-fluid" id="main-content" style="max-width: 1400px;">
+  <div class="demo-head">
+    <div>
+      <span class="demo-code__label">Join code</span>
+      <span class="demo-code">{{ course.join_code }}</span>
+    </div>
+    <div class="demo-meta">
+      Anyone can join at<br>
+      <strong>{{ join_url }}</strong><br>
+      No account needed.
+    </div>
+    <div class="demo-head__spacer"></div>
+    <div class="demo-meta" id="demo-joined">
+      {{ students|length }} joined so far<br>
+      Deletes itself at <strong>{{ expires_at|date:"H:i" }}</strong>
+    </div>
+    <form method="post" action="{% url 'course:sandbox_microphone' cid=course.id %}" class="demo-meta">
+      {% csrf_token %}
+      Phone microphone: <strong>{% if course.classroom_microphone %}on{% else %}off{% endif %}</strong><br>
+      <input type="hidden" name="on" value="{% if course.classroom_microphone %}0{% else %}1{% endif %}">
+      <button type="submit" class="btn btn-default btn-xs">
+        {% if course.classroom_microphone %}Turn off{% else %}Turn on{% endif %}
+      </button>
+    </form>
+    <form method="post" action="{% url 'course:sandbox_end' cid=course.id %}"
+          onsubmit="return confirm('Delete this demonstration class and everything in it?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-default">End now</button>
+    </form>
+  </div>
+
+  <div class="demo-panes">
+    <div class="demo-pane">
+      <div class="demo-pane__title">
+        What you would project <span>&mdash; the instructor's view</span>
+      </div>
+      <iframe class="demo-frame" src="/"
+              title="The instructor's view of the demonstration lecture"></iframe>
+    </div>
+
+    <div>
+      {% comment %}
+        Not the join URL again -- it is already at the top of this page, in the
+        size you would project. This is the part a first-time visitor does not
+        know: what to actually do next.
+      {% endcomment %}
+      <div class="demo-pane" style="margin-bottom: 12px;">
+        <div class="demo-pane__title">Trying it on your own</div>
+        <ol style="padding: 8px 10px 8px 26px; margin: 0; font-size: 13px; line-height: 1.6;">
+          <li>Open the join page above in a second browser, or a private
+            window, and enter the code.</li>
+          <li>Type any name. There is no sign-in.</li>
+          <li>Raise a hand there &mdash; it appears in the list below within a
+            few seconds.</li>
+          <li>Come back here and call on someone, as you would in class.</li>
+        </ol>
+      </div>
+
+      <div class="demo-pane" id="demo-roster-pane">
+        <div class="demo-pane__title">
+          Hands up now <span>&mdash; {{ raised|length }} of {{ students|length }}</span>
+        </div>
+        <ul class="demo-roster">
+          {% for student in students %}
+            <li class="{% if student.any_hand_up %}demo-roster__up{% endif %}">
+              {% if student.any_hand_up %}&#9995;{% else %}&nbsp;&nbsp;{% endif %}
+              {{ student.user.get_full_name|default:student.user.username }}
+            </li>
+          {% empty %}
+            <li class="text-muted">
+              Nobody yet. Open the join page in another browser and use the
+              code above.
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+<script>
+  // The roster is a snapshot, so it is refreshed -- the roster only. This
+  // reloaded the whole page every fifteen seconds, which reloaded the framed
+  // lecture screen with it: whatever the instructor was doing there was
+  // thrown away mid-click. The framed screen keeps itself current.
+  (function () {
+    function schedule() { setTimeout(refresh, 5000); }
+    function refresh() {
+      if (document.hidden) { schedule(); return; }
+      fetch(window.location.href, { credentials: "same-origin" })
+        .then(function (r) { return r.ok ? r.text() : Promise.reject(r.status); })
+        .then(function (html) {
+          const fresh = new DOMParser().parseFromString(html, "text/html");
+          ["demo-joined", "demo-roster-pane"].forEach(function (id) {
+            const now = document.getElementById(id);
+            const next = fresh.getElementById(id);
+            if (now && next) now.replaceWith(next);
+          });
+        })
+        .catch(function () {})
+        .finally(schedule);
+    }
+    schedule();
+  })();
+</script>
+{% endblock %}

@@ -4,7 +4,7 @@
   <!-- Standard Meta -->
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <!-- Site Properties -->
   <title>Agora</title>
@@ -136,9 +136,12 @@
         </a>
         <div class="right item">
           {% if logged_in %}
-          <a class="ui inverted button" href="{% url 'account:saml_logout' %}">Log out</a>
+          <form method="post" action="{% url 'account:logout' %}" style="display: inline">
+            {% csrf_token %}
+            <button class="ui inverted button" type="submit">Log out</button>
+          </form>
           {% else %}
-          <a class="ui inverted button" href="{% url 'account:saml_login' %}">Log in</a>
+          <a class="ui inverted button" href="{% url 'account:login' %}">Log in</a>
           <a class="ui inverted button" href="{% url 'account:signup' %}">Sign Up</a>
           {% endif %}
         </div>
@@ -147,7 +150,7 @@
 
     <div class="ui text container">
       <h1 class="ui inverted header">
-        The Agora
+        Agora
       </h1>
       <h2 style="margin-bottom:3em;">(Learn more about us)</h2>
 <!--       {% if logged_in %}

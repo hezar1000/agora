@@ -1,5 +1,4 @@
 {% extends "form_simp_base.html" %}
-
 {% block content %}
 
 <div class="container-fluid">
@@ -9,25 +8,61 @@
       <h2>User {{ user.first_name }} {{ user.last_name }}</h2>
     </div>
 
-    <form method="post" action="{% url 'account:edit' user.id %}">
+    <!-- IMPORTANT: enctype="multipart/form-data" for file uploads -->
+    <form method="post" action="{% url 'account:edit' user.id %}" enctype="multipart/form-data">
       {% csrf_token %}
 
+      {# User fields #}
       {% for field in EditForm %}
-          <div class="form-group row">
-              <div class="col-md-2 col-form-label">
-                  {{ field.label_tag }} 
-              </div>
-              <div class="col-md-3">
-                  {{ field }}
-              </div>
-              <div class="col-md-6">
-                {{ field.help_text }}
-              </div>
+        <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+            {{ field.label_tag }} 
           </div>
+          <div class="col-md-3">
+            {{ field }}
+          </div>
+          <div class="col-md-6">
+            {{ field.help_text }}
+          </div>
+        </div>
+      {% endfor %}
+
+      {# Profile fields: the preferred name, and the photo #}
+      {% for field in ProfileForm %}
+        <div class="form-group row">
+          <div class="col-md-2 col-form-label">
+            {{ field.label_tag }}
+          </div>
+          <div class="col-md-3">
+            {{ field }}
+            {% for error in field.errors %}
+              <span class="text-danger">{{ error }}</span>
+            {% endfor %}
+          </div>
+          <div class="col-md-6">
+            {{ field.help_text }}
+          </div>
+        </div>
       {% endfor %}
 
       <button type="submit" class="btn btn-primary">Update user information</button>
     </form>
+
+    {% if request.user == user and user.has_usable_password %}
+    <hr>
+    <h3>Password</h3>
+    <p>Change the password you sign in to Agora with.</p>
+    <a class="btn btn-default" href="{% url 'account:password_change' %}">
+      Change password
+    </a>
+
+      <hr>
+      <h3>Two-factor authentication</h3>
+      <p>Replace your authenticator and issue a fresh set of recovery codes.</p>
+      <a class="btn btn-default" href="{% url 'account:mfa_setup' %}">
+        Manage two-factor authentication
+      </a>
+    {% endif %}
 
   </div>
 </div>

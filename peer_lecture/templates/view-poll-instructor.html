@@ -1,8 +1,9 @@
-<div>
+<div id="poll-timeout" style="visibility: hidden;">
     <h3>Poll Running</h3>
 
+    <h4 style="text-align: right; font-size: 24px;">Submissions: <span id="submission-counter">0</span></h4>
+
     <form method="post">
-    
         {% csrf_token %}
 
         {% if poll.poll_data %}
@@ -10,20 +11,25 @@
         {% endif %}
 
         <fieldset>
-            <button type="submit" class="btn btn-danger"  name="stop-poll">Stop Poll</button>
+            <button type="submit" class="btn btn-danger" name="stop-poll">Stop Poll</button>
         </fieldset>
-
     </form>
 </div>
 
+{{ poll.safe_poll_data | json_script:"poll-data_json" }}
 <script>
+    const pollContainer = document.getElementById('poll-timeout');
+
     let quill = new Quill('#view-poll-data', {
         theme: 'snow',
         readOnly: true,
     });
 
     quill.getModule('toolbar').container.style.display = 'none';
-    quill.root.innerHTML = `{{ poll.poll_data|safe }}`;
+
+    const pollDataElement = document.getElementById('poll-data_json');
+    const pollData = JSON.parse(pollDataElement.textContent);
+    quill.root.innerHTML = pollData
 
     const editorContainer = document.querySelector('#view-poll-data');
 
@@ -38,4 +44,9 @@
     quill.root.querySelectorAll('img').forEach(img => {
         img.addEventListener('load', setEditorHeight);
     });
+
+    // Make the container visible after a 2000ms
+    setTimeout(() => {
+        pollContainer.style.visibility = 'visible';
+    }, 2000);
 </script>

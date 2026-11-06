@@ -1,0 +1,33 @@
+{% comment %}
+  The course page's administration cards. "Where do I find the roster, the
+  exports and the settings" should have the same answer and the same shape on
+  every course page.
+
+  Sizes are in px for the reason given in blocks/settings-style.html: Bootstrap
+  3's root font-size is 10px, so rem-based sizes come out a third too small.
+{% endcomment %}
+<style>
+  .course-admin {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    margin-bottom: 24px;
+  }
+  .course-admin__card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 16px 18px;
+  }
+  .course-admin__title { font-size: 16px; font-weight: 600; margin: 0 0 10px; }
+  .course-admin__figure { font-size: 30px; font-weight: 600; line-height: 1.1; margin: 0; }
+  .course-admin__meta { color: #666; margin: 2px 0 8px; }
+  .course-admin__list { list-style: none; padding: 0; margin: 0; }
+  .course-admin__list li { padding: 3px 0; }
+  /* Lists inside a card are unadorned whether or not they carry the class. */
+  .course-admin__card ul { list-style: none; padding: 0; margin: 8px 0 0; }
+  .course-admin__card li { padding: 2px 0; }
+
+  /* The line above the cards: when the next lecture is, and how to join it. */
+  .course-admin__lead { margin: 8px 0 24px; }
+  .course-admin__when { font-size: 16px; }
+</style>

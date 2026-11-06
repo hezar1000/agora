@@ -33,17 +33,12 @@
                 {% if is_instructor %}
                   <td>
                     {% if user.id != request_user.id %}
-                      <a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
-                        class="btn btn-danger btn-xs"
-                        data-toggle="confirmation"
-                        data-singleton="true"
-                        data-btn-ok-class="btn-danger"
-                        data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
-                        data-btn-cancel-class="btn-success"
-                        data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
-                        data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
-                        <span class="glyphicon glyphicon-trash"></span>
-                      </a>
+                      <form method="post" action="/course/{{ course.id }}/remove_user/{{ user.id }}/" style="display:inline" onsubmit="return confirm('Remove this user from the course?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-xs" aria-label="Remove instructor">
+                          <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                        </button>
+                      </form>
                     {% endif %}
                     <a href="{% url 'account:edit' user.id %}"
                       class="btn btn-primary btn-xs">
@@ -90,17 +85,12 @@
                 <td><a href="/course/{{course.id}}/{{user.id}}/" target="">{{ user.first_name }} {{ user.last_name }}</a></td> 
                 <td>{{ user.email }}</td>
                 {% if is_instructor %}
-                  <td><a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
-                    class="btn btn-danger btn-xs"
-                    data-toggle="confirmation"
-                    data-singleton="true"
-                    data-btn-ok-class="btn-danger"
-                    data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
-                    data-btn-cancel-class="btn-success"
-                    data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
-                    data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
-                    <span class="glyphicon glyphicon-trash"></span>
-                    </a>
+                  <td><form method="post" action="/course/{{ course.id }}/remove_user/{{ user.id }}/" style="display:inline" onsubmit="return confirm('Remove this user from the course?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger btn-xs" aria-label="Remove teaching assistant">
+                      <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                    </button>
+                    </form>
                     <a href="{% url 'account:edit' user.id %}"
                       class="btn btn-primary btn-xs">
                       <span class="glyphicon glyphicon-pencil"></span>
@@ -147,17 +137,12 @@
                 <td>{{ user.email }}</td>
                 {% if is_instructor %}
                   <td>
-                    <a href="/course/{{ course.id }}/remove_user/{{ user.id }}/"
-                      class="btn btn-danger btn-xs"
-                      data-toggle="confirmation"
-                      data-singleton="true"
-                      data-btn-ok-class="btn-danger"
-                      data-btn-ok-label="Yes!" data-btn-ok-icon="glyphicon glyphicon-ok"
-                      data-btn-cancel-class="btn-success"
-                      data-btn-cancel-label="No!" data-btn-cancel-icon="glyphicon glyphicon-remove"
-                      data-content="By doing this, the user will not be able to access this course and/or respond to any reviews assigned to them!">
-                      <span class="glyphicon glyphicon-trash"></span>
-                    </a>
+                    <form method="post" action="/course/{{ course.id }}/remove_user/{{ user.id }}/" style="display:inline" onsubmit="return confirm('Remove this user from the course?');">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-danger btn-xs" aria-label="Remove student">
+                        <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                      </button>
+                    </form>
                     <a href="{% url 'account:edit' user.id %}"
                       class="btn btn-primary btn-xs">
                       <span class="glyphicon glyphicon-pencil"></span>
@@ -185,7 +170,7 @@
             <label for="id_user" class="col-md-2 col-form-label">User:</label> 
 
             <div class="col-md-3">
-                <input id="user_input" type="text" placeholder="Search by user email" required form-control />
+                <input aria-label="Search by user email" id="user_input" type="text" placeholder="Search by user email" required form-control />
                 <input type="hidden" id="actual_user_input" name="user" type="text" value="" />
                 <!-- <select name="user" required class="form-control" id="id_user">
                     <option value="" selected>---------</option>

@@ -1,0 +1,52 @@
+{% extends "form_simp_base.html" %}
+{% block content %}
+<div class="container-fluid">
+  <div class="col-md-8 col-md-offset-2">
+
+    <div class="page-header">
+      <h2>{% if replacing %}Replace your authenticator{% else %}Set up two-factor authentication{% endif %}</h2>
+    </div>
+
+    <p>
+      This account signs in with a password, so it needs a second factor.
+      Scan this with an authenticator app on your phone &mdash;
+      <strong>Duo Mobile</strong>, Google Authenticator, Microsoft
+      Authenticator, 1Password, Aegis: any of them, whichever you already
+      use. They all speak the same standard.
+    </p>
+
+    <div style="background:#fff; display:inline-block; padding:12px; border:1px solid #ddd; max-width:280px;">
+      {{ qr_svg|safe }}
+    </div>
+
+    <p style="margin-top:1em;">
+      Can't scan it? Type this key into the app by hand instead:
+      <code style="font-size:1.1em; letter-spacing:1px;">{{ secret }}</code>
+      <br>
+      <small class="text-muted">It will appear in the app as &ldquo;{{ issuer }}&rdquo;.</small>
+    </p>
+
+    <hr>
+
+    <form method="post" action="{% url 'account:mfa_setup' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-group">
+        <label for="token">Enter the six digits the app is showing now</label>
+        <input type="text" class="form-control" id="token" name="token"
+               inputmode="numeric" autocomplete="one-time-code"
+               pattern="[0-9 ]*" maxlength="9" required autofocus
+               style="max-width:12em; font-size:1.4em; letter-spacing:3px;">
+        <p class="help-block">
+          Nothing is switched on until a code from your app has been checked,
+          so a QR you never managed to scan cannot lock you out.
+        </p>
+      </div>
+      <button type="submit" class="btn btn-primary">
+        {% if replacing %}Replace authenticator{% else %}Turn on two-factor authentication{% endif %}
+      </button>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

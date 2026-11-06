@@ -1,53 +1,53 @@
-agora package
+mta2 package
 ============
 
 Submodules
 ----------
 
-agora.development\_settings module
+mta2.development\_settings module
 ---------------------------------
 
-.. automodule:: agora.development_settings
+.. automodule:: mta2.development_settings
     :members:
     :undoc-members:
     :show-inheritance:
 
-agora.models module
+mta2.models module
 ------------------
 
-.. automodule:: agora.models
+.. automodule:: mta2.models
     :members:
     :undoc-members:
     :show-inheritance:
 
-agora.saml\_settings module
+mta2.saml\_settings module
 --------------------------
 
-.. automodule:: agora.saml_settings
+.. automodule:: mta2.saml_settings
     :members:
     :undoc-members:
     :show-inheritance:
 
-agora.settings module
+mta2.settings module
 --------------------
 
-.. automodule:: agora.settings
+.. automodule:: mta2.settings
     :members:
     :undoc-members:
     :show-inheritance:
 
-agora.urls module
+mta2.urls module
 ----------------
 
-.. automodule:: agora.urls
+.. automodule:: mta2.urls
     :members:
     :undoc-members:
     :show-inheritance:
 
-agora.wsgi module
+mta2.wsgi module
 ----------------
 
-.. automodule:: agora.wsgi
+.. automodule:: mta2.wsgi
     :members:
     :undoc-members:
     :show-inheritance:
@@ -56,7 +56,7 @@ agora.wsgi module
 Module contents
 ---------------
 
-.. automodule:: agora
+.. automodule:: mta2
     :members:
     :undoc-members:
     :show-inheritance:

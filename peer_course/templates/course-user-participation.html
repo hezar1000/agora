@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% load queue_names %}
+{% load participation_charts %}
+
+{% block extra_style %}
+<style>
+  .grade-header { margin-bottom: 24px; }
+  .grade-header h1 { margin-bottom: 4px; }
+  .grade-section { margin-top: 28px; }
+  .standing { display: flex; flex-wrap: wrap; gap: 24px 40px; align-items: flex-start; margin-top: 8px; }
+  .standing__figures { display: flex; flex-direction: column; gap: 14px; flex: 0 0 260px; }
+  .figure__value { display: block; font-size: 28px; font-weight: 600; line-height: 1.1; color: #2f6fb0; }
+  .figure__value small { font-size: 15px; font-weight: 500; color: #6b6b6b; }
+  .figure__label { display: block; color: #555; font-size: 13px; margin-top: 2px; max-width: 260px; }
+  .participation-meter { display: block; margin-top: 6px; max-width: 100%; }
+  .standing__chart { flex: 1 1 320px; min-width: 0; }
+  .participation-chart-scroll { overflow-x: auto; }
+  .participation-chart { display: block; max-width: none; height: auto; }
+  .lecture-bar { cursor: pointer; }
+  .lecture-bar:hover { filter: brightness(0.85); }
+  .chart-tip { position: absolute; pointer-events: none; background: #222; color: #fff; font-size: 12px; padding: 5px 8px; border-radius: 4px; white-space: nowrap; z-index: 20; transform: translate(-50%, -100%); }
+  details.grade-section summary { cursor: pointer; color: #2f6fb0; }
+  .chart-heading { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .caption { font-size: 13px; margin-top: 2px; }
+  .rubric-notes p { margin: 0 0 6px; }
+  .staff-only { border-top: 1px dashed #bbb; padding-top: 16px; }
+  .grade-total { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 4px; }
+  .grade-total__value { font-size: 32px; font-weight: 600; line-height: 1; }
+  .grade-total__of { color: #666; }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="ui container" id="main-content">
+  <header class="grade-header">
+    <h1>Participation</h1>
+    <p class="text-muted">{{ course.displayname }} &middot; {{ coursemember.get_user_fullname }}</p>
+  </header>
+
+  {% if standing %}
+    {% comment %}
+      The page mirrors the grading pipeline: the quantity the marks come
+      from, in the rubric's unit; the per-lecture pieces it is built from;
+      class context only where the rubric compares the student to the class
+      on a term-wide quantity. Nothing a formula does not consume.
+    {% endcomment %}
+    <div class="standing">
+      <div class="standing__figures">
+        {% for figure in standing.headline %}
+          {% if figure.kind == "per_lecture" %}
+            <div class="figure">
+              <span class="figure__value">{% if figure.value != None %}{{ figure.value }}%{% else %}&ndash;{% endif %}</span>
+              <span class="figure__label">average of your {{ figure.lectures }} lecture grade{{ figure.lectures|pluralize }} so far{% if figure.dropped %}; your lowest {{ figure.dropped }} are dropped at the end of term{% endif %}</span>
+            </div>
+          {% elif figure.kind == "coverage" %}
+            <div class="figure">
+              <span class="figure__value">{{ figure.value }} <small>of {{ figure.held }} so far</small></span>
+              <span class="figure__label">lectures attended; full attendance marks at {{ figure.target }}</span>
+            </div>
+          {% elif figure.kind == "volume" %}
+            <div class="figure">
+              <span class="figure__value">{{ figure.value|floatformat:"-2" }}{% if figure.target %} <small>/ {{ figure.target|floatformat:"-2" }}</small>{% endif %}</span>
+              <span class="figure__label">additional hand raises{% if figure.target %} toward the fixed scale{% endif %} (the first in each lecture is attendance, unless the roll call already counted you)</span>
+              {% if figure.target %}{% progress_meter figure.value figure.target "Additional hand raises toward the fixed scale" %}{% endif %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="standing__chart">
+        <h2 class="chart-heading">Hand raises counted, lecture by lecture</h2>
+        {% if standing.lecture_rows %}
+          <div class="participation-chart-scroll">
+            {% if standing.lecture_grades %}
+              {% lecture_chart standing.lecture_rows "per_lecture" %}
+            {% elif standing.splits_attendance %}
+              {% lecture_chart standing.lecture_rows "split" %}
+            {% else %}
+              {% lecture_chart standing.lecture_rows "plain" %}
+            {% endif %}
+          </div>
+          <p class="text-muted caption">
+            {% if standing.lecture_grades %}
+              Grade under each bar; the line is that lecture's class median (80%), the faint column its top (100%).{% if standing.drops_visible %} Faded lectures are your dropped ones.{% endif %}
+            {% elif standing.splits_attendance %}
+              Light segment: attendance, from your first hand raise or from answering the roll call. Dark: additional raises.
+            {% else %}
+              Counted each time the instructor calls on someone while your hand is up.
+            {% endif %}
+          </p>
+        {% else %}
+          <p class="text-muted">No graded lecture has run yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if standing.distribution and standing.distribution.students > 1 %}
+      <section class="grade-section" aria-labelledby="dist-heading">
+        <h2 id="dist-heading" class="chart-heading">Additional hand raises across the class</h2>
+        <div class="participation-chart-scroll">
+          {% class_distribution standing.distribution.buckets standing.distribution.mine standing.distribution.median standing.distribution.maximum %}
+        </div>
+        <p class="text-muted caption">
+          All {{ standing.distribution.students }} students; your bar is dark. At the end of term the median earns 7 of 10 and the top 10 of 10.
+        </p>
+      </section>
+    {% endif %}
+
+    {% if standing.lecture_rows %}
+      <details class="grade-section">
+        <summary>Lecture by lecture, as a table</summary>
+        <div class="table-responsive">
+          <table class="ui celled table lecture-table">
+            <thead>
+              <tr>
+                <th>Lecture</th>
+                {% if standing.splits_attendance %}
+                  <th>Attendance</th>
+                  <th>Participation (additional hand raises)</th>
+                {% else %}
+                  <th>Hand raises counted</th>
+                {% endif %}
+                {% if standing.shows_bonus %}<th>After speaking</th>{% endif %}
+                {% if standing.lecture_grades %}<th>Class median</th><th>Grade for the lecture</th>{% endif %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in standing.lecture_rows %}
+                <tr id="lecture-row-{{ row.session_id }}">
+                  <td>
+                    {% if row.session %}{{ row.session.display_name }}{% if row.session.session_date %} <span class="text-muted">&middot; {{ row.session.session_date|date:"D j M" }}</span>{% endif %}{% else %}Lecture {{ row.number }}{% endif %}
+                  </td>
+                  {% if standing.splits_attendance %}
+                    <td>{% if row.took_part %}<span aria-hidden="true">&#10003;</span> attended{% if row.roll_call %} (roll call){% endif %}{% else %}<span class="text-muted">not counted</span>{% endif %}</td>
+                    <td>
+                      {% if row.took_part %}{{ row.additional }}{% if row.spoke %} <span class="text-muted">(chosen to speak {{ row.spoke }} time{{ row.spoke|pluralize }})</span>{% endif %}{% else %}<span class="text-muted">&ndash;</span>{% endif %}
+                    </td>
+                  {% else %}
+                    <td>
+                      {% if row.took_part %}
+                        {{ row.raised }}{% if row.spoke %} <span class="text-muted">(chosen to speak {{ row.spoke }} time{{ row.spoke|pluralize }})</span>{% endif %}
+                      {% else %}
+                        <span class="text-muted">none &mdash; not counted as attended</span>
+                      {% endif %}
+                    </td>
+                  {% endif %}
+                  {% if standing.shows_bonus %}<td>{{ row.bonus }}</td>{% endif %}
+                  {% if standing.lecture_grades %}
+                    <td>{{ row.median|floatformat:"-1" }}</td>
+                    <td>{% if row.percent != None %}{{ row.percent }}%{% endif %}</td>
+                  {% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </details>
+    {% endif %}
+
+    {% if is_staff_view %}
+      {% comment %}
+        Staff see the arithmetic as it stands today. Students do not: the
+        figure is provisional for the whole term and reads as a grade.
+      {% endcomment %}
+      <section class="grade-section staff-only" aria-labelledby="current-grade-heading">
+        <h2 id="current-grade-heading">Where this stands under the rubric today <small class="text-muted">(staff view)</small></h2>
+        <p class="grade-total">
+          <strong class="grade-total__value">{{ standing.marks_so_far|floatformat:"-2" }}</strong>
+          <span class="grade-total__of">/ {{ standing.marks_available|floatformat:"-2" }}</span>
+        </p>
+        {% if standing.marks_can_still_move %}
+          <p class="text-muted">Provisional until final class participation is known.</p>
+        {% endif %}
+        {% if standing.breakdown %}
+          <ul>
+            {% for line in standing.breakdown %}
+              <li>{{ line.label }}: {{ line.earned|floatformat:"-2" }} / {{ line.available|floatformat:"-2" }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+        {% if standing.shows_class %}
+          <p class="text-muted">Class median of additional hand raises so far: {{ standing.volume_median|floatformat:"-2" }}</p>
+        {% endif %}
+      </section>
+    {% endif %}
+  {% elif session_grades %}
+    <section aria-labelledby="session-grades-heading">
+      <h2 id="session-grades-heading">Grade by lecture</h2>
+      <div class="table-responsive">
+        <table class="ui celled table">
+          <thead>
+            <tr><th>Lecture</th><th>Grade</th></tr>
+          </thead>
+          <tbody>
+            {% for item in session_grades %}
+              <tr><td>{{ item.label }}</td><td>{{ item.grade }} / 10</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% else %}
+    <p class="text-muted">Participation grades are not available for this course.</p>
+  {% endif %}
+
+  <details class="grade-section">
+    <summary id="recent-heading">Recorded hand raises (every time your hand went up and came down)</summary>
+    <p class="text-muted">
+      For the record only. This is not
+      the count that is graded: a hand raise is counted above only when the
+      instructor called on someone while it was up.
+    </p>
+    <div class="table-responsive">
+      <table class="ui celled table">
+        <thead>
+          <tr><th>Date and time</th><th>Lecture</th><th>List</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          {% for item in hand_raises %}
+            <tr>
+              <td>{{ item.raised_at }}</td>
+              <td>{% if item.session %}{{ item.session.display_name }}{% else %}&mdash;{% endif %}</td>
+              <td>{{ course.queue_labels|queue_name:item.participation_list }}</td>
+              <td>{% if item.resolution %}{{ item.get_resolution_display }}{% else %}Raised{% endif %}</td>
+            </tr>
+          {% empty %}
+            {% for item in participations %}
+              <tr>
+                <td>{{ item.time_participated }}</td>
+                <td>{% if item.session %}{{ item.session.display_name }}{% else %}&mdash;{% endif %}</td>
+                <td>{{ course.queue_labels|queue_name:item.participation_list }}</td>
+                <td>{% if item.spoke_upon_participation %}Chosen to speak{% else %}Recorded{% endif %}</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="4">No hand raises recorded yet.</td></tr>
+            {% endfor %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</main>
+<script>
+  // Hover a bar for its lecture; click it to jump to that lecture's row.
+  (function () {
+    var tip = document.createElement("div");
+    tip.className = "chart-tip"; tip.hidden = true; document.body.appendChild(tip);
+    document.querySelectorAll(".lecture-bar").forEach(function (bar) {
+      bar.addEventListener("mouseenter", function () {
+        tip.textContent = bar.getAttribute("data-tip") || ""; tip.hidden = false;
+      });
+      bar.addEventListener("mousemove", function (e) {
+        tip.style.left = (e.pageX) + "px"; tip.style.top = (e.pageY - 12) + "px";
+      });
+      bar.addEventListener("mouseleave", function () { tip.hidden = true; });
+      bar.addEventListener("click", function () {
+        var id = bar.getAttribute("data-row"); if (!id) return;
+        var row = document.getElementById(id); if (!row) return;
+        var details = row.closest("details"); if (details) details.open = true;
+        row.scrollIntoView({ behavior: "smooth", block: "center" });
+        row.style.background = "#eef4fb"; setTimeout(function () { row.style.background = ""; }, 1600);
+      });
+    });
+  })();
+</script>
+{% endblock %}

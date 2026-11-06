@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<main class="classroom-sound-page">
+  <h1>Classroom sound</h1>
+  <h2>{{ course.displayname }}</h2>
+  <p>Leave this page open on the laptop connected to the classroom speakers.
+    You can control Agora from your iPad while presenting slides on this laptop.</p>
+  {% include "classroom-microphone.html" %}
+  <p><a href="{% url 'home:agora_dash' %}">Return to Agora</a></p>
+</main>
+{% endblock %}

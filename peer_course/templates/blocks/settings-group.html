@@ -1,0 +1,10 @@
+{% comment %}One settings section: its heading, what it is for, and its fields.{% endcomment %}
+<section class="settings-group" id="{{ group.id }}" aria-labelledby="{{ group.id }}-heading">
+  <h2 class="settings-group__title" id="{{ group.id }}-heading">{{ group.title }}</h2>
+  {% if group.description %}
+    <p class="settings-group__hint">{{ group.description }}</p>
+  {% endif %}
+  {% for field in group.fields %}
+    {% include "blocks/settings-field.html" %}
+  {% endfor %}
+</section>

@@ -1,156 +1,360 @@
-<style>
-    #instructor-canvas-container {
-        width: 60%;
-        height: 60%;
-    }
-
-    #student-canvas-container {
-        width: 80%;
-        height: 80%;
-        margin: 0 auto;
-    }
-
-    .bar-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 5px 0;
-    }
-
-    .bar {
-        background-color: #3498db;
-        color: white;
-        padding: 5px;
-        position: relative;
-    }
-
-    .bar-label,
-    .option-label {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-    }
-
-    .bar-label {
-        top: -20px;
-        /* Adjust the distance above the bar */
-    }
-
-    .option-label {
-        bottom: -20px;
-        /* Adjust the distance below the bar */
-    }
-
-    {% for option, data in results.items %}
-        .bar.{{option}} {
-            width: {{ data.ratio }}%;
-        }
-    {% endfor %}
-
-    .results-container {
-        display: flex;
-        margin-top: 20px;
-    }
-
-    .results-container span {
-        cursor: pointer;
-        line-height: 70px;
-        margin-right: 20px;
-        font-size: 20px;
-    }
-
-    .results-container span:hover {
-        color: red;
-    }
-</style>
-
-<div class="results-container">
-
-    {% if results %}
-    <div><span onclick="closeResults()" class="glyphicon glyphicon-remove-circle"></span></div>
-    <div><h3>Poll Results
-        {% if course_member.is_instructor %}
-            <a id="download-results" href="" class="btn btn-primary">Download Results</a>
-            <a id="download-graph" href="" class="btn btn-warning">Download Graph</a>
-        {% endif %}
-    </h3></div>
-    {% endif %}
-
-</div>
+{% load static %}
+<link rel="stylesheet" href="{% static 'peer_lecture/instructor-results.css' %}">
+{% if results %}
+{{ results|json_script:"poll-results-data" }}
+{% endif %}
 
 <script>
-    red = '#FF6666';
-    green = '#66FF66';
-    blue = '#66B2FF';
-
-    parent.resizeIframe(this.frameElement);
-
-    function createPoll(results) {
-        const canvas = document.getElementById('horizontal-bar-chart');
-        if (!canvas) return;
-
-        let myChart;
-
-        if (window.myChart) {
-            myChart = window.myChart;
-            myChart.data.datasets[0].data = Object.values(results.results);
-            myChart.update();
-        } else {
-            const ctx = canvas.getContext('2d');
-            const ans = results.answer;
-            const labels = Object.keys(results.results);
-            const data = Object.values(results.results);
-            const colors = ans === "None" ? blue : labels.map(label => (label === ans ? green : red));
-
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y',
-                    scales: {
-                        x: {
-                            type: 'linear',
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: false,
-                    }
-                }
-            });
-
-            window.myChart = myChart;
-        }
-    }
-
-    let update_poll_runner = () => {
-        console.log('Updating poll');
-
-        $.ajax({
-                type: 'GET',
-                data: {
-                    'update-results': "{{poll.pk}}"
-                },
-                success: function (data) {
-                    const results = JSON.parse(data);
-                    createPoll(results);
-                },
-                error: function (error) {
-                    console.error("Error sending message:", error);
-                  }
-            });
-    }
+    function closeResults() {
+    const panel = document.getElementById('poll-results-container');
+    if (panel) panel.style.display = 'none';
+    const instr = document.getElementById('instructor-canvas-container');
+    const stud  = document.getElementById('student-canvas-container');
+    if (instr) instr.style.display = 'none';
+    if (stud)  stud.style.display = 'none';
+  if (typeof parent.resizeIframe === 'function') {
+    parent.resizeIframe(window.frameElement);
+  }
+}
 </script>
 
+
+<div id="poll-results-container" class="results-container">
+  {% if results %}
+    <div>
+      <span onclick="closeResults()" class="glyphicon glyphicon-remove-circle"></span>
+    </div>
+    <h3>Poll Results</h3>
+    
+    {% if course_member.is_instructor or request.user.is_superuser %}
+      <a id="download-results" href="" class="btn btn-primary">Download Results</a>
+      {% if results.poll_type != "text" %}
+      <a id="download-graph" href="" class="btn btn-warning">Download Graph</a>
+      {% endif %}
+      {% if results.poll_type == "list" %}
+      <form method="post" id="move-hands-form">
+            {% csrf_token %}
+            <button
+                type="button"  id="move-hands-btn" name="move-hands"
+                value="{{ results.poll_id }}" 
+                class="btn btn-info">
+                Move Student Hands to Lists
+            </button>
+        </form>               
+      {% endif %}
+    {% endif %}
+  {% endif %}
+
+  {% if results %}
+
+  {% if results.poll_type == 'text' %}
+  <div id="text-poll-results" style="margin-top: 20px;">
+    {% if course_member.is_instructor or request.user.is_superuser %}
+      <h4>Text Responses ({{ results.responses|length }} total)</h4>
+    {% else %}
+      <h4>Your Response</h4>
+    {% endif %}
+    <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+      {% if results.responses %}
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              {% if course_member.is_instructor or request.user.is_superuser %}
+                <th>Student</th>
+              {% endif %}
+              <th>Response</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for response in results.responses %}
+            <tr>
+              {% if course_member.is_instructor or request.user.is_superuser %}
+                <td>{{ response.user_name }}</td>
+              {% endif %}
+              <td style="word-wrap: break-word; word-break: break-word; max-width: 400px;">{{ response.answer }}</td>
+              <td>
+                {% if response.time %}
+                  <small>{{ response.time }}</small>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p>{% if course_member.is_instructor or request.user.is_superuser %}No responses yet.{% else %}You haven't submitted a response yet.{% endif %}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  
+  {% endif %}
+  
+  {% if poll and poll.poll_type == 'text' and not results %}
+  {# Show text poll results section during running poll (before stop) #}
+  <div id="text-poll-results" style="margin-top: 20px;">
+    {% if course_member.is_instructor or request.user.is_superuser %}
+      <h4>Text Responses (0 total)</h4>
+    {% else %}
+      <h4>Your Response</h4>
+    {% endif %}
+    <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            {% if course_member.is_instructor or request.user.is_superuser %}
+              <th>Student</th>
+            {% endif %}
+            <th>Response</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td colspan="{% if course_member.is_instructor or request.user.is_superuser %}3{% else %}2{% endif %}">
+              {% if course_member.is_instructor or request.user.is_superuser %}No responses yet.{% else %}You haven't submitted a response yet.{% endif %}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if results %}
+  <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        const pollDataForMove = JSON.parse(document.getElementById('poll-results-data').textContent);
+        const btn = document.querySelector('button[name="move-hands"]');
+        if (!btn || !pollDataForMove.poll_id) return;
+        btn.value = pollDataForMove.poll_id;
+        btn.textContent = `Move Student Hands to Lists`;
+        });
+</script>
+  {% endif %}
+</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const moveHandsBtn = document.getElementById('move-hands-btn');
+    const form = document.getElementById('move-hands-form');
+
+    if (moveHandsBtn && form) {
+        moveHandsBtn.addEventListener('click', function() {
+            const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]').value;
+            const pollId = moveHandsBtn.value;
+            const url = form.action || window.location.href;
+
+            moveHandsBtn.disabled = true;
+            moveHandsBtn.textContent = 'Moving...';
+
+            const body = new URLSearchParams();
+            body.append('csrfmiddlewaretoken', csrfToken);
+            body.append('move-hands', pollId);
+
+            fetch(url, {
+                method: 'POST',
+                body: body,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (window.parent && typeof window.parent.count_hands_up === 'function') {
+                        window.parent.count_hands_up("false");
+                    } else {
+                        console.error("FAILURE: Could not find the count_hands_up function on the parent page.");
+                    }
+                    
+                    closeResults();
+
+                } else {
+                    alert('An error occurred. Please try again.');
+                    moveHandsBtn.disabled = false;
+                    moveHandsBtn.textContent = 'Move Student Hands to Lists';
+                }
+            })
+            .catch(error => {
+                console.error('Error moving student hands:', error);
+                alert('A server error occurred. Check the console for details.');
+                moveHandsBtn.disabled = false;
+                moveHandsBtn.textContent = 'Move Student Hands to Lists';
+            });
+        });
+    }
+});
+</script>
+
+<script>
+  function norm(v) { return String(v ?? '').trim(); }
+
+  function createPoll(results) {
+    const canvas = document.getElementById('horizontal-bar-chart');
+    if (!canvas || !results) return;
+    
+    // Don't create chart for text polls
+    if (results.poll_type === 'text') {
+      return;
+    }
+    
+    if (!results.results) return;
+
+    const labels = Object.keys(results.results);
+    const toCount = v => (v && typeof v === 'object' && 'count' in v) ? v.count : v;
+    const data   = Object.values(results.results).map(toCount);
+
+    const isList = (results.poll_type === 'list');
+
+    const red    = '#d9534f';
+    const green  = '#5cb85c';
+    const blue   = '#337ab7';
+    const yellow = '#f0ad4e';
+
+    let backgroundColors;
+
+    if (isList) {
+      const colorMap = { green, blue, red, yellow };
+      backgroundColors = labels.map(label => {
+        const base = label.split('-')[0].trim().toLowerCase();
+        return colorMap[base] || blue;
+      });
+    } else {
+      const correctRaw =
+        (Array.isArray(results.answer) && results.answer.length) ? results.answer :
+        (Array.isArray(results.correct_answer) && results.correct_answer.length) ? results.correct_answer :
+        (results.answer ?? results.correct_answer ?? null);
+
+      const correctList = Array.isArray(correctRaw)
+        ? correctRaw.map(norm)
+        : (correctRaw ? [norm(correctRaw)] : []);
+
+      backgroundColors = labels.map(lbl =>
+        correctList.includes(norm(lbl)) ? green : blue
+      );
+    }
+
+    if (window.myChart) {
+      window.myChart.data.labels                      = labels;
+      window.myChart.data.datasets[0].data            = data;
+      window.myChart.data.datasets[0].backgroundColor = backgroundColors;
+      window.myChart.update();
+    } else {
+      const ctx = canvas.getContext('2d');
+      window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            data,
+            backgroundColor: backgroundColors
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          scales: {
+            x: { beginAtZero: true, ticks: { stepSize: 1 } }
+          },
+          plugins: { legend: false }
+        }
+      });
+    }
+  }
+
+  // If you keep the live updater, it will now also color correctly
+  let update_poll_runner = () => {
+    $.ajax({
+      type: 'GET',
+      data: { 'update-results': "{{ poll.pk }}" },
+success: data => {
+    // Update the counter
+    const counterEl = document.getElementById('submission-counter');
+    if (counterEl) {
+      counterEl.textContent = data.participant_count;
+    }
+
+    // Update the graph (only for non-text polls)
+    if (data.counts && data.counts.poll_type !== 'text') {
+      createPoll(data.counts);
+    }
+    
+    // Update text poll results in real-time (for instructors)
+    if (data.counts && data.counts.poll_type === 'text' && data.counts.responses) {
+      updateTextPollResults(data.counts);
+    }
+  },      
+  error: err => console.error("Error updating results:", err)
+    });
+  };
+  
+  // Function to update text poll results table in real-time
+  function updateTextPollResults(resultsData) {
+    const textResultsDiv = document.getElementById('text-poll-results');
+    if (!textResultsDiv) return;
+    
+    const isInstructor = {{ course_member.is_instructor|yesno:"true,false" }} || {{ request.user.is_superuser|yesno:"true,false" }};
+    const tbody = textResultsDiv.querySelector('tbody');
+    const heading = textResultsDiv.querySelector('h4');
+    
+    // Update heading with count
+    if (heading && isInstructor) {
+      heading.textContent = `Text Responses (${resultsData.responses.length} total)`;
+    }
+    
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Add new rows
+    if (resultsData.responses && resultsData.responses.length > 0) {
+      resultsData.responses.forEach(response => {
+        const row = document.createElement('tr');
+        
+        if (isInstructor) {
+          const studentCell = document.createElement('td');
+          studentCell.textContent = response.user_name || 'Unknown';
+          row.appendChild(studentCell);
+        }
+        
+        const answerCell = document.createElement('td');
+        answerCell.style.wordWrap = 'break-word';
+        answerCell.style.wordBreak = 'break-word';
+        answerCell.style.maxWidth = '400px';
+        answerCell.textContent = response.answer || '';
+        row.appendChild(answerCell);
+        
+        const timeCell = document.createElement('td');
+        if (response.time) {
+          const timeSmall = document.createElement('small');
+          timeSmall.textContent = response.time;
+          timeCell.appendChild(timeSmall);
+        }
+        row.appendChild(timeCell);
+        
+        tbody.appendChild(row);
+      });
+    } else {
+      // Show "no responses" message
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = isInstructor ? 3 : 2;
+      cell.textContent = isInstructor ? 'No responses yet.' : 'You haven\'t submitted a response yet.';
+      row.appendChild(cell);
+      tbody.appendChild(row);
+    }
+  }
+</script>
+
+
+
+
+
+{% if results.poll_type != 'text' %}
 {% if course_member.is_instructor %}
 <div id="instructor-canvas-container">
     <canvas id="horizontal-bar-chart"></canvas>
@@ -160,27 +364,32 @@
     <canvas id="horizontal-bar-chart"></canvas>
 </div>
 {% endif %}
+{% endif %}
 
 <script>
-    let closeResults = () => window.location.reload();
-
-    {% if results %}
-    const results = JSON.parse('{{ results|safe }}');
-    const poll_id = results.poll_id;
-
+      {% if results %}
+    const initialResults = JSON.parse(document.getElementById('poll-results-data').textContent);
+const poll_id = initialResults.poll_id;
     {% if course_member.is_instructor %}
     const downloadResults = document.getElementById('download-results');
-    downloadResults.href = `/course/{{ course.id }}/export_poll_participation_data/?poll_id=${poll_id}`;
-
+    if (downloadResults) {
+      downloadResults.href = `/course/{{ course.id }}/export_poll_participation_data/?poll_id=${poll_id}`;
+    }
     const downloadGraph = document.getElementById('download-graph');
-    downloadGraph.addEventListener("click", () => {
+    if (downloadGraph && initialResults.poll_type !== 'text') {
+      downloadGraph.addEventListener("click", () => {
         const canvas = document.getElementById('horizontal-bar-chart');
-        const image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
-        downloadGraph.setAttribute("href", image);
-        downloadGraph.setAttribute("download", `poll-${poll_id}.png`);
-    })
+        if (canvas) {
+          const image = canvas.toDataURL("image/png", 1.0).replace("image/png", "image/octet-stream");
+          downloadGraph.setAttribute("href", image);
+          downloadGraph.setAttribute("download", `poll-${poll_id}.png`);
+        }
+      });
+    }
     {% endif %}
     
-    createPoll(results);
+    if (initialResults.poll_type !== 'text') {
+      createPoll(initialResults);
+    }
     {% endif %}
 </script>

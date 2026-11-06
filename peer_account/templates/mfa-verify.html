@@ -1,0 +1,34 @@
+{% extends "form_simp_base.html" %}
+{% block content %}
+<div class="container-fluid">
+  <div class="col-md-6 col-md-offset-3">
+
+    <div class="page-header">
+      <h2>Two-factor authentication</h2>
+    </div>
+
+    <form method="post" action="{% url 'account:mfa_verify' %}">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <input type="hidden" name="reauth" value="{{ reauth }}">
+      <div class="form-group">
+        <label for="token">Code from your authenticator app</label>
+        <input type="text" class="form-control" id="token" name="token"
+               inputmode="numeric" autocomplete="one-time-code"
+               maxlength="20" required autofocus
+               style="max-width:12em; font-size:1.4em; letter-spacing:3px;">
+        <p class="help-block">
+          Lost your phone? A recovery code works here too. Each one works
+          once.
+        </p>
+      </div>
+      <button type="submit" class="btn btn-primary">Continue</button>
+    </form>
+    <form method="post" action="{% url 'account:logout' %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-link">Sign out</button>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

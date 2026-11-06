@@ -1,0 +1,31 @@
+<div id="color-block-black" class="button-group-row">
+  <button class="btn btn-dark btn-ms" id="enable_all">
+    <span class="glyphicon glyphicon-ok"></span> Enable All
+  </button>
+  <button class="btn btn-dark btn-ms" id="clear_all_lists">
+    <span class="glyphicon glyphicon-erase"></span> Clear All
+  </button>
+  <button class="btn btn-dark btn-ms" id="disable_all">
+    <span class="glyphicon glyphicon-remove"></span> Disable All
+  </button>
+
+  <div class="btn-group dropdown-group ">
+    <button
+      type="button"
+      class="btn btn-dark btn-ms dropdown-toggle"
+      data-toggle="dropdown"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <span class="glyphicon glyphicon-filter"></span>
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+     <li class="list-is-visible"><a href="#" onclick="toggleListAndCheck(this, 'green')"><span class="glyphicon glyphicon-ok check-icon"></span>Green</a></li>
+      <li class="list-is-visible"><a href="#" onclick="toggleListAndCheck(this, 'blue')"><span class="glyphicon glyphicon-ok check-icon"></span>Blue</a></li>
+      <li class="list-is-visible"><a href="#" onclick="toggleListAndCheck(this, 'red')"><span class="glyphicon glyphicon-ok check-icon"></span>Red</a></li>
+      <li class="list-is-visible"><a href="#" onclick="toggleListAndCheck(this, 'yellow')"><span class="glyphicon glyphicon-ok check-icon"></span>Yellow</a></li>
+    </ul>
+  </div>
+</div>
+

@@ -1,0 +1,28 @@
+{% extends "form_simp_base.html" %}
+{% block content %}
+<div class="container-fluid">
+  <div class="col-md-8 col-md-offset-2">
+
+    <div class="page-header">
+      <h2>Two-factor authentication is on</h2>
+    </div>
+
+    <div class="alert alert-warning">
+      <strong>Save these recovery codes somewhere that is not your phone.</strong>
+      They are shown once and never again. Each one signs you in exactly
+      once, and they are the way back in if you lose the phone.
+    </div>
+
+    <pre style="font-size:1.2em; line-height:1.8; letter-spacing:2px;">{% for code in codes %}{{ code }}
+{% endfor %}</pre>
+
+    <p>
+      Setting up your authenticator again replaces this list with a fresh
+      one.
+    </p>
+
+    <a class="btn btn-primary" href="{{ next }}">Done</a>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% comment %}
+  One field. Checkboxes get Bootstrap 3's .checkbox wrapper and a normal-weight
+  label, because the label is a sentence, not a heading.
+{% endcomment %}
+<div class="settings-field{% if field.errors %} has-error{% endif %}">
+  {% if field.field.widget.input_type == "checkbox" %}
+    <div class="checkbox"><label>{{ field }} {{ field.label }}</label></div>
+  {% else %}
+    {{ field.label_tag }}
+    {{ field }}
+  {% endif %}
+  {% if field.help_text %}
+    <p class="settings-field__help">{{ field.help_text }}</p>
+  {% endif %}
+  {% for error in field.errors %}
+    <p class="settings-field__error">{{ error }}</p>
+  {% endfor %}
+</div>

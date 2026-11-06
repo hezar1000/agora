@@ -40,7 +40,7 @@
   </div>
 
   <div class="input-container">
-    <input class="form-control" type="text" name="message" placeholder="Message..." {% if blocked %} disabled {% endif %}>
+    <input aria-label="Message..." class="form-control" type="text" name="message" placeholder="Message..." {% if blocked %} disabled {% endif %}>
     <button class="btn btn-primary" onclick="send_message()" {% if blocked %} disabled {% endif %}>Send to Instructor</button>
 </div>
 {% if blocked %}
@@ -68,7 +68,6 @@
       },
       data: { message: message },
       success: function (response) {
-        console.log("Message sent successfully");
         $("input[name='message']").val('');
         $('.message-container').load(window.location.href + ' .message-container');
       },

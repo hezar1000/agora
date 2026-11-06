@@ -1,9 +1,54 @@
+<style>
+    .poll-title {
+        font-size: 18px;     
+        font-weight: 700;     
+        margin-bottom: .5rem; 
+    }
+    /* This CSS makes the checkbox invisible but still functional */
+    .radio-container input[type="checkbox"] {
+        opacity: 0;
+        position: fixed;
+        width: 0;
+    }
+    /* This styles the label like a button and highlights it when its checkbox is checked */
+    .radio-container input[type="checkbox"]:checked + label {
+        background-color: #337ab7; /* Bootstrap Primary Blue */
+        color: white;
+        border-color: #2e6da4;
+    }
+/* ───────── Base button colours (same hexes you gave) ───────── */
+.btn-green  { background:#5cb85c; border-color:#4cae4c; color:#fff; }
+.btn-blue   { background:#337ab7; border-color:#2e6da4; color:#fff; }
+.btn-red    { background:#d9534f; border-color:#d43f3a; color:#fff; }
+.btn-yellow { background:#f0ad4e; border-color:#eea236; color:#fff; }
+
+/* ───────── Default = washed-out ───────── */
+.radio-container input + label {          /* every label, any colour */
+    opacity:.55;                          /* feel free to tweak      */
+    transition:all .15s ease-in-out;      /* smooth fade / pop       */
+}
+
+/* ───────── Checked state ───────── */
+.radio-container input:checked + label      { opacity:1; transform:scale(1.05); }
+
+.radio-container input:checked + label.btn-green  { background:#449d44; }
+.radio-container input:checked + label.btn-blue   { background:#286090; }
+.radio-container input:checked + label.btn-red    { background:#c9302c; }
+.radio-container input:checked + label.btn-yellow { background:#ec971f; }
+</style>
+</style>
+
 <div>
-    <form action="post">
+    <form onsubmit="return false;">
         {% csrf_token %}
 
-        {% if poll.poll_data %}
-        <div id="view-poll-data"></div>
+        {% if poll %}
+        <h3 class="poll-title">{{ poll.title }}</h3>         
+
+        <div id="poll-html" class="poll-display">
+            {{ poll.safe_poll_data|safe }}
+        </div>
+        {{ poll.answer_options|json_script:"poll-answer-options-json" }}
         {% endif %}
 
         <fieldset>
@@ -12,80 +57,285 @@
     </form>
 </div>
 
+{% if course_member.role == 'student' or course_member.role == 'guest' %}
 <script>
-    let quill = new Quill('#view-poll-data', {
-        theme: 'snow',
-        readOnly: true,
-    });
-
-    quill.getModule('toolbar').container.style.display = 'none';
-    quill.root.innerHTML = `{{ poll.poll_data|safe }}`;
-
-    const editorContainer = document.querySelector('#view-poll-data');
-
-    function setEditorHeight() {
-        quill.root.style.height = 'auto'; // Reset height to auto to calculate the actual height
-        const contentHeight = quill.root.offsetHeight;
-        editorContainer.style.height = contentHeight + 'px';
-    }
-
-    setEditorHeight();
-
-    quill.root.querySelectorAll('img').forEach(img => {
-        img.addEventListener('load', setEditorHeight);
-    });
-</script>
-
-{% if course_member.role == 'student' %}
-
-<script>
-
-    // {{ poll.answer_options|safe }} is a js list as a string, so we need to parse it
-    let answer_options = JSON.parse('{{ poll.answer_options|safe }}');
-
-    let radioContainer = document.querySelector('.radio-container');
-
-    for (let i = 0; i < answer_options.length; i++) {
-        let input = document.createElement('input');
-        input.type = 'radio';
-        input.id = 'option' + answer_options[i];
-        input.name = 'poll-answer';
-        input.value = answer_options[i];
-
-        let label = document.createElement('label');
-        label.className = 'btn btn-default';
-        label.htmlFor = 'option' + answer_options[i];
-        label.innerHTML = answer_options[i];
-
-        radioContainer.appendChild(input);
-        radioContainer.appendChild(label);
-
-        radioContainer.appendChild(document.createTextNode(' '));
-    }
-
-</script>
-
-<script>
-    let poll_id = parseInt('{{poll.poll_id}}');
-    let radioBtns = document.querySelectorAll('input[type="radio"]');
-
-    radioBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-
-            let data = new FormData()
-            data.append('poll_id', poll_id)
-            data.append('poll-answer', btn.value)
+    (function() {
+        const poll_id = parseInt('{{ poll.poll_id }}');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const pollType = '{{ poll.poll_type }}'; 
+        const radioContainer = document.querySelector('.radio-container');
+        
+        // Handle text poll type
+        if (pollType === 'text') {
+            // Get min/max word counts from poll
+            const minWords = parseInt('{{ poll.min_word_count|default:1 }}') || 1;
+            const maxWords = parseInt('{{ poll.max_word_count|default:50 }}') || 50;
             
-            // send a post request using fetch api
-            fetch('', {
-                method: 'POST',
-                body: data,
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
+            // Create textarea for text responses
+            const textContainer = document.createElement('div');
+            textContainer.style.marginTop = '15px';
+            
+            const textarea = document.createElement('textarea');
+            textarea.id = 'poll-text-input';
+            textarea.className = 'form-control';
+            textarea.rows = 4;
+            textarea.placeholder = `Type your response here (${minWords}-${maxWords} words)...`;
+            textarea.style.width = '100%';
+            textarea.style.resize = 'vertical';
+            // Mobile keyboard trigger attributes
+            textarea.setAttribute('inputmode', 'text');
+            textarea.setAttribute('autocomplete', 'off');
+            textarea.setAttribute('spellcheck', 'true');
+            
+            // Word count display
+            const wordCountDiv = document.createElement('div');
+            wordCountDiv.id = 'word-count-display';
+            wordCountDiv.style.marginTop = '5px';
+            wordCountDiv.style.fontSize = '12px';
+            wordCountDiv.style.color = '#666';
+            
+            // Submit button
+            const submitButton = document.createElement('button');
+            submitButton.type = 'button';
+            submitButton.className = 'btn btn-primary';
+            submitButton.textContent = 'Submit';
+            submitButton.style.marginTop = '10px';
+            submitButton.style.width = '100%';
+            submitButton.onclick = submitAnswer; // Set initial click handler
+            
+            // Function to count words
+            function countWords(text) {
+                return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+            }
+            
+            // Function to update word count
+            function updateWordCount() {
+                const text = textarea.value;
+                const wordCount = countWords(text);
+                
+                if (wordCount < minWords) {
+                    wordCountDiv.textContent = `Word count: ${wordCount}/${maxWords} (minimum ${minWords} words required)`;
+                    wordCountDiv.style.color = '#f0ad4e';
+                    textarea.style.borderColor = '#f0ad4e';
+                    submitButton.disabled = true;
+                    submitButton.style.opacity = '0.6';
+                } else if (wordCount > maxWords) {
+                    wordCountDiv.textContent = `Word count: ${wordCount}/${maxWords} (exceeds limit)`;
+                    wordCountDiv.style.color = '#d9534f';
+                    textarea.style.borderColor = '#d9534f';
+                    submitButton.disabled = true;
+                    submitButton.style.opacity = '0.6';
+                } else {
+                    wordCountDiv.textContent = `Word count: ${wordCount}/${maxWords}`;
+                    wordCountDiv.style.color = '#666';
+                    textarea.style.borderColor = '';
+                    submitButton.disabled = false;
+                    submitButton.style.opacity = '1';
                 }
-            })
-        })
-    })
-</script>
+            }
+            
+            // Track if we're in edit mode
+            let isEditMode = false;
+            
+            // Function to show submitted state with Edit button
+            function showSubmittedState(submittedText) {
+                if (submittedText) {
+                    textarea.value = submittedText;
+                }
+                submitButton.textContent = 'Edit';
+                submitButton.classList.remove('btn-primary', 'btn-success');
+                submitButton.classList.add('btn-default');
+                submitButton.disabled = false;
+                submitButton.onclick = editAnswer; // Change click handler to edit function
+                textarea.disabled = true;
+                textarea.style.backgroundColor = '#f5f5f5';
+                updateWordCount(); // Update word count display
+                isEditMode = false;
+            }
+            
+            // Function to enable editing
+            function editAnswer() {
+                isEditMode = true;
+                textarea.disabled = false;
+                textarea.style.backgroundColor = '';
+                textarea.focus();
+                submitButton.textContent = 'Submit';
+                submitButton.classList.remove('btn-default');
+                submitButton.classList.add('btn-primary');
+                submitButton.onclick = submitAnswer; // Change click handler back to submit
+                updateWordCount(); // Update word count display
+            }
+            
+            // Function to submit the answer
+            function submitAnswer() {
+                const text = textarea.value.trim();
+                const wordCount = countWords(text);
+                
+                if (wordCount < minWords) {
+                    alert(`Your response must be at least ${minWords} word${minWords > 1 ? 's' : ''}. Please add more content.`);
+                    textarea.focus();
+                    return;
+                }
+                
+                if (wordCount > maxWords) {
+                    alert(`Your response exceeds ${maxWords} words. Please shorten it.`);
+                    textarea.focus();
+                    return;
+                }
+                
+                if (!text) {
+                    alert('Please enter a response before submitting.');
+                    textarea.focus();
+                    return;
+                }
+                
+                // Disable button during submission
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+                
+                let data = new FormData();
+                data.append('poll_id', poll_id);
+                data.append('poll-answer', text);
+                
+                fetch('', {
+                    method: 'POST',
+                    body: data,
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || 'Error submitting response');
+                        });
+                    }
+                    return response.text();
+                })
+                .then(() => {
+                    // Success - show submitted state with Edit button
+                    showSubmittedState(text);
+                })
+                .catch(error => {
+                    console.error('Error submitting poll answer:', error);
+                    alert(error.message || 'Error submitting your response. Please try again.');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit';
+                });
+            }
+            
+            // Check if student has already submitted
+            function checkExistingSubmission() {
+                fetch(`/polling/student/my-answer-json/${poll_id}/`, {
+                    method: 'GET',
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.participated && data.answer && data.answer.length > 0) {
+                        // Student has already submitted - show their answer in submitted state
+                        const submittedText = data.answer[0]; // Text polls store answer as single-item array
+                        showSubmittedState(submittedText);
+                    } else {
+                        // No submission yet - auto-focus on mobile to trigger keyboard
+                        setTimeout(() => {
+                            textarea.focus();
+                        }, 100);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking existing submission:', error);
+                    // On error, still allow them to submit (don't auto-focus)
+                });
+            }
+            
+            // Add event listeners
+            textarea.addEventListener('input', updateWordCount);
+            
+            // Also allow Enter key to submit (but Shift+Enter for new line)
+            // Note: This will work for both initial submit and re-submit after editing
+            textarea.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    // Check if button is in Submit mode (not Edit mode)
+                    if (submitButton.textContent === 'Submit' && !submitButton.disabled) {
+                        submitAnswer();
+                    }
+                }
+            });
+            
+            textContainer.appendChild(textarea);
+            textContainer.appendChild(wordCountDiv);
+            textContainer.appendChild(submitButton);
+            radioContainer.parentElement.appendChild(textContainer);
+            radioContainer.style.display = 'none';
+            
+            // Initialize word count display
+            updateWordCount();
+            
+            // Check if student has already submitted on page load
+            checkExistingSubmission();
+            
+            return; // Exit early for text polls
+        }
+        
+        // Handle other poll types (existing logic)
+        const answerOptionsElement = document.getElementById('poll-answer-options-json');
+        const answerOptionsRaw = answerOptionsElement
+            ? JSON.parse(answerOptionsElement.textContent)
+            : '';
+        const answer_options = answerOptionsRaw ? JSON.parse(answerOptionsRaw) : [];
+        const enforceOne = '{{ poll.enforce_one_answer|yesno:"true,false" }}' === 'true';
+        const inputType = (pollType === 'list' || enforceOne) ? 'radio' : 'checkbox';
 
+        // Define an array of the color classes in the correct order.
+        const colorClasses = ['btn-green', 'btn-blue', 'btn-red', 'btn-yellow'];
+
+        // Add 'index' to the forEach loop to track the position of each option.
+        answer_options.forEach((optionText, index) => {
+            const optionId = 'option_' + index;
+            let input = document.createElement('input');
+            input.type = inputType;
+            input.id = optionId;
+            input.name = 'poll-answer';
+            input.value = optionText;
+
+            let label = document.createElement('label');
+            
+            // Determine the correct class based on poll type and index.
+            let buttonClass = 'btn btn-default'; // Default class for non-list polls
+            if (pollType === 'list') {
+                // For "Participation" polls, get the color from our array using the index.
+                buttonClass = `btn ${colorClasses[index]}`;
+            }
+            
+            label.className = buttonClass; // Apply the correct class
+            label.htmlFor = input.id;
+            label.textContent = optionText;
+
+            radioContainer.appendChild(input);
+            radioContainer.appendChild(label);
+            radioContainer.appendChild(document.createTextNode(' '));
+        });
+
+        // The submission logic remains the same and will work correctly
+        radioContainer.addEventListener('click', (event) => {
+            if (event.target.tagName !== 'LABEL') { return; }
+            
+            setTimeout(() => {
+                const checkedInputs = radioContainer.querySelectorAll(`input[type="${inputType}"]:checked`);
+                const selectedAnswers = Array.from(checkedInputs).map(input => input.value);
+
+                let data = new FormData();
+                data.append('poll_id', poll_id);
+                selectedAnswers.forEach(answer => data.append('poll-answer', answer));
+
+                fetch('', {
+                    method: 'POST',
+                    body: data,
+                    headers: { 'X-CSRFToken': csrfToken }
+                })
+                .catch(error => console.error('Error submitting poll answer:', error));
+            }, 50);
+        });
+    })();
+</script>
 {% endif %}

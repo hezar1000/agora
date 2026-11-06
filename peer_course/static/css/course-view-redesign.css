@@ -1,273 +1,585 @@
 * {
-  box-sizing: border-box;
-}
+    box-sizing: border-box;
+  }
+  
+  .column {
+    float: left;
+    width: 33%;
+    padding: 1px 0.2px 1px 11.9px;
+  }
 
-.column {
-  float: left;
-  width: 33%;
-  padding: 1px 0.2px 1px 11.9px;
-}
+  .horizontal-checkboxes {
+    display: flex;
+    flex-wrap: wrap;      
+    gap: 1rem;           
+    align-items: center;  
+  }
+  .horizontal-checkboxes label {
+    margin: 0;            
+  }
+  
+  .btn-toolbar .btn {
+    padding: 12px 15px; 
+    font-size: 18px; 
+    border-radius: 10px; 
+    width: 100%; 
+    max-width: 300px; 
+    text-align: center; 
+    margin: 5px; 
+  }
+  
+  @media screen and (min-width: 1000px) {
+    .btn-toolbar .btn {
+      width: 30%; 
+    }
+  }
+  
+  .btn-dark {
+    background-color: #444; 
+    color: #fff; 
+    border: none; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+  }
+  
+  .btn-dark {
+    background-color: #444;  
+    color: #fff;
+    border-color: #333;
+  }
+  
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  .popup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+  }
+  
+  #agora-header-with-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+  }
+  
+  #agora-header-with-btn div:nth-child(2) {
+    display: flex;
+    gap: 0;
+  }
+  
+  #agora-header-with-btn div:nth-child(2) .btn {
+    border-radius: 0;
+  }
+  
+  input[type="date"] {
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 6px;
+    color: #333;
+    background-color: #fff;
+    font-size: 16px;
+  }
+  
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    color: #999;
+  }
+  
+  #student-chosen-popup {
+    width: 50%;
+  }
+  
+  #hand-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1%;
+  }
+  
+  #hand-controls #control-buttons {
+    width: 70%;
+  }
+  
+  #hand-controls #instructor-notification {
+    width: 30%;
+  }
+  
+  @media screen and (max-width: 600px) {
+    #agora-header-with-btn {
+      flex-direction: column;
+      justify-content: center;
+    }
+  
+    #agora-header-with-btn div:nth-child(2) {
+      flex-direction: column;
+      width: 90%;
+    }
+  
+    #agora-header-with-btn div:nth-child(2) .btn {
+      width: 100%;
+      margin: 5px;
+      border-radius: 5px;
+    }
+  
+    .dropdown-menu {
+      width: 100%;
+    }
+  
+    #hand-controls #control-buttons {
+      display: flex;
+      flex-direction: column;
+    }
+  
+    #hand-controls #control-buttons button {
+      width: 30%;
+      height: 80px;
+      margin: 2px;
+      white-space: normal;
+    }
+  
+    #hand-controls #control-buttons .glyphicon {
+      display: none;
+    }
+  
+    #hand-controls #instructor-notification {
+      width: 60%;
+      margin: auto;
+      text-align: center;
+    }
+  
+    #hand-controls #instructor-notification h3 {
+      font-size: 20px;
+      white-space: normal;
+    }
+  }
+  
+  .divider {
+    border-right: 2px solid #ddd;
+  }
+  
+  .btn-xl {
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 10px;
+    width: 300px;
+  }
 
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.popup {
-  display: none;
+  .modal.fade-out {
+    animation: fadeOut 1s forwards;
+  }
+  
+  @keyframes fadeOut {
+    100% { opacity: 0; visibility: hidden; }
+  }
+  
+#session-started-popup,
+#session-ended-popup {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 20px;
+  z-index: 9999;
+  box-sizing: border-box; 
+
+  width: 350px; 
+  max-width: 90vw;
+  padding: 25px 35px;
+  
   background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-  z-index: 999;
-}
-
-#agora-header-with-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-direction: row;
-}
-
-#agora-header-with-btn div:nth-child(2) {
-  display: flex;
-  gap: 0;
-}
-
-#agora-header-with-btn div:nth-child(2) .btn {
-  border-radius: 0;
-}
-
-input[type="date"] {
-  appearance: none;
   border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 6px;
+  border-radius: 8px; 
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#session-started-popup h4,
+#session-ended-popup h4 {
+  margin: 0;
+  font-size: 1.2rem; 
+  font-weight: 500; 
   color: #333;
-  background-color: #fff;
-  font-size: 16px;
+  text-align: center;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-  color: #999;
-}
-
-#student-chosen-popup {
-  width: 50%;
-}
-
-#hand-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#hand-controls #control-buttons {
-  width: 70%;
-}
-
-#hand-controls #instructor-notification {
-  width: 30%;
-}
-
-@media screen and (max-width: 600px) {
-  #agora-header-with-btn {
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  #agora-header-with-btn div:nth-child(2) {
-    flex-direction: column;
-    width: 90%;
-  }
-
-  #agora-header-with-btn div:nth-child(2) .btn {
-    width: 100%;
-    margin: 5px;
-    border-radius: 5px;
-  }
-
-  .dropdown-menu {
-    width: 100%;
-  }
-
-  #hand-controls #control-buttons {
-    display: flex;
-    flex-direction: column;
-  }
-
-  #hand-controls #control-buttons button {
-    width: 30%;
+  
+  .btn-hand {
+    width: 40%;
     height: 80px;
-    margin: 2px;
-    white-space: normal;
-  }
-
-  #hand-controls #control-buttons .glyphicon {
-    display: none;
-  }
-
-  #hand-controls #instructor-notification {
-    width: 60%;
-    margin: auto;
-    text-align: center;
-  }
-
-  #hand-controls #instructor-notification h3 {
     font-size: 20px;
-    white-space: normal;
+    margin: 2.5px;
   }
-}
-
-.divider {
-  border-right: 2px solid #333;
-}
-
-.btn-xl {
-  padding: 10px 20px;
-  font-size: 16px;
-  border-radius: 10px;
-  width: 300px;
-}
-
-.btn-hand {
-  width: 40%;
-  height: 80px;
-  font-size: 20px;
-  margin: 2.5px;
-}
-
-.btn-ms {
-  padding: 12px 15px;
-  font-size: 18px;
-  border-radius: 10px;
-  width: 200px;
-}
-
-.btn-tbl {
-  padding: 0.0001px 5px;
-  font-size: 14px;
-  border-radius: 0.0001px;
-}
-
-@media screen and (max-width: 800px) {
-  #student-chosen-popup {
-    width: 90%;
+  
+  .btn-ms {
+    padding: 12px 15px;
+    font-size: 18px;
+    border-radius: 10px;
+    width: 200px;
   }
-}
-
-@media screen and (max-width: 999px) {
-  #hand-controls {
-    flex-direction: column;
+  
+  .btn-tbl {
+    padding: 0.0001px 5px;
+    font-size: 14px;
+    border-radius: 0.0001px;
   }
-
-  #hand-controls #control-buttons {
-    width: 100%;
-    margin: auto;
-    text-align: center;
+  
+  @media screen and (max-width: 800px) {
+    #student-chosen-popup {
+      width: 90%;
+    }
   }
-
-  #hand-controls #control-buttons button {
-    width: 30%;
-    font-size: medium;
+  
+  @media screen and (max-width: 999px) {
+    #hand-controls {
+      flex-direction: column;
+    }
+  
+    #hand-controls #control-buttons {
+      width: 100%;
+      margin: auto;
+      text-align: center;
+    }
+  
+    #hand-controls #control-buttons button {
+      width: 30%;
+      font-size: medium;
+    }
+  
+    #hand-controls #instructor-notification {
+      width: 90%;
+      margin: auto;
+      text-align: center;
+    }
+  
+    .divider {
+      border: none;
+    }
   }
-
-  #hand-controls #instructor-notification {
-    width: 90%;
-    margin: auto;
-    text-align: center;
+  
+  @media screen and (min-width: 1000px) {
+    #hand-controls #control-buttons {
+      width: 80%;
+    }
+  
+    #hand-controls #control-buttons button {
+      width: 30%;
+    }
+  
+    #hand-controls #instructor-notification {
+      width: 20%;
+    }
   }
-
-  .divider {
-    border: none;
+  
+  .column1 {
+    float: left;
+    width: 50%;
+    padding: 1px 0.1px 1px 11.9px;
   }
-}
-
-@media screen and (min-width: 1000px) {
-  #hand-controls #control-buttons {
-    width: 80%;
-  }
-
-  #hand-controls #control-buttons button {
-    width: 30%;
-  }
-
-  #hand-controls #instructor-notification {
-    width: 20%;
-  }
-}
-
-.column1 {
-  float: left;
-  width: 50%;
-  padding: 1px 0.1px 1px 11.9px;
-}
-
-.thumbnail {
-  padding-right: 17px;
-  padding-left: 17px;
-}
-
-@media screen and (max-width: 800px) {
+  
   .thumbnail {
-    margin-top: 20px;
+    padding-right: 17px;
+    padding-left: 17px;
   }
-}
+  
+  @media screen and (max-width: 800px) {
+    .thumbnail {
+      margin-top: 20px;
+    }
+  }
+  
+  .column {
+    float: left;
+    width: 33%;
+    padding: 1px 0.2px 1px 11.9px;
+  }
+  
+  .row:after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+  
+  #message-board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* "Message Board" plus its two buttons want 308px on one line. In a
+       tablet-width column that pushed the whole page sideways, so the
+       Disable button sat off the right edge of the screen. */
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  #message-board-header > div:first-child {
+    /* basis auto, not 0: with a zero basis the heading shrinks to nothing
+       and the buttons sit on top of it instead of wrapping below. */
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+  
+  #message-board-header > div:last-child {
+    display: flex;
+    gap: 5px;
+  }
+  
+  #myDIV {
+    width: 100%;
+    padding: 5px 0;
+    background-color: lightblue;
+    margin-top: 5px;
+  }
+  
+  table tr#ROW1 {
+    background-color: rgb(115, 202, 115);
+  }
+  
+  table tr#ROW2 {
+    background-color: rgb(168, 210, 247);
+  }
+  
+  table tr#ROW3 {
+    background-color: rgb(250, 137, 137);
+  }
+  
+  table tr#ROW4 {
+    background-color: rgb(250, 224, 137);
+  }
+  
+  .rename-icon {
+    margin-left: 5px;
+    cursor: pointer;
+    display: inline-block;
+  }
+  
+  #hide_green, #hide_blue, #hide_red, #hide_yellow {
+    margin-left: 5px;
+    cursor: pointer;
+    display: inline-block; 
+  }
+  
+  #color-block-green .glyphicon-eye-close,
+  #color-block-blue .glyphicon-eye-close,
+  #color-block-red .glyphicon-eye-close,
+  #color-block-yellow .glyphicon-eye-close {
+    display: inline-block; 
+    margin-left: 5px; 
+  }
 
-.column {
-  float: left;
-  width: 33%;
-  padding: 1px 0.2px 1px 11.9px;
-}
-
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-#message-board-header {
+#color-block-green,
+#color-block-blue,
+#color-block-red,
+#color-block-black,
+#color-block-yellow {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap; 
+  gap: 6px;       
+  align-items: center; 
+  margin-bottom: 10px; 
+}
+
+#color-block-green > .btn.btn-ms,
+#color-block-blue > .btn.btn-ms,
+#color-block-red > .btn.btn-ms,
+#color-block-yellow > .btn.btn-ms {
+  width: auto;      
+  flex-grow: 1;     
+  flex-shrink: 1;  
+  flex-basis: 0;    
+}
+
+#color-block-black > .btn.btn-ms { 
+  width: auto;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 0;
+}
+
+#color-block-green > .glyphicon,
+#color-block-blue > .glyphicon,
+#color-block-red > .glyphicon,
+#color-block-yellow > .glyphicon {
+  flex-shrink: 0; 
+  display: inline-flex; 
   align-items: center;
 }
 
-#message-board-header > div:first-child {
-  flex: 1;
+#color-block-black .dropdown-group {
+  display: flex;  
+  flex-grow: 0;  
+  flex-shrink: 0; 
+  flex-basis: auto; 
 }
 
-#message-board-header > div:last-child {
+/* Inline floating panel, on top of hands */
+.poll-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;             /* change to top:16px; if you want it at the top */
+  width: 480px;
+  max-width: calc(100vw - 32px);
+  height: 420px;
+  max-height: calc(100vh - 32px);
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+  z-index: 10050;           /* higher than your 9999 popups */
+  display: none;            /* hidden by default */
+}
+
+.poll-panel.visible { display: block; }
+
+.poll-panel__header {
   display: flex;
-  gap: 5px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
 }
 
-#myDIV {
+.poll-panel__close {
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#poll-iframe {
   width: 100%;
-  padding: 5px 0;
-  background-color: lightblue;
-  margin-top: 5px;
+  height: calc(100% - 44px); /* header height */
+  border: 0;
 }
 
-/* table tr#ROW1  {background-color:rgb(124, 241, 183);}
-      table tr#ROW2  {background-color:rgb(154, 201, 240);}
-      table tr#ROW3  {background-color:rgb(241, 145, 145);} */
-table tr#ROW1 {
-  background-color: rgb(115, 202, 115);
+/* Mobile: make it full width at the bottom */
+@media (max-width: 600px) {
+  .poll-panel {
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    height: 50vh;
+    border-radius: 10px;
+  }
 }
 
-table tr#ROW2 {
-  background-color: rgb(168, 210, 247);
+
+#color-block-black .dropdown-toggle {
+  padding: 7px 7px !important;   
+  line-height: normal !important;
+  height: auto !important;
+  min-height: 48px !important;      
+  box-sizing: border-box !important;
+
+  width: auto !important;         
+  white-space: nowrap;            
+
+  flex-grow: 0 !important;       
+  flex-shrink: 0 !important;       
 }
 
-table tr#ROW3 {
-  background-color: rgb(250, 137, 137);
+@media screen and (max-width: 600px) { 
+
+  #color-block-black .dropdown-group {
+    flex: 1 1 100%; 
+  }
+
+  #color-block-black .dropdown-toggle {
+    width: 100% !important;
+    padding: 12px 15px !important;
+    white-space: normal; 
+    flex-grow: 1 !important; 
+  }
 }
 
-table tr#ROW4 {
-  background-color: rgb(250, 224, 137);
+.dropdown-menu .check-icon {
+  margin-right: 10px; 
+  visibility: hidden;   
+  width: 15px;          
+  display: inline-block;
+}
+
+.dropdown-menu li.list-is-visible .check-icon {
+  visibility: visible;
+}
+
+@media screen and (max-width: 991px) {
+  .divider {
+    border-right: none !important; /* Remove the vertical border */
+    margin-bottom: 20px;          /* Add some space below the stacked item */
+    padding-bottom: 20px;         /* Add some padding above the new bottom border */
+  }
+}
+
+.clickable-icon-bg {
+  display: inline-flex;  /* Helps to center the icon vertically and horizontally */
+  align-items: center;
+  justify-content: center;
+  
+  background-color: #f0f0f0; /* A light grey background */
+  padding: 8px;           /* Adjust padding as needed */
+  border-radius: 50%;     /* Creates a circular shape */
+  
+  cursor: pointer;        /* Ensures the cursor changes to a pointer */
+  transition: background-color 0.2s ease-in-out; /* Smooth hover effect */
+  
+  /* Make sure it doesn't add unwanted width to the flex container */
+  flex-shrink: 0;
+}
+
+.clickable-icon-bg:hover {
+  background-color: #e0e0e0; /* A slightly darker grey on hover */
+}
+
+#color-block-black .dropdown-group {
+    width: 75px; 
+    justify-content: flex-end;
+}
+/* Specific adjustment for dropdowns to make them look good */
+.dropdown-toggle.clickable-icon-bg {
+    border: 1px solid #ccc; /* Adds a border to match other buttons */
+    padding: 7px 10px;      /* Fine-tune padding for dropdowns */
+}
+
+
+/* Teaching console: keep the queues visible on an iPad in either orientation. */
+.agora-instructor #agora-header-with-btn h2 { font-size:22px; margin:10px 0; }
+.agora-instructor .thumbnail { padding:8px; margin-top:0; }
+.agora-instructor #hand-controls { flex-direction:column; align-items:stretch; gap:4px; }
+.agora-instructor #hand-controls #control-buttons { width:100%; display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px 12px; }
+.agora-instructor #control-buttons > div { margin:0; gap:4px; flex-wrap:nowrap; }
+.agora-instructor #hand-controls #control-buttons button { min-height:44px; height:auto; font-size:14px; padding:6px 8px; width:auto; white-space:normal; }
+.agora-instructor #color-block-black { grid-column:1 / -1; }
+.agora-instructor #hand-controls #instructor-notification { width:100%; text-align:left; display:flex; align-items:center; gap:10px; }
+.agora-instructor #instructor-notification h3 { margin:4px 0; font-size:18px; }
+.agora-instructor #instructor-notification #student_photo { max-width:44px !important; max-height:44px; margin-bottom:0 !important; }
+.agora-instructor .lecture-panel { min-height:0; }
+.agora-instructor .lecture-panel h3 { font-size:18px; margin:6px 0; }
+.agora-instructor .lecture-scroll--hands, .agora-instructor .lecture-scroll--spoken { height:clamp(220px, calc(100dvh - 450px), 520px); }
+.agora-instructor .lecture-panel--hands { display:flex; flex-direction:column; }
+.agora-instructor .lecture-panel--hands .lecture-scroll--hands { order:2; }
+.agora-instructor .lecture-chart-details { order:3; }
+.agora-instructor .lecture-chart-details summary { padding:10px 0; cursor:pointer; }
+@media (max-width:700px) {
+  .agora-instructor #hand-controls #control-buttons { grid-template-columns:1fr; }
+}
+
+@media (min-width:768px) and (max-width:900px) {
+  .agora-instructor .lecture-panels > .lecture-panel { width:50%; }
+  .agora-instructor .lecture-panels > .lecture-panel:last-child { width:100%; margin-top:12px; }
+  .agora-instructor .lecture-scroll--hands, .agora-instructor .lecture-scroll--spoken { height:240px; }
 }

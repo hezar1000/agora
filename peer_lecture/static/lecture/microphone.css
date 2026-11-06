@@ -1,0 +1,23 @@
+.classroom-microphone { border: 1px solid #cbd6df; border-radius: 6px; background: #f5f8fb; padding: 12px 16px; margin: 12px 0 18px; color: #17334a; }
+.classroom-microphone__heading, .classroom-microphone__controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.classroom-microphone__heading { justify-content: space-between; margin-bottom: 6px; }
+.classroom-microphone__controls label { display: inline-flex; gap: 8px; align-items: center; margin: 0; font-weight: normal; }
+.classroom-microphone__controls input[type=range] { width: 120px; }
+.classroom-microphone__controls select { max-width: 240px; min-height: 32px; }
+.classroom-microphone__hint { margin: 10px 0 6px; font-size: 13px; }
+.classroom-microphone [hidden] { display: none !important; }
+.classroom-microphone audio { display: none; }
+.classroom-sound-page { max-width: 900px; margin: 30px auto; padding: 0 16px; }
+@media (max-width: 600px) { .classroom-microphone__controls .btn { min-height: 44px; } }
+
+/* One compact strip on the teaching screen; setup stays one tap away. */
+.classroom-microphone--instructor { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:8px 12px; margin:6px 0; }
+.classroom-microphone--instructor .classroom-microphone__heading { display:none; }
+.classroom-microphone--instructor > [data-status] { flex:1 1 260px; margin:0; }
+.classroom-microphone__quick { display:flex; gap:8px; }
+.classroom-microphone .btn, .classroom-microphone summary { min-height:44px; }
+.classroom-microphone summary { cursor:pointer; padding:10px 0; }
+.classroom-microphone__settings[open] { flex-basis:100%; }
+.classroom-microphone__settings .classroom-microphone__controls { margin:6px 0; }
+.classroom-microphone [data-audio-health] { margin:8px 0; }
+.classroom-microphone__settings pre { max-height:260px; overflow:auto; }

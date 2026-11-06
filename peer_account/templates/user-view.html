@@ -1,5 +1,4 @@
 {% extends "form_simp_base.html" %}
-
 {% block content %}
 
 <div class="container-fluid">
@@ -14,9 +13,24 @@
     <h4>First Name:  {{ user.first_name }}</h4>
     <h4>Last Name:  {{ user.last_name }}</h4>
 
-    <a class="btn btn-primary" href="{% url 'account:edit' user.id %}">Edit User Information</a>
+    {# Show the user's profile photo if it exists #}
+    {% if user.profile and user.profile.photo %}
+    <img src="{% url 'account:protected_photo' user.id %}" alt="Profile Photo" style="max-width:200px; display: block; margin-bottom: 15px;">
+    {% else %}
+      <p>No profile photo uploaded.</p>
+    {% endif %}
+
+    {% if request.user == user and user.has_usable_password %}
+      <a class="btn btn-default" href="{% url 'account:password_change' %}">
+        Change password
+      </a>
+    {% endif %}
+    <a class="btn btn-primary" href="{% url 'account:edit' user.id %}">
+      Edit User Information
+    </a>
 
   </div>
 </div>
+
 
 {% endblock %}

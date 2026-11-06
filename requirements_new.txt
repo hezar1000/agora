@@ -48,7 +48,7 @@ lxml==6.1.2
 msgpack==1.2.1
 pycparser==3.0
 pyOpenSSL==26.4.0
-python-dateutil==2.9.0.post0
+python-dateutil==4.0.0
 service-identity==26.1.0
 six==1.17.0
 soupsieve==2.9.2

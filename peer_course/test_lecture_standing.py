@@ -29,7 +29,6 @@ class LectureStatusTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="In the room", browsable=True, archived=False,
-            agora_mode=True,
         )
         self.session = CourseSession.objects.create(
             course=self.course, is_template=False, session_date=date(2026, 9, 9),
@@ -110,7 +109,6 @@ class LectureStatusTests(TestCase):
     def test_a_course_with_no_scheme_is_told_nothing(self):
         bare = Course.objects.create(
             displayname="No scheme", browsable=True, archived=False,
-            agora_mode=True,
         )
         member = CourseMember.objects.create(
             course=bare, role="student",
@@ -158,7 +156,7 @@ class LecturePageRendersTests(TestCase):
 
         now = timezone.localtime(timezone.now())
         course = Course.objects.create(
-            displayname=name, browsable=True, archived=False, agora_mode=True,
+            displayname=name, browsable=True, archived=False, 
             course_timezone="US/Pacific",
         )
         presets.apply_preset(course, preset)
@@ -268,7 +266,6 @@ class UngradedLectureTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Ungraded first", browsable=True, archived=False,
-            agora_mode=True,
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.course.refresh_from_db()
@@ -369,7 +366,6 @@ class AttendanceThenParticipationTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Attendance first", browsable=True, archived=False,
-            agora_mode=True,
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.course.refresh_from_db()

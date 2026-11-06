@@ -51,7 +51,6 @@ class CourseTestMixin:
             self.user,
             "Test Agora Course",
             browsable=False,
-            agora_mode=True,
         )
         CourseBase._enroll(self.user, self.course, "instructor")
         self.client.login(username=self.user.username, password="test-password-123")
@@ -102,7 +101,6 @@ class AgoraLiveSelectionTests(TestCase):
             displayname="Overnight Agora",
             browsable=False,
             archived=False,
-            agora_mode=True,
             auto_start=False,
             course_timezone="America/Vancouver",
             allow_bonus=False,
@@ -569,7 +567,6 @@ class ScheduleEnteredAheadLifecycleTests(TestCase):
             displayname="Seventeen scheduled lectures",
             browsable=False,
             archived=False,
-            agora_mode=True,
             auto_start=True,
             course_timezone="America/Vancouver",
         )
@@ -661,7 +658,6 @@ class StudentStatusPollTests(TestCase):
             displayname="Status Course",
             browsable=False,
             archived=False,
-            agora_mode=True,
             auto_start=False,
             course_timezone="America/Vancouver",
             allow_bonus=False,

@@ -67,7 +67,7 @@ def main():
         from peer_lecture.models import Lecture
         from peer_lecture.microphone import select_microphone_student
 
-        course = Course.objects.create(displayname="Microphone browser test", agora_mode=True, browsable=True, archived=False, manual_override=True, classroom_microphone=True)
+        course = Course.objects.create(displayname="Microphone browser test", browsable=True, archived=False, manual_override=True, classroom_microphone=True)
         teacher = User.objects.create_user("browser-teacher")
         student = User.objects.create_user("browser-student", first_name="Guolin")
         second = User.objects.create_user("browser-second", first_name="Second")

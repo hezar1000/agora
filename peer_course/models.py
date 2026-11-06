@@ -62,22 +62,7 @@ class Course(models.Model):
     browsable = models.BooleanField(
         "Visible to Students?", db_column="browsable", db_index=True
     )
-    # Compatibility shim: retained so ORM INSERTs satisfy the historical
-    # physical NOT NULL column. Agora has no grade-visibility behavior.
-    show_student_grades = models.BooleanField(
-        "Show Student their grades?",
-        db_column="show_student_grades",
-        default=False,
-        editable=False,
-    )
     archived = models.BooleanField("Archived?", db_column="archived", db_index=True)
-    # Written when a course is created and read nowhere in this codebase. Kept
-    # so the physical column keeps its NOT NULL, but no longer offered as a
-    # setting: a switch that does nothing is worse than no switch.
-    on_list = models.BooleanField(
-        "Is listed as a Regular Courses", db_column="on_list", db_index=True,
-        default=True, editable=False,
-    )
     created_on = models.DateTimeField("Created On", db_column="created_on", default=timezone.now)
     auto_start = models.BooleanField(
         "Start lectures automatically",
@@ -157,12 +142,6 @@ class Course(models.Model):
     ta_code_expires_at = models.DateTimeField(null=True, blank=True)
     instructor_code_expires_at = models.DateTimeField(null=True, blank=True)
 
-    # Inert legacy-schema compatibility columns. Keep them in ORM INSERTs until a
-    # production-snapshot migration can safely change/drop the physical schema.
-    total_late_units = models.IntegerField(blank=True, default=6, editable=False)
-    can_tas_see_reviews = models.BooleanField(default=False, editable=False)
-    enable_independent_pool = models.BooleanField(default=True, editable=False)
-
     allow_bonus = models.BooleanField(
         default=True,
         help_text="If true, provides bonus points to student who have spoken after somone else speaks"
@@ -203,11 +182,6 @@ class Course(models.Model):
       validators=[MinValueValidator(0), MaxValueValidator(10)],
       help_text="Each student will receive some number of points when they are chosen to speak, on top of the normal hand raise point."
     )
-    agora_mode = models.BooleanField(
-        default=False,
-        help_text="If True, hides certain items in the navbar (Agora Mode)."
-    )
-
     show_participation_grade = models.BooleanField(
         "Show participation grades by session?",
         default=False,
@@ -392,47 +366,11 @@ class CourseMember(models.Model):
         "User Type", db_column="role", max_length=128, db_index=True
     )
 
-    # Inert legacy-schema compatibility columns; see Course shims above.
-    is_independent = models.BooleanField(
-        "is_independent?",
-        db_column="is_independent",
-        default=False,
-        db_index=True,
-        editable=False,
-    )
-    time_is_independent_changed = models.DateTimeField(
-        default=timezone.now,
-        editable=False,
-    )
-
     active = models.BooleanField(default=True, blank=True, db_index=True)
     """
-    Not deleting members from DB, since it automatically removes all of their submissions/reviews.
+    Members are never deleted, so their participation records survive.
     (active == False) indicates that the member has been removed from the course.
     """
-
-    qualified = models.BooleanField(default=True, blank=True, editable=False)
-    upper_confidence_bound = models.FloatField(
-        "Upper confidence bound",
-        db_column="upperconfidencebound",
-        null=True,
-        default=1.0,
-        editable=False,
-    )
-    markingload = models.FloatField(
-        "Marking Load",
-        db_column="markingload",
-        null=True,
-        default=0.0,
-        editable=False,
-    )
-    lower_confidence_bound = models.FloatField(
-        "Lower confidence bound",
-        db_column="lowerconfidencebound",
-        null=True,
-        default=0.0,
-        editable=False,
-    )
 
     hand_up = models.BooleanField(
         "hand_up", db_column="hand_up", default=False, db_index=True
@@ -454,14 +392,6 @@ class CourseMember(models.Model):
     participation_points = models.IntegerField(
         "participation_points", db_column='participation_points', 
         null=True, default=0
-    )
-
-    regular_points = models.IntegerField(
-        "regular_points",
-        db_column="regular_points",
-        null=True,
-        default=0,
-        editable=False,
     )
 
     # Someone who joined a demonstration class with its code and a name, with

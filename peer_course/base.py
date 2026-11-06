@@ -46,11 +46,11 @@ class CourseBase:
         raise RuntimeError("Unable to generate a unique enrollment capability")
 
     @staticmethod
-    def create(user, name, browsable, agora_mode = True, archived = False, on_list = False):
+    def create(user, name, browsable, archived=False):
         "Create the course"
         if not name or not name.strip():
             raise ValueError("Course name cannot be empty")
-        c = Course(displayname=name, browsable=browsable, archived=archived, agora_mode=agora_mode, on_list=on_list)
+        c = Course(displayname=name, browsable=browsable, archived=archived)
         expires_at = timezone.now() + timedelta(days=180)
         c.stucode = CourseBase.generate_unique_code(make=CourseBase._student_code)
         c.tascode = CourseBase.generate_unique_code()

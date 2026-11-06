@@ -1,6 +1,5 @@
 
 *.sqlite3
-mta2/development_settings.py
 
 .saml.key
 .saml.crt

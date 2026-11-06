@@ -207,7 +207,6 @@ INSTALLED_APPS = [
     "peer_home.apps.PeerHomeConfig",
     "django.contrib.staticfiles",
     "django.contrib.sites",
-    #    'django_extensions',
     "peer_account",
     "peer_course.apps.PeerCourseConfig",
     "peer_lecture",
@@ -216,11 +215,6 @@ INSTALLED_APPS = [
     "django_otp",
     "django_otp.plugins.otp_totp",
     "django_otp.plugins.otp_static",
-    ## For weblog integration: not used
-    # 'zinnia',
-    # 'django_comments',
-    # 'mptt',
-    # 'tagging',
 ]
 
 MIDDLEWARE = [

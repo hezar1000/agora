@@ -38,7 +38,7 @@ class StandingTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Standing", browsable=True, archived=False,
-            agora_mode=True, show_participation_grade=True,
+            show_participation_grade=True,
         )
         self.sessions = [
             CourseSession.objects.create(
@@ -63,7 +63,7 @@ class StandingTests(TestCase):
 
     def test_no_scheme_means_no_standing(self):
         bare = Course.objects.create(
-            displayname="Bare", browsable=True, archived=False, agora_mode=True
+            displayname="Bare", browsable=True, archived=False
         )
         member = CourseMember.objects.create(
             course=bare, user=User.objects.create_user("bare"), role="student"

@@ -1,7 +1,6 @@
-from django.contrib import admin
 from django.contrib.auth.models import User
 from django.db import connection
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.urls import NoReverseMatch, reverse
 
 from .base import CourseBase
@@ -10,86 +9,51 @@ from .models import Course, CourseMember
 # Test scenario 1: add new course
 # Test scenario 2: enter with instructor/ta/student code as well as wrong codes
 
-INERT_COURSE_FIELDS = {
+# Columns Agora inherited from MTA's peer-review schema. Migration
+# peer_course.0093 drops them; nothing may bring them back.
+MTA_COURSE_COLUMNS = {
     "show_student_grades",
+    "on_list",
     "total_late_units",
     "can_tas_see_reviews",
     "enable_independent_pool",
+    "agora_mode",
 }
-INERT_MEMBER_FIELDS = {
+MTA_MEMBER_COLUMNS = {
     "is_independent",
     "time_is_independent_changed",
     "qualified",
-    "upper_confidence_bound",
+    "upperconfidencebound",
     "markingload",
-    "lower_confidence_bound",
+    "lowerconfidencebound",
     "regular_points",
 }
 
 
 class AgoraProductBoundaryTests(TestCase):
-    def test_mta_only_schema_shims_are_inert_and_runtime_helpers_are_absent(self):
-        for field_name in INERT_COURSE_FIELDS:
-            self.assertFalse(Course._meta.get_field(field_name).editable)
-        for field_name in INERT_MEMBER_FIELDS:
-            self.assertFalse(CourseMember._meta.get_field(field_name).editable)
-
+    def test_mta_runtime_helpers_are_absent(self):
         self.assertFalse(hasattr(CourseBase, "is_independent"))
         self.assertFalse(hasattr(CourseBase, "get_graders"))
         with self.assertRaises(NoReverseMatch):
             reverse("home:disqualify_all")
 
-    def test_admin_cannot_expose_removed_mta_fields(self):
-        user = User.objects.create_superuser(
-            username="boundary-admin",
-            email="admin@example.invalid",
-            password="unused-password",
-        )
-        request = RequestFactory().get("/admin/")
-        request.user = user
-
-        course_fields = set(admin.site._registry[Course].get_fields(request))
-        member_fields = set(admin.site._registry[CourseMember].get_fields(request))
-
-        self.assertTrue(INERT_COURSE_FIELDS.isdisjoint(course_fields))
-        self.assertTrue(INERT_MEMBER_FIELDS.isdisjoint(member_fields))
-
-    def test_state_only_migration_preserves_legacy_physical_columns(self):
+    def test_mta_columns_are_gone_from_the_schema(self):
         with connection.cursor() as cursor:
             course_columns = {
                 column.name
                 for column in connection.introspection.get_table_description(
-                    cursor,
-                    Course._meta.db_table,
+                    cursor, Course._meta.db_table
                 )
             }
             member_columns = {
                 column.name
                 for column in connection.introspection.get_table_description(
-                    cursor,
-                    CourseMember._meta.db_table,
+                    cursor, CourseMember._meta.db_table
                 )
             }
 
-        self.assertTrue(
-            {
-                "show_student_grades",
-                "total_late_units",
-                "can_tas_see_reviews",
-                "enable_independent_pool",
-            }.issubset(course_columns)
-        )
-        self.assertTrue(
-            {
-                "is_independent",
-                "time_is_independent_changed",
-                "qualified",
-                "upperconfidencebound",
-                "markingload",
-                "lowerconfidencebound",
-                "regular_points",
-            }.issubset(member_columns)
-        )
+        self.assertTrue(MTA_COURSE_COLUMNS.isdisjoint(course_columns))
+        self.assertTrue(MTA_MEMBER_COLUMNS.isdisjoint(member_columns))
 
 
 class CourseMembershipMutationTests(TestCase):

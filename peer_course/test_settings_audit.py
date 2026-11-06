@@ -59,7 +59,6 @@ class SwitchNamingTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Switches", browsable=True, archived=False,
-            agora_mode=True,
         )
 
     def test_switches_are_named_for_what_they_turn_on(self):
@@ -83,11 +82,6 @@ class SwitchNamingTests(TestCase):
         self.assertTrue(self.course.auto_start)
         self.assertTrue(self.course.export_prompt_at_end)
 
-    def test_a_switch_that_controls_nothing_is_not_offered(self):
-        # `on_list` is written when a course is created and read nowhere.
-        self.assertNotIn("on_list", CourseForm(instance=self.course).fields)
-        self.assertFalse(Course._meta.get_field("on_list").editable)
-
     def test_visibility_holds_the_switch_that_controls_visibility(self):
         groups = {g["id"]: g for g in CourseForm(instance=self.course).fieldsets()}
         names = [field.name for field in groups["visibility"]["fields"]]
@@ -106,7 +100,6 @@ class QueueTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Queues", browsable=True, archived=False,
-            agora_mode=True,
         )
 
     def test_a_renamed_queue_is_shown_by_its_name_in_the_settings(self):
@@ -139,7 +132,7 @@ class SwitchingQueuesTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Switching", browsable=True, archived=False,
-            agora_mode=True, allow_multiple_queues=False,
+            allow_multiple_queues=False,
         )
         self.student = CourseMember.objects.create(
             course=self.course, role="student",

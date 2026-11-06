@@ -37,7 +37,7 @@ class AttendanceTestCase(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="AI 100 attendance", browsable=True, archived=False,
-            agora_mode=True, included_lists=["1", "2", "3", "4"],
+            included_lists=["1", "2", "3", "4"],
         )
         self.instructor_user = User.objects.create_user("att-instructor", password=self.password)
         self.instructor = CourseMember.objects.create(

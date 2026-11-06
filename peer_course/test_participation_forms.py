@@ -43,7 +43,6 @@ class SchemeFormTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Scheme form", browsable=True, archived=False,
-            agora_mode=True,
         )
         self.scheme = participation_presets.apply_preset(
             self.course, participation_presets.COVERAGE_AND_VOLUME
@@ -93,7 +92,6 @@ class RubricFormTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Rubric form", browsable=True, archived=False,
-            agora_mode=True,
         )
         self.scheme = participation_presets.apply_preset(
             self.course, participation_presets.COVERAGE_AND_VOLUME
@@ -179,7 +177,7 @@ class SchemeBootstrapTests(TestCase):
     def test_opening_the_page_seeds_a_scheme_matching_current_behaviour(self):
         course = Course.objects.create(
             displayname="Bootstrap", browsable=True, archived=False,
-            agora_mode=True, max_hand_raise_points=1,
+            max_hand_raise_points=1,
         )
         self.assertFalse(hasattr(course, "participation_scheme"))
 
@@ -194,7 +192,7 @@ class SchemeBootstrapTests(TestCase):
 
     def test_seeding_twice_does_not_duplicate(self):
         course = Course.objects.create(
-            displayname="Twice", browsable=True, archived=False, agora_mode=True
+            displayname="Twice", browsable=True, archived=False
         )
         CourseViews._participation_forms(course)
         course.refresh_from_db()

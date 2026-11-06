@@ -24,7 +24,7 @@ from peer_course import participation_standing as standing
 class SchemeGradingTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="Schemes", browsable=True, archived=False, agora_mode=True
+            displayname="Schemes", browsable=True, archived=False
         )
         self.sessions = [
             CourseSession.objects.create(
@@ -453,7 +453,7 @@ class AI100RubricTests(TestCase):
 
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="AI 100", browsable=True, archived=False, agora_mode=True
+            displayname="AI 100", browsable=True, archived=False
         )
         self.sessions = [
             CourseSession.objects.create(
@@ -623,7 +623,6 @@ class CPSC430SyllabusTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="CPSC 430 check", browsable=True, archived=False,
-            agora_mode=True,
         )
         presets.apply_preset(self.course, presets.PER_LECTURE)
         self.course.refresh_from_db()
@@ -702,7 +701,6 @@ class MidTermTableChangeTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="CPSC 430 change", browsable=True, archived=False,
-            agora_mode=True,
         )
         presets.apply_preset(self.course, presets.PER_LECTURE)
         self.course.refresh_from_db()
@@ -799,7 +797,7 @@ class ContributionsAreCallsTests(TestCase):
 
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="Calls", browsable=True, archived=False, agora_mode=True
+            displayname="Calls", browsable=True, archived=False
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.course.refresh_from_db()

@@ -24,7 +24,7 @@ class ScheduleEnteredInAdvanceTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Entered ahead", browsable=False, archived=False,
-            agora_mode=True, course_timezone="US/Pacific",
+            course_timezone="US/Pacific",
         )
         today = timezone.localdate()
         self.past = CourseSession.objects.create(

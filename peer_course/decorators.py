@@ -4,8 +4,6 @@ from django.contrib import messages
 from django.urls import reverse
 from django.http import HttpResponseRedirect
 
-# from .models import Assignment
-
 # TODO (Farzad): I don't like this ...
 def chosen_course_required(function):
     def wrap(request, *args, **kwargs):

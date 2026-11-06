@@ -126,7 +126,7 @@ class LectureGuestTests(TestCase):
         client = self.join()
         other = Course.objects.create(
             displayname="Elsewhere", browsable=True, archived=False,
-            agora_mode=True, stucode="ELSEWHERE-0123456789abc",
+            stucode="ELSEWHERE-0123456789abc",
         )
         client.post(reverse("course:enroll"), {"coursecode": other.stucode})
         self.assertFalse(CourseMember.objects.filter(course=other, user=self.guest().user).exists())

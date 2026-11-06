@@ -81,7 +81,6 @@ class SandboxCreationTests(TestCase):
         course = sandbox.create(self.owner)
 
         self.assertFalse(course.browsable)
-        self.assertFalse(course.on_list)
         self.assertTrue(course.is_sandbox)
 
     def test_a_stranger_sees_nothing_of_it(self):
@@ -126,7 +125,7 @@ class ExpiryTests(TestCase):
 
     def test_a_real_course_can_never_be_removed_this_way(self):
         real = Course.objects.create(
-            displayname="Real", browsable=True, archived=False, agora_mode=True,
+            displayname="Real", browsable=True, archived=False, 
         )
         with self.assertRaises(ValueError):
             sandbox.remove(real)
@@ -200,7 +199,7 @@ class GuestsStayPutTests(TestCase):
         self.course = sandbox.create(self.owner)
         self.real = Course.objects.create(
             displayname="A real course", browsable=True, archived=False,
-            agora_mode=True, stucode="REALCODE-0123456789abcd",
+            stucode="REALCODE-0123456789abcd",
         )
         self.client = Client()
         self.client.post(
@@ -303,7 +302,7 @@ class ConsoleTests(TestCase):
 
     def test_a_real_course_cannot_be_ended_through_this_route(self):
         real = Course.objects.create(
-            displayname="Real", browsable=True, archived=False, agora_mode=True,
+            displayname="Real", browsable=True, archived=False, 
         )
         CourseMember.objects.create(course=real, user=self.owner, role="instructor")
 
@@ -545,7 +544,6 @@ class ReachabilityTests(TestCase):
         instructor = User.objects.create_user("has-a-course")
         course = Course.objects.create(
             displayname="CPSC 999 2026W1", browsable=True, archived=False,
-            agora_mode=True,
         )
         CourseMember.objects.create(
             user=instructor, course=course, role="instructor", active=True

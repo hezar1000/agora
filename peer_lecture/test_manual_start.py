@@ -36,7 +36,7 @@ class ManualStartTests(TestCase):
         ))
         self.course = Course.objects.create(
             displayname="Scheduled in advance", browsable=True, archived=False,
-            agora_mode=True, course_timezone="America/Vancouver",
+            course_timezone="America/Vancouver",
             auto_start=True, default_session_duration=timedelta(minutes=90),
         )
         self.instructor = User.objects.create_user("prof", password="pw")

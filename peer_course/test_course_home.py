@@ -17,7 +17,7 @@ class CourseHomeTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Home", browsable=True, archived=False,
-            agora_mode=True, show_participation_grade=True,
+            show_participation_grade=True,
         )
         today = timezone.localtime().date()
         self.past = CourseSession.objects.create(

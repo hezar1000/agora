@@ -31,7 +31,7 @@ STYLE = Path(__file__).resolve().parent / "templates" / "blocks" / "lecture-styl
 class SchemeInWordsTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="Readable", browsable=False, archived=False, agora_mode=True,
+            displayname="Readable", browsable=False, archived=False, 
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.course.refresh_from_db()
@@ -79,7 +79,7 @@ class SchemeInWordsTests(TestCase):
 
     def test_a_course_without_a_scheme_has_nothing_to_say(self):
         bare = Course.objects.create(
-            displayname="Bare", browsable=False, archived=False, agora_mode=True,
+            displayname="Bare", browsable=False, archived=False, 
         )
         self.assertIsNone(participation_summary.for_course(bare))
 
@@ -88,7 +88,7 @@ class CalendarTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Calendar", browsable=False, archived=False,
-            agora_mode=True, course_timezone="US/Pacific",
+            course_timezone="US/Pacific",
         )
         CourseSession.objects.create(
             course=self.course, is_template=True, active_days="wed",
@@ -139,7 +139,7 @@ class SkippingADayTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Skipping", browsable=False, archived=False,
-            agora_mode=True, course_timezone="US/Pacific",
+            course_timezone="US/Pacific",
         )
         CourseSession.objects.create(
             course=self.course, is_template=True, active_days="wed",
@@ -271,7 +271,7 @@ class OneParticipationSystemTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="One system", browsable=False, archived=False,
-            agora_mode=True, hand_raise_point=1, speaking_point=0,
+            hand_raise_point=1, speaking_point=0,
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.course.refresh_from_db()
@@ -302,7 +302,7 @@ class OneParticipationSystemTests(TestCase):
     def test_a_course_with_no_scheme_still_has_rules(self):
         bare = Course.objects.create(
             displayname="No scheme", browsable=False, archived=False,
-            agora_mode=True, hand_raise_point=2, speaking_point=1,
+            hand_raise_point=2, speaking_point=1,
             max_hand_raise_points=4, allow_bonus=True,
         )
 
@@ -355,7 +355,7 @@ class StudentsSeeTheirGradeTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Running total", browsable=True, archived=False,
-            agora_mode=True, show_participation_grade=True,
+            show_participation_grade=True,
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         scheme = self.course.participation_scheme

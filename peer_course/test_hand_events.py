@@ -20,7 +20,6 @@ class HandRaiseRecordingTests(TestCase):
             displayname="Hand Events",
             browsable=True,
             archived=False,
-            agora_mode=True,
         )
         self.session = CourseSession.objects.create(
             course=self.course,
@@ -307,7 +306,7 @@ class ScheduleCreatedInAdvanceTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Scheduled ahead", browsable=False, archived=False,
-            agora_mode=True, course_timezone="US/Pacific",
+            course_timezone="US/Pacific",
         )
         today = timezone.localdate()
         self.past = CourseSession.objects.create(

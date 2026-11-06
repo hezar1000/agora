@@ -22,7 +22,7 @@ from .tests import IN_MEMORY_CHANNELS
 class MicrophoneFixture:
     def setUp(self):
         super().setUp()
-        self.course = Course.objects.create(displayname="Microphone class", agora_mode=True, browsable=True, archived=False, classroom_microphone=True)
+        self.course = Course.objects.create(displayname="Microphone class", browsable=True, archived=False, classroom_microphone=True)
         self.instructor = User.objects.create_user("mic-instructor", password="pw")
         self.student = User.objects.create_user("mic-student", password="pw", first_name="Guolin")
         self.other = User.objects.create_user("mic-other", password="pw")
@@ -72,7 +72,7 @@ class MicrophonePagesTests(MicrophoneFixture, TestCase):
         self.assertEqual(self.client.get(reverse("home:sound_only", args=[self.course.pk])).status_code, 404)
 
     def test_selection_leaves_no_microphone_state_while_off(self):
-        other_course = Course.objects.create(displayname="No microphone", agora_mode=True, browsable=True, archived=False)
+        other_course = Course.objects.create(displayname="No microphone", browsable=True, archived=False)
         member = CourseMember.objects.create(course=other_course, user=self.other, role="student")
         select_microphone_student(other_course.pk, member, Lecture.objects.create(course=other_course))
         self.assertFalse(ClassroomMicrophone.objects.filter(pk=other_course.pk).exists())

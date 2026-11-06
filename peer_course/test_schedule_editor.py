@@ -72,7 +72,7 @@ class ServerSideValidationTests(TestCase):
 class SessionNameTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="Named", browsable=True, archived=False, agora_mode=True
+            displayname="Named", browsable=True, archived=False
         )
 
     def lecture(self, **kwargs):
@@ -114,7 +114,7 @@ class LectureEditingTests(TestCase):
 
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="Lectures", browsable=True, archived=False, agora_mode=True
+            displayname="Lectures", browsable=True, archived=False
         )
         self.first = CourseSession.objects.create(
             course=self.course, session_date=date(2026, 1, 6),

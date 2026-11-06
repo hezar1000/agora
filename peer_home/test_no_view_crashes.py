@@ -52,7 +52,7 @@ class NoViewCrashesTests(TestCase):
     def setUpTestData(cls):
         cls.instructor = User.objects.create_user(username="crash_instructor")
         cls.course = CourseBase.create(
-            cls.instructor, "Crash audit", browsable=True, archived=False, on_list=True
+            cls.instructor, "Crash audit", browsable=True, archived=False
         )
         CourseMember.objects.create(
             course=cls.course, user=cls.instructor, role="instructor", active=True

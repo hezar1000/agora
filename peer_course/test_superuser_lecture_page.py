@@ -28,7 +28,6 @@ class SuperuserDuringAnOpenLectureTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="AI 100 2026W1", browsable=True, archived=False,
-            agora_mode=True,
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         CourseMember.objects.create(

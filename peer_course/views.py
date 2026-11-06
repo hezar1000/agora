@@ -114,10 +114,8 @@ class CourseViews:
             return HttpResponse("Course creation requires an instructor invitation.", status=403)
         cname = request.POST.get("cname")
 
-        browsable = False  
-        archived = False   
-        agora_mode = True 
-        on_list = True
+        browsable = False
+        archived = False
 
         if Course._default_manager.filter(displayname=cname).exists():
             messages.error(
@@ -130,9 +128,7 @@ class CourseViews:
             request.user,
             cname,
             browsable=browsable,
-            agora_mode=agora_mode,
             archived=archived,
-            on_list=on_list,
         )
         if c is not None:
             messages.success(request, "Successfully created the course %s" % cname)

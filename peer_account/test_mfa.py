@@ -799,7 +799,6 @@ class MFAASGIStackIntegrationTests(TransactionTestCase):
             displayname="MFA Socket Course",
             browsable=True,
             archived=False,
-            agora_mode=True,
         )
         CourseMember.objects.create(
             course=self.course,
@@ -987,7 +986,7 @@ class ShippedDefaultTests(TestCase):
         from pathlib import Path
 
         template = (
-            Path(__file__).resolve().parent.parent / "deploy" / "generate_env.py"
+            Path(__file__).resolve().parent.parent / ".env.example"
         ).read_text()
 
         self.assertNotIn("MFA_ENFORCED=false", template.lower())

@@ -41,7 +41,6 @@ class CourseParticipationGradeTests(TestCase):
             displayname="Participation Grades",
             browsable=True,
             archived=False,
-            agora_mode=True,
         )
         self.session_one = CourseSession.objects.create(
             course=self.course,
@@ -163,7 +162,7 @@ class MultipleQueueTemplateTests(TestCase):
         from django.template.loader import render_to_string
 
         course = Course.objects.create(
-            displayname="Queues", browsable=True, archived=False, agora_mode=True
+            displayname="Queues", browsable=True, archived=False
         )
         for allowed, expected in ((True, "true"), (False, "false")):
             course.allow_multiple_queues = allowed
@@ -191,7 +190,6 @@ class ParticipationGradeDisplayTests(TestCase):
             displayname="Grade Display",
             browsable=True,
             archived=False,
-            agora_mode=True,
         )
         CourseMember.objects.create(
             course=self.course, user=self.instructor_user, role="instructor"

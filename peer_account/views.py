@@ -284,7 +284,6 @@ class AuthViews:
                 if temp_role in INSTRUCTOR_ROLES and temp_course_id is not None:
                     Course.objects.filter(
                         pk=temp_course_id,
-                        agora_mode=True,
                         members__user=user,
                         members__role="instructor",
                     ).delete()

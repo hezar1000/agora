@@ -44,7 +44,6 @@ class ExcludedParticipationListTests(TestCase):
             displayname="Excluded List Test",
             browsable=True,
             archived=False,
-            agora_mode=True,
             hand_raise_point=1,
             speaking_point=2,
             # MultiSelectField stores strings; list_counts_for_points

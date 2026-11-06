@@ -130,8 +130,6 @@ class Command(BaseCommand):
             displayname=name,
             browsable=False,
             archived=False,
-            on_list=True,
-            agora_mode=True,
             show_participation_grade=True,
             hand_raise_point=1,
             speaking_point=0,

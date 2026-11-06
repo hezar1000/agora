@@ -16,11 +16,11 @@ class SettingsFieldsetTests(SimpleTestCase):
         self.form = CourseForm()
 
     def test_every_field_is_either_grouped_or_hand_built(self):
-        # This is the bug this test exists for: `on_list`, `manually_started`,
+        # This is the bug this test exists for: `manually_started`,
         # `show_participation_grade` and `allow_multiple_queues` were listed in
         # Meta.fields but rendered nowhere. An unrendered checkbox is absent
         # from the POST, and an absent checkbox cleans to False -- so every
-        # Save silently switched all four off.
+        # Save silently switched all three off.
         grouped = [name for _, _, _, names in CourseForm.FIELDSETS for name in names]
         accounted = sorted(grouped + list(CourseForm.CUSTOM_FIELDS))
         self.assertEqual(

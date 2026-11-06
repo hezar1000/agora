@@ -101,8 +101,6 @@ def create(owner, *, guest_owner=False, now=None):
         displayname=f"{NAME_PREFIX} {code}",
         browsable=False,
         archived=False,
-        on_list=False,
-        agora_mode=True,
         is_sandbox=True,
         sandbox_expires_at=now + LIFETIME,
         join_code=code,

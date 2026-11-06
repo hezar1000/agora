@@ -123,7 +123,6 @@ class ConsoleWidthTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="CPSC 999 2026W1", browsable=True, archived=False,
-            agora_mode=True,
         )
         now = timezone.localtime(timezone.now())
         CourseSession.objects.create(

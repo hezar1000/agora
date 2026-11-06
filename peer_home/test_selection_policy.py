@@ -91,7 +91,7 @@ class TermLongInteractionTests(TestCase):
 
     def setUp(self):
         self.course = Course.objects.create(
-            displayname="weights", browsable=False, archived=False, on_list=False,
+            displayname="weights", browsable=False, archived=False, 
             weight_exponent=1.0, spoken_weight=0.5,
         )
 

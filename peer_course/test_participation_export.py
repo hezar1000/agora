@@ -22,7 +22,7 @@ class ReportTests(TestCase):
     def setUp(self):
         self.course = Course.objects.create(
             displayname="Export", browsable=False, archived=False,
-            agora_mode=True, course_timezone="US/Pacific",
+            course_timezone="US/Pacific",
         )
         presets.apply_preset(self.course, presets.COVERAGE_AND_VOLUME)
         self.scheme = self.course.participation_scheme
@@ -167,7 +167,7 @@ class ReportTests(TestCase):
 
     def test_a_course_with_no_scheme_still_exports(self):
         bare = Course.objects.create(
-            displayname="Bare", browsable=False, archived=False, agora_mode=True,
+            displayname="Bare", browsable=False, archived=False, 
         )
         rows = export.build(bare, kind=export.GRADES)
         self.assertTrue(any("no participation scheme" in " ".join(row)

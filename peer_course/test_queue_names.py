@@ -12,7 +12,7 @@ class QueueLabelTests(TestCase):
     def course(self, config=None):
         return Course.objects.create(
             displayname="Named", browsable=True, archived=False,
-            agora_mode=True, color_config=config or "",
+            color_config=config or "",
         )
 
     def test_an_unconfigured_course_falls_back_to_the_colours(self):

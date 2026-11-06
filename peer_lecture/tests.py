@@ -28,7 +28,6 @@ def make_course(name):
         displayname=name,
         browsable=True,
         archived=False,
-        agora_mode=True,
     )
 
 

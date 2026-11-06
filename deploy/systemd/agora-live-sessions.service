@@ -1,6 +1,6 @@
 [Unit]
 Description=Run one Agora live-session maintenance pass
-Documentation=file:/srv/agora/current/prod_setup.txt
+Documentation=file:/srv/agora/current/docs/DEPLOYING.md
 After=network-online.target redis-server.service
 Wants=network-online.target redis-server.service
 

@@ -1,6 +1,6 @@
 [Unit]
 Description=Run Agora live-session maintenance every minute
-Documentation=file:/srv/agora/current/prod_setup.txt
+Documentation=file:/srv/agora/current/docs/DEPLOYING.md
 
 [Timer]
 OnCalendar=*-*-* *:*:00

@@ -1,6 +1,6 @@
 [Unit]
 Description=Agora ASGI worker on 127.0.0.1:%i
-Documentation=file:/srv/agora/current/prod_setup.txt
+Documentation=file:/srv/agora/current/docs/DEPLOYING.md
 After=network-online.target redis-server.service
 Wants=network-online.target redis-server.service
 PartOf=agora-web.target
@@ -17,8 +17,6 @@ User=agora
 # readable, so it needs nothing here.
 Group=agora
 WorkingDirectory=/srv/agora/current
-# EnvironmentFile may override this example hostname for another deployment.
-Environment=AGORA_PROBE_HOST=agora.students.cs.ubc.ca
 EnvironmentFile=/etc/agora/agora.env
 Environment=DJANGO_SETTINGS_MODULE=mta2.settings
 Environment=PYTHONUNBUFFERED=1

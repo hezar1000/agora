@@ -165,9 +165,8 @@ if [[ "${DJANGO_EMAIL_BACKEND}" == "django.core.mail.backends.smtp.EmailBackend"
   fi
 fi
 
-# Checked by property rather than by literal value. The deployed instance uses
-# /home/agora/agora/static and /home/agora/agora/mta2/uploads, so requiring the
-# example paths verbatim refused to start on the host this targets.
+# Checked by property rather than by literal value, so a deployment can put
+# its data wherever it likes.
 for storage_path in "${DJANGO_STATIC_ROOT}" "${DJANGO_MEDIA_ROOT}"; do
   if [[ "${storage_path}" != /* ]]; then
     fail "Django storage paths must be absolute: ${storage_path}"

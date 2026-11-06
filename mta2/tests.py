@@ -262,16 +262,18 @@ class ConfigurationContractTests(SimpleTestCase):
 
 
 class DeploymentHealthProbeTests(SimpleTestCase):
-    def test_worker_and_redeploy_use_explicit_health_endpoints(self):
+    def test_worker_and_activation_use_explicit_health_endpoints(self):
         base_dir = Path(settings.BASE_DIR)
-        redeploy = (base_dir / "redeploy.sh").read_text(encoding="utf-8")
+        activate = (base_dir / "deploy" / "activate-release.sh").read_text(
+            encoding="utf-8"
+        )
         web_unit = (
             base_dir / "deploy" / "systemd" / "agora-web@.service"
         ).read_text(encoding="utf-8")
-        runbook = (base_dir / "prod_setup.txt").read_text(encoding="utf-8")
+        runbook = (base_dir / "docs" / "DEPLOYING.md").read_text(encoding="utf-8")
 
-        self.assertIn("/health/ready/", redeploy)
-        self.assertIn("${AGORA_PROBE_HOST:-agora.students.cs.ubc.ca}", redeploy)
+        self.assertIn("/health/ready/", activate)
+        self.assertIn("$AGORA_PROBE_HOST", activate)
         self.assertIn("/health/live/", web_unit)
         self.assertIn("/health/live/", runbook)
         self.assertIn("/health/ready/", runbook)

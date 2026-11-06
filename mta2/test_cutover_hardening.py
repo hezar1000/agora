@@ -8,6 +8,7 @@ application: they live in the browser, the identity provider, or systemd.
 import os
 import subprocess
 import sys
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -236,6 +237,28 @@ class DeploymentPathConsistencyTests(SimpleTestCase):
         unit = self._unit("agora-web@.service")
         self.assertIn("/srv/agora/current/deploy/preflight.sh", unit)
         self.assertIn("/srv/agora/current/.venv/bin/", unit)
+
+    def test_nginx_serves_the_configured_static_root(self):
+        nginx = (Path(settings.BASE_DIR) / "deploy" / "nginx.conf").read_text(
+            encoding="utf-8"
+        )
+        static_root = self._example_value("DJANGO_STATIC_ROOT").rstrip("/")
+        self.assertIn("alias %s/;" % static_root, nginx)
+
+    def test_nginx_the_worker_pool_and_activation_agree_on_ports(self):
+        root = Path(settings.BASE_DIR)
+        nginx = (root / "deploy" / "nginx.conf").read_text(encoding="utf-8")
+        target = self._unit("agora-web.target")
+        activate = (root / "deploy" / "activate-release.sh").read_text(
+            encoding="utf-8"
+        )
+        upstream = set(re.findall(r"server 127\.0\.0\.1:(\d+)", nginx))
+        required = set(re.findall(r"agora-web@(\d+)\.service", target))
+        activated = set(
+            re.search(r'AGORA_PORTS:-([0-9 ]+)', activate).group(1).split()
+        )
+        self.assertEqual(upstream, required)
+        self.assertEqual(upstream, activated)
 
     def test_uploads_do_not_live_under_the_static_root(self):
         static_root = self._example_value("DJANGO_STATIC_ROOT")

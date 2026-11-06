@@ -288,7 +288,9 @@ class DeploymentConfigurationTests(SimpleTestCase):
         self.assertNotIn("moment-timezone/0.5.34/", template)
 
     def test_nginx_logs_no_query_and_does_not_serve_media(self):
-        nginx = (Path(settings.BASE_DIR) / "nginx.conf").read_text(encoding="utf-8")
+        nginx = (Path(settings.BASE_DIR) / "deploy" / "nginx.conf").read_text(
+            encoding="utf-8"
+        )
         active = "\n".join(
             line for line in nginx.splitlines() if not line.lstrip().startswith("#")
         )

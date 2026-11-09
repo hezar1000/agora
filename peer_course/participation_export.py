@@ -174,7 +174,7 @@ def build(course, kind=GRADES, start_date=None, end_date=None, lists=None):
         if ParticipationScheme.COVERAGE in weights:
             header += ["Lectures attended", f"Attendance (of {weights[ParticipationScheme.COVERAGE]:g})"]
         if ParticipationScheme.VOLUME in weights:
-            header += ["Contributions counted", f"Contributions (of {weights[ParticipationScheme.VOLUME]:g})"]
+            header += ["Bonus outside lectures", "Contributions counted", f"Contributions (of {weights[ParticipationScheme.VOLUME]:g})"]
         if ParticipationScheme.PER_LECTURE in weights:
             header += [f"Per-lecture (of {weights[ParticipationScheme.PER_LECTURE]:g})"]
         header += [f"Participation (of {total_weight:g})", "Participation %"]
@@ -186,6 +186,7 @@ def build(course, kind=GRADES, start_date=None, end_date=None, lists=None):
         ]
         counts = raise_counts(course, counted, students)
         roll_calls = schemes.roll_call_attendance(course, sessions=counted)
+        extras = schemes.course_bonuses(course)
         for student in students:
             row = _identity(student)
             result = (graded or {}).get(student.id)
@@ -199,7 +200,7 @@ def build(course, kind=GRADES, start_date=None, end_date=None, lists=None):
             if ParticipationScheme.VOLUME in weights:
                 raw = (result or {}).get("raw", {}).get(ParticipationScheme.VOLUME, 0)
                 marks = (result or {}).get(ParticipationScheme.VOLUME, 0.0)
-                row += [round(raw, 2), round(marks * weights[ParticipationScheme.VOLUME], 2)]
+                row += [extras.get(student.id, 0), round(raw, 2), round(marks * weights[ParticipationScheme.VOLUME], 2)]
             if ParticipationScheme.PER_LECTURE in weights:
                 marks = (result or {}).get(ParticipationScheme.PER_LECTURE, 0.0)
                 row += [round(marks * weights[ParticipationScheme.PER_LECTURE], 2)]

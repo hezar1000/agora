@@ -95,6 +95,47 @@ class SchemeGradingTests(TestCase):
             schemes.grade_course(self.course)[student.id]["total"], 0.5
         )
 
+    def test_credit_outside_lectures_adds_to_volume_only(self):
+        # Quiz 0 style credit: a row with no lecture and only bonus points.
+        presets.apply_preset(self.course, presets.VOLUME)
+        scheme = self.course.participation_scheme
+        student = self.student("quizzer")
+        absent = self.student("absent")
+        self.contribute(student, self.sessions[0], times=3)
+        self.contribute(absent, self.sessions[1], times=1)
+        before = schemes.measure_values(self.course, scheme)
+        CourseParticipation.objects.create(
+            participant=student, session=None, bonus_points=2,
+            participation_points_gained=0, time_participated=timezone.now(),
+            count_in_calculations=True, real_participation=False,
+        )
+        # Neither an undone row nor call credit outside a lecture counts.
+        CourseParticipation.objects.create(
+            participant=absent, session=None, bonus_points=2,
+            participation_points_gained=0, time_participated=timezone.now(),
+            count_in_calculations=False, real_participation=False,
+        )
+        CourseParticipation.objects.create(
+            participant=absent, session=None, bonus_points=0,
+            participation_points_gained=5, time_participated=timezone.now(),
+            count_in_calculations=True, real_participation=False,
+        )
+
+        after = schemes.measure_values(self.course, scheme)
+
+        self.assertEqual(schemes.course_bonuses(self.course), {student.id: 2})
+        self.assertEqual(
+            after[student.id][ParticipationScheme.VOLUME],
+            before[student.id][ParticipationScheme.VOLUME] + 2,
+        )
+        self.assertEqual(
+            after[student.id][ParticipationScheme.COVERAGE],
+            before[student.id][ParticipationScheme.COVERAGE],
+        )
+        self.assertEqual(after[absent.id], before[absent.id])
+        self.assertNotIn(None, schemes.lecture_tallies(self.course))
+        self.assertEqual(standing.standing_for(self.course, student)["course_bonus"], 2)
+
     def test_the_cap_bounds_what_a_lecture_pays(self):
         # The recorder applies the cap as the lecture happens, speaking bonus
         # included, and the grade is what was recorded.

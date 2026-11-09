@@ -403,6 +403,8 @@ def standing_for(course, member):
         # Each part against the marks assigned to it in the rubric.
         "breakdown": grade_breakdown(scheme, my_grade),
         "volume": my_volume,
+        # Hand raises credited outside lectures (e.g. Quiz 0), already in volume.
+        "course_bonus": schemes.course_bonuses(course).get(member.id, 0),
         "volume_target": volume_target,
         "volume_median": median,
         "volume_population": volume_population,

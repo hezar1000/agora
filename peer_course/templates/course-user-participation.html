@@ -178,6 +178,9 @@
             {% endfor %}
           </ul>
         {% endif %}
+        {% if standing.course_bonus %}
+          <p>Bonus hand raises outside lectures (for example Quiz 0): {{ standing.course_bonus }}. These count toward your hand raises but not toward lectures attended.</p>
+        {% endif %}
         {% if standing.shows_class %}
           <p class="text-muted">Class median of additional hand raises so far: {{ standing.volume_median|floatformat:"-2" }}</p>
         {% endif %}

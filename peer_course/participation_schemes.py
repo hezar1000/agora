@@ -262,6 +262,31 @@ def _lecture_count(course, scheme, scores, roll_calls=()):
     return len(set(scores) | set(roll_calls)) or 1
 
 
+def course_bonuses(course):
+    """``{member_id: points}`` of credit recorded outside any lecture.
+
+    A ``CourseParticipation`` row with no session is credit the course gave
+    for something other than a lecture -- an ORCA familiarization quiz worth
+    two hand raises, say. It adds to a student's contributions (``volume``)
+    and nothing else: it is not a lecture attended, it has no class to be
+    compared against, and it never appears in a lecture's tally. Only
+    ``bonus_points`` count on these rows, so that an orphaned call record can
+    never turn into credit.
+    """
+    rows = (
+        CourseParticipation.objects.filter(
+            participant__course=course,
+            participant__role="student",
+            participant__active=True,
+            session__isnull=True,
+            count_in_calculations=True,
+        )
+        .values("participant_id")
+        .annotate(bonus=Sum("bonus_points"))
+    )
+    return {row["participant_id"]: row["bonus"] for row in rows if (row["bonus"] or 0) > 0}
+
+
 def measure_values(course, scheme, scores=None, roll_calls=None):
     """``{member_id: {measure: value}}``, before any curve is applied."""
     scores = lecture_scores(course, scheme) if scores is None else scores
@@ -275,6 +300,7 @@ def measure_values(course, scheme, scores=None, roll_calls=None):
     held = _lecture_count(course, scheme, scores, roll_calls)
     drops = min(scheme.dropped_lectures, max(held - 1, 0))
     graded_lectures = max(held - drops, 1)
+    extras = course_bonuses(course)
 
     values = {}
     for member_id in members:
@@ -301,6 +327,8 @@ def measure_values(course, scheme, scores=None, roll_calls=None):
             # of sixteen lectures has fourteen raises deducted, though
             # attendance is graded out of thirteen.
             volume = max(0.0, volume - by_raise * scheme.raise_value)
+        # Credit given outside lectures is a contribution, never attendance.
+        volume += extras.get(member_id, 0)
         values[member_id] = {
             # Coverage is capped at 1: the dropped lectures are a grace, not a
             # way to exceed full marks by attending everything.

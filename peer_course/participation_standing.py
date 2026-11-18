@@ -132,7 +132,7 @@ def lecture_grades(course, scheme, rubric, member, scores):
     # The lowest grades are the ones dropped, so say which they were rather
     # than leaving the student to work out why the average is higher than the
     # bars suggest.
-    drops = min(scheme.dropped_lectures, max(len(entries) - 1, 0))
+    drops = schemes.drops_for(scheme, member.extra_dropped_lectures, len(entries))
     if drops:
         weakest = sorted(
             range(len(entries)), key=lambda index: entries[index]["grade"]
@@ -245,6 +245,8 @@ def standing_for(course, member):
 
     graded = schemes.grade_course(course) or {}
     my_grade = graded.get(member.id, {})
+    # The course's drops plus any granted to this student alone.
+    dropped = scheme.dropped_lectures + member.extra_dropped_lectures
 
     volume_rubric = _rubric_for(scheme, ParticipationScheme.VOLUME)
     per_lecture_rubric = _rubric_for(scheme, ParticipationScheme.PER_LECTURE)
@@ -333,10 +335,10 @@ def standing_for(course, member):
                 if graded_lectures else None
             ),
             "lectures": len(graded_lectures),
-            "dropped": scheme.dropped_lectures,
+            "dropped": dropped,
         })
     attendance_target = max(
-        (scheme.lectures_expected or len(attendance)) - scheme.dropped_lectures, 1
+        (scheme.lectures_expected or len(attendance)) - dropped, 1
     )
     if ParticipationScheme.COVERAGE in weighted:
         headline.append({
@@ -357,7 +359,7 @@ def standing_for(course, member):
     # Drops are marked on the chart only once the term is long enough for
     # them to mean something: with four drops and two lectures held, fading
     # one of the two would say more about the calendar than the student.
-    drops_visible = len(attendance) > 2 * scheme.dropped_lectures
+    drops_visible = len(attendance) > 2 * dropped
     for row in rows:
         row["faded"] = drops_visible and not row["counted"]
         # Under AI 100's rubric the first counted raise in a lecture is the
@@ -417,11 +419,8 @@ def standing_for(course, member):
         # page needs it too, for the people looking at the squares.
         "coverage_count": sum(1 for cell in lecture_cells if cell["took_part"]),
         "lectures_counted": len(attendance),
-        "attendance_target": max(
-            (scheme.lectures_expected or len(attendance)) - scheme.dropped_lectures,
-            1,
-        ),
-        "dropped": scheme.dropped_lectures,
+        "attendance_target": attendance_target,
+        "dropped": dropped,
         "curve": (
             curve_points(scheme, volume_rubric, volume_population)
             if ParticipationScheme.VOLUME in weighted

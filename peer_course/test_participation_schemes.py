@@ -725,6 +725,37 @@ class CPSC430SyllabusTests(TestCase):
         )
 
 
+    def test_an_extra_drop_for_one_student(self):
+        sessions = [
+            CourseSession.objects.create(
+                course=self.course, is_template=False,
+                session_date=date(2026, 9, 8) + timedelta(days=2 * n),
+                start_time_pst=time(15, 30), end_time_pst=time(17, 0),
+            )
+            for n in range(8)
+        ]
+        present = self.student("present-throughout")
+        missed_five = self.student("missed-five")
+        for session in sessions:
+            self.contribute(present, session, times=2)
+        for session in sessions[:3]:
+            self.contribute(missed_five, session, times=2)
+
+        graded = schemes.grade_course(self.course)
+        self.assertLess(
+            graded[missed_five.id][ParticipationScheme.PER_LECTURE],
+            graded[present.id][ParticipationScheme.PER_LECTURE],
+        )
+
+        missed_five.extra_dropped_lectures = 1
+        missed_five.save()
+        graded = schemes.grade_course(self.course)
+        self.assertAlmostEqual(
+            graded[missed_five.id][ParticipationScheme.PER_LECTURE],
+            graded[present.id][ParticipationScheme.PER_LECTURE],
+        )
+
+
 class MidTermTableChangeTests(TestCase):
     """CPSC 430 2026W1 changed its per-class table from November on.
 

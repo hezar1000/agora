@@ -262,6 +262,14 @@ def _lecture_count(course, scheme, scores, roll_calls=()):
     return len(set(scores) | set(roll_calls)) or 1
 
 
+def drops_for(scheme, extra, held):
+    """Lectures dropped for one student: the course's drops plus their own.
+
+    At least one lecture is always graded.
+    """
+    return min(scheme.dropped_lectures + extra, max(held - 1, 0))
+
+
 def course_bonuses(course):
     """``{member_id: points}`` of credit recorded outside any lecture.
 
@@ -292,18 +300,17 @@ def measure_values(course, scheme, scores=None, roll_calls=None):
     scores = lecture_scores(course, scheme) if scores is None else scores
     roll_calls = roll_call_attendance(course) if roll_calls is None else roll_calls
     attendance = attendance_by_lecture(scores, roll_calls)
-    members = list(
+    members = dict(
         CourseMember.objects.filter(
             course=course, role="student", active=True
-        ).values_list("id", flat=True)
+        ).values_list("id", "extra_dropped_lectures")
     )
     held = _lecture_count(course, scheme, scores, roll_calls)
-    drops = min(scheme.dropped_lectures, max(held - 1, 0))
-    graded_lectures = max(held - drops, 1)
     extras = course_bonuses(course)
 
     values = {}
-    for member_id in members:
+    for member_id, extra_drops in members.items():
+        graded_lectures = max(held - drops_for(scheme, extra_drops, held), 1)
         attended = sum(1 for members in attendance.values() if member_id in members)
         volume = sum(session.get(member_id, 0) for session in scores.values())
         if scheme.volume_excludes_covered:
@@ -346,10 +353,10 @@ def per_lecture_fractions(course, scheme, rubric, scores=None):
     the lowest grades, which is what makes absence survivable.
     """
     scores = lecture_scores(course, scheme) if scores is None else scores
-    members = list(
+    members = dict(
         CourseMember.objects.filter(
             course=course, role="student", active=True
-        ).values_list("id", flat=True)
+        ).values_list("id", "extra_dropped_lectures")
     )
 
     curves_by_lecture = lecture_curves(rubric, scores)
@@ -367,17 +374,16 @@ def per_lecture_fractions(course, scheme, rubric, scores=None):
             )
 
     held = _lecture_count(course, scheme, scores)
-    drops = min(scheme.dropped_lectures, max(held - 1, 0))
     fractions = {}
-    for member_id in members:
-        graded = sorted(per_member.get(member_id, []), reverse=True)
-        graded = graded[: max(held - drops, 1)]
+    for member_id, extra_drops in members.items():
+        counted = max(held - drops_for(scheme, extra_drops, held), 1)
+        graded = sorted(per_member.get(member_id, []), reverse=True)[:counted]
         if not graded:
             fractions[member_id] = 0.0
             continue
         # Averaged over the lectures the term is graded against, so missing one
         # entirely is not the same as attending and staying quiet.
-        fractions[member_id] = sum(graded) / max(held - drops, 1)
+        fractions[member_id] = sum(graded) / counted
     return fractions
 
 

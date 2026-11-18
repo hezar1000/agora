@@ -404,6 +404,10 @@ class CourseMember(models.Model):
         "first_hand_up", db_column="first_hand_up", default=True, db_index=True
     )
 
+    # Lectures dropped for this student on top of the course's own drops -- an
+    # accommodation an instructor grants one person, e.g. for an illness.
+    extra_dropped_lectures = models.PositiveIntegerField(default=0)
+
     class Meta:
         db_table = "course_member"
         unique_together = ("course", "user")
